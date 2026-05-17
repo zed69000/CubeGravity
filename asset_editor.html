@@ -1,0 +1,581 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gravity Cube - Asset Editor</title>
+<style>
+:root{
+  --bg:#050720;
+  --panel:#0b1030;
+  --panel2:#121845;
+  --cyan:#29e7ff;
+  --pink:#ff4f93;
+  --yellow:#ffd640;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  min-height:100vh;
+  background:radial-gradient(circle at 50% 20%,#182063,#050720 70%);
+  color:#eef4ff;
+  font-family:Arial,sans-serif;
+}
+header{
+  padding:14px 16px;
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  background:rgba(3,5,24,.9);
+  border-bottom:1px solid rgba(41,231,255,.2);
+}
+h1{margin:0;font-family:monospace;font-size:22px}
+h1 span:nth-child(1){color:var(--cyan)}
+h1 span:nth-child(2){color:var(--pink)}
+main{
+  display:grid;
+  grid-template-columns:260px 1fr 300px;
+  gap:14px;
+  padding:14px;
+}
+.panel{
+  background:rgba(8,12,42,.88);
+  border:1px solid rgba(99,125,255,.25);
+  border-radius:16px;
+  padding:12px;
+  box-shadow:0 14px 28px rgba(0,0,0,.25);
+}
+label{display:block;margin:8px 0 4px;font-size:12px;font-weight:900;color:#bfc9ff}
+select,button,input,textarea{
+  font:inherit;
+  border:0;
+  border-radius:10px;
+  padding:9px 10px;
+  font-weight:900;
+}
+select,input,textarea{
+  width:100%;
+  background:#eef4ff;
+  color:#0b1030;
+}
+button{
+  background:#20295f;
+  color:#eaf7ff;
+  border:1px solid rgba(41,231,255,.25);
+  cursor:pointer;
+}
+button.primary{background:linear-gradient(180deg,#0c9eff,#075dcc);border-color:#29e7ff}
+button.pink{background:linear-gradient(180deg,#ff5fa8,#c62378);border-color:#ff9acc}
+button.warn{background:#4b2435}
+.row{display:flex;gap:8px;flex-wrap:wrap}
+.row button{flex:1}
+#grid{
+  display:grid;
+  grid-template-columns:repeat(16,28px);
+  grid-template-rows:repeat(16,28px);
+  gap:1px;
+  background:#283056;
+  padding:8px;
+  border-radius:14px;
+  width:max-content;
+  margin:auto;
+  touch-action:none;
+}
+.cell{
+  width:28px;
+  height:28px;
+  background:#151a34;
+  border:1px solid rgba(255,255,255,.05);
+  cursor:crosshair;
+}
+.cell:hover{outline:2px solid var(--cyan);z-index:2}
+#palette{
+  display:grid;
+  grid-template-columns:repeat(4,1fr);
+  gap:8px;
+}
+.swatch{
+  height:38px;
+  border-radius:10px;
+  border:2px solid rgba(255,255,255,.18);
+  cursor:pointer;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  font-weight:900;
+  color:#fff;
+  text-shadow:0 2px 0 #000;
+}
+.swatch.active{outline:3px solid var(--yellow)}
+.previewBox{
+  width:180px;
+  height:180px;
+  background:#071235;
+  border:3px solid #29e7ff;
+  border-radius:14px;
+  margin:8px auto 16px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+#preview{
+  width:160px;
+  height:160px;
+  image-rendering:pixelated;
+  background:#071235;
+}
+textarea{
+  min-height:220px;
+  font-family:monospace;
+  font-size:12px;
+}
+small{color:#aab6e8;line-height:1.35;display:block}
+@media(max-width:950px){
+  main{grid-template-columns:1fr}
+  #grid{grid-template-columns:repeat(16,22px);grid-template-rows:repeat(16,22px)}
+  .cell{width:22px;height:22px}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1><span>GRAVITY</span> <span>CUBE</span> Asset Editor</h1>
+  <div class="row">
+    <button id="copyBtn">Copier JSON</button>
+    <button id="downloadBtn" class="primary">Télécharger assets.json</button>
+  </div>
+</header>
+
+<main>
+  <section class="panel">
+    <label>Asset</label>
+    <select id="assetSelect"></select>
+
+    <label>Couleur active</label>
+    <div id="palette"></div>
+
+    <div class="row" style="margin-top:12px">
+      <button id="eraserBtn">Gomme</button>
+      <button id="fillBtn">Remplir</button>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <button id="mirrorBtn">Miroir H</button>
+      <button id="clearBtn" class="warn">Clear</button>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <button id="duplicateOnOff">Copier vers ON/OFF</button>
+    </div>
+
+    <label>Importer assets.json</label>
+    <input id="fileInput" type="file" accept=".json,application/json">
+
+    <p><small>
+      Règle simple : chaque asset fait 16×16. Le caractère <b>.</b> est transparent.
+      Quand tu exportes, mets le fichier <b>assets.json</b> à côté de <b>index.html</b>.
+      Oui, c’est moins glamour que Photoshop, mais au moins ça ne demande pas un sacrifice rituel.
+    </small></p>
+  </section>
+
+  <section class="panel">
+    <div id="grid"></div>
+  </section>
+
+  <section class="panel">
+    <label>Aperçu tuile 40×40</label>
+    <div class="previewBox"><canvas id="preview" width="16" height="16"></canvas></div>
+
+    <label>JSON courant</label>
+    <textarea id="jsonView" spellcheck="false"></textarea>
+    <div class="row" style="margin-top:8px">
+      <button id="applyJson">Appliquer JSON texte</button>
+    </div>
+  </section>
+</main>
+
+<script>
+const defaultPack = {
+  "version": 1,
+  "name": "Gravity Cube Base Assets",
+  "description": "Assets de base 16x16 utilisés par le jeu et modifiables dans asset_editor.html.",
+  "tileSize": 40,
+  "assetSize": 16,
+  "requiredAssets": [
+    "player",
+    "destination",
+    "button_off",
+    "button_on",
+    "block_up",
+    "block_down",
+    "wall",
+    "danger",
+    "rotator_left",
+    "rotator_right"
+  ],
+  "palette": {
+    ".": "transparent",
+    "K": "#111426",
+    "k": "#303541",
+    "W": "#ffffff",
+    "0": "#000000",
+    "Y": "#ffd640",
+    "y": "#f1b900",
+    "O": "#a56500",
+    "o": "#6b3f00",
+    "P": "#ff4f93",
+    "p": "#8a1745",
+    "Q": "#ffd1eb",
+    "q": "#ff8fc2",
+    "V": "#c775ff",
+    "v": "#6d2aa8",
+    "U": "#301447",
+    "B": "#29e7ff",
+    "b": "#073168",
+    "C": "#13295f",
+    "R": "#ff304f",
+    "r": "#790019",
+    "D": "#4e0625",
+    "G": "#737987",
+    "g": "#404552",
+    "M": "#1a1d24",
+    "m": "#2f3440"
+  },
+  "assets": {
+    "player": [
+      "................",
+      "....OOOOOOOO....",
+      "...OYYYYYYYYO...",
+      "..OYYYYYYYYYYO..",
+      "..OYYWWYYWWYYO..",
+      "..OYYW0YYW0YYO..",
+      "..OYYYYYYYYYYO..",
+      "..OYYYYYYYYYYO..",
+      "..OYYYY00YYYYO..",
+      "..OYYYYYYYYYYO..",
+      "...OYYYYYYYYO...",
+      "....OOOOOOOO....",
+      "................",
+      "................",
+      "................",
+      "................"
+    ],
+    "destination": [
+      "................",
+      ".........q......",
+      "........qqq.....",
+      "....ppppqppp....",
+      "...pPPPPPPPPp...",
+      "..pPPWWPPWWPPp..",
+      "..pPPW0PPW0PPp..",
+      "..pPPPPPPPPPPp..",
+      "..pPPPPQQPPPPp..",
+      "..pPPPPPPPPPPp..",
+      "...pPPPPPPPPp...",
+      "....pppppppp....",
+      "................",
+      "................",
+      "................",
+      "................"
+    ],
+    "button_off": [
+      "................",
+      "................",
+      "................",
+      ".....GGGGGG.....",
+      "....GMMMMMMG....",
+      "...GMMGGGGMMG...",
+      "...GMGggggGMG...",
+      "...GMGgWWgGMG...",
+      "...GMGgWWgGMG...",
+      "...GMGggggGMG...",
+      "...GMMGGGGMMG...",
+      "....GMMMMMMG....",
+      ".....GGGGGG.....",
+      "................",
+      "................",
+      "................"
+    ],
+    "button_on": [
+      "................",
+      ".......Q........",
+      "................",
+      ".....QQQQQQ.....",
+      "....QppppppQ....",
+      "...QppPPPPppQ...",
+      "...QpPPPPPPpQ...",
+      ".Q.QpPPWWPPpQ.Q.",
+      "...QpPPWWPPpQ...",
+      "...QpPPPPPPpQ...",
+      "...QppPPPPppQ...",
+      "....QppppppQ....",
+      ".....QQQQQQ.....",
+      "................",
+      ".......Q........",
+      "................"
+    ],
+    "block_up": [
+      "................",
+      "................",
+      "................",
+      "....QQQQQQQQ....",
+      "...QPPPPPPPPQ...",
+      "...QPPPPPPPPQ...",
+      "...QPPQQQQPPQ...",
+      "...QPPPPPPPPQ...",
+      "...ppPPPPPPpp...",
+      "...pPppppppPp...",
+      "...pPppppppPp...",
+      "...pppppppppp...",
+      "................",
+      "................",
+      "................",
+      "................"
+    ],
+    "block_down": [
+      "................",
+      "................",
+      "................",
+      "................",
+      "....mmmmmmmm....",
+      "...mMMMMMMMMm...",
+      "...mMggggggMm...",
+      "...mMggWWggMm...",
+      "...mMggWWggMm...",
+      "...mMggggggMm...",
+      "...mMMMMMMMMm...",
+      "....mmmmmmmm....",
+      "................",
+      "................",
+      "................",
+      "................"
+    ],
+    "wall": [
+      "................",
+      ".UUUUUUUUUUUUUU.",
+      ".UVVVVVVVVVVVVU.",
+      ".UVVVVVVVVVVVVU.",
+      ".UVVVVVVVVVVVVU.",
+      ".UVVVVQQQQVVVVU.",
+      ".UVVVVVVVVVVVVU.",
+      ".UVVVVVVVVVVVVU.",
+      ".UvvvvvvvvvvvvU.",
+      ".UvVvvvvvvvvVvU.",
+      ".UvVvvvvvvvvVvU.",
+      ".UvvvvvvvvvvvvU.",
+      ".UUUUUUUUUUUUUU.",
+      "................",
+      "................",
+      "................"
+    ],
+    "danger": [
+      ".......R........",
+      "...R...R...R....",
+      "....RRRRRRR.....",
+      "..RRRrrrrrRRR...",
+      "...RrRRRRRrR....",
+      ".RRRrRWWRrRRR...",
+      "....rRW0Rr......",
+      "..RRrRRRRRrRR...",
+      "....rRRRRRr.....",
+      "...RrrrrrrrR....",
+      "..RRRrrrrRRR....",
+      "....RRRRRR......",
+      "...R...R...R....",
+      ".......R........",
+      "................",
+      "................"
+    ],
+    "rotator_left": [
+      "................",
+      "..BBBBBBBBBBBB..",
+      ".BbbbbbbbbbbbbB.",
+      ".BbbCCCCCCCCbbB.",
+      ".BbCCBBBBBBCCbB.",
+      ".BbCB....B..CbB.",
+      ".BbCB...B...CbB.",
+      ".BbCB..B....CbB.",
+      ".BbCB.BBBB..CbB.",
+      ".BbCB.......CbB.",
+      ".BbCCBBBBBBCCbB.",
+      ".BbbCCCCCCCCbbB.",
+      ".BbbbbbbbbbbbbB.",
+      "..BBBBBBBBBBBB..",
+      "................",
+      "................"
+    ],
+    "rotator_right": [
+      "................",
+      "..BBBBBBBBBBBB..",
+      ".BbbbbbbbbbbbbB.",
+      ".BbbCCCCCCCCbbB.",
+      ".BbCCBBBBBBCCbB.",
+      ".BbC..B....BCbB.",
+      ".BbC...B...BCbB.",
+      ".BbC....B..BCbB.",
+      ".BbC..BBBB.BCbB.",
+      ".BbC.......BCbB.",
+      ".BbCCBBBBBBCCbB.",
+      ".BbbCCCCCCCCbbB.",
+      ".BbbbbbbbbbbbbB.",
+      "..BBBBBBBBBBBB..",
+      "................",
+      "................"
+    ]
+  }
+};
+
+let pack = JSON.parse(JSON.stringify(defaultPack));
+let currentAsset = "player";
+let currentKey = "Y";
+let mouseDown = false;
+
+const assetSelect=document.getElementById("assetSelect");
+const paletteEl=document.getElementById("palette");
+const gridEl=document.getElementById("grid");
+const preview=document.getElementById("preview");
+const ctx=preview.getContext("2d");
+const jsonView=document.getElementById("jsonView");
+
+function ensureRows(name){
+  if(!pack.assets[name])pack.assets[name]=Array.from({length:pack.assetSize},()=>'.'.repeat(pack.assetSize));
+  pack.assets[name]=pack.assets[name].map(r=>{
+    r=String(r||'');
+    if(r.length<pack.assetSize)r+='.'.repeat(pack.assetSize-r.length);
+    return r.slice(0,pack.assetSize);
+  });
+}
+
+function rebuildAssetSelect(){
+  assetSelect.innerHTML="";
+  Object.keys(pack.assets).forEach(name=>{
+    const o=document.createElement("option");
+    o.value=name;o.textContent=name;
+    assetSelect.appendChild(o);
+  });
+  if(!pack.assets[currentAsset])currentAsset=Object.keys(pack.assets)[0];
+  assetSelect.value=currentAsset;
+}
+
+function rebuildPalette(){
+  paletteEl.innerHTML="";
+  Object.entries(pack.palette).forEach(([k,v])=>{
+    const b=document.createElement("div");
+    b.className="swatch"+(k===currentKey?" active":"");
+    b.textContent=k;
+    b.title=k+" = "+v;
+    b.style.background=v==="transparent"?"repeating-conic-gradient(#777 0% 25%,#333 0% 50%) 50%/12px 12px":v;
+    b.onclick=()=>{currentKey=k;rebuildPalette()};
+    paletteEl.appendChild(b);
+  });
+}
+
+function setPixel(x,y,k){
+  ensureRows(currentAsset);
+  const rows=pack.assets[currentAsset].slice();
+  const row=rows[y].split("");
+  row[x]=k;
+  rows[y]=row.join("");
+  pack.assets[currentAsset]=rows;
+  render();
+}
+
+function renderGrid(){
+  ensureRows(currentAsset);
+  gridEl.innerHTML="";
+  const rows=pack.assets[currentAsset];
+  for(let y=0;y<pack.assetSize;y++){
+    for(let x=0;x<pack.assetSize;x++){
+      const c=document.createElement("div");
+      const key=rows[y][x];
+      c.className="cell";
+      c.style.background=pack.palette[key] && pack.palette[key]!=="transparent" ? pack.palette[key] : "#151a34";
+      c.onpointerdown=(e)=>{mouseDown=true;setPixel(x,y,currentKey);e.preventDefault()};
+      c.onpointerenter=()=>{if(mouseDown)setPixel(x,y,currentKey)};
+      gridEl.appendChild(c);
+    }
+  }
+}
+
+function renderPreview(){
+  ensureRows(currentAsset);
+  ctx.clearRect(0,0,16,16);
+  const rows=pack.assets[currentAsset];
+  for(let y=0;y<16;y++){
+    for(let x=0;x<16;x++){
+      const key=rows[y][x];
+      const col=pack.palette[key];
+      if(!col||col==="transparent")continue;
+      ctx.fillStyle=col;
+      ctx.fillRect(x,y,1,1);
+    }
+  }
+}
+
+function renderJson(){
+  jsonView.value=JSON.stringify(pack,null,2);
+}
+
+function render(){
+  renderGrid();
+  renderPreview();
+  renderJson();
+}
+
+function download(){
+  const blob=new Blob([JSON.stringify(pack,null,2)],{type:"application/json"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="assets.json";
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+window.addEventListener("pointerup",()=>mouseDown=false);
+window.addEventListener("pointercancel",()=>mouseDown=false);
+
+assetSelect.onchange=()=>{currentAsset=assetSelect.value;render()};
+document.getElementById("eraserBtn").onclick=()=>{currentKey=".";rebuildPalette()};
+document.getElementById("fillBtn").onclick=()=>{pack.assets[currentAsset]=Array.from({length:16},()=>currentKey.repeat(16));render()};
+document.getElementById("clearBtn").onclick=()=>{pack.assets[currentAsset]=Array.from({length:16},()=>'.'.repeat(16));render()};
+document.getElementById("mirrorBtn").onclick=()=>{pack.assets[currentAsset]=pack.assets[currentAsset].map(r=>r.split("").reverse().join(""));render()};
+document.getElementById("downloadBtn").onclick=download;
+document.getElementById("copyBtn").onclick=async()=>{await navigator.clipboard.writeText(JSON.stringify(pack,null,2));alert("JSON copié.")};
+document.getElementById("applyJson").onclick=()=>{
+  try{
+    const data=JSON.parse(jsonView.value);
+    if(!data.assets||!data.palette)throw new Error("Format invalide");
+    pack=data;
+    rebuildAssetSelect();rebuildPalette();render();
+  }catch(e){alert("JSON invalide : "+e.message)}
+};
+document.getElementById("fileInput").onchange=async(e)=>{
+  const f=e.target.files[0]; if(!f)return;
+  const txt=await f.text();
+  try{
+    const data=JSON.parse(txt);
+    if(!data.assets||!data.palette)throw new Error("Format invalide");
+    pack=data;
+    rebuildAssetSelect();rebuildPalette();render();
+  }catch(err){alert("Import impossible : "+err.message)}
+};
+document.getElementById("duplicateOnOff").onclick=()=>{
+  if(currentAsset.endsWith("_off")){
+    const target=currentAsset.replace("_off","_on");
+    pack.assets[target]=pack.assets[currentAsset].slice();
+    currentAsset=target;
+  }else if(currentAsset.endsWith("_on")){
+    const target=currentAsset.replace("_on","_off");
+    pack.assets[target]=pack.assets[currentAsset].slice();
+    currentAsset=target;
+  }else{
+    alert("Fonction utile surtout pour button_on/button_off.");
+  }
+  rebuildAssetSelect();render();
+};
+
+rebuildAssetSelect();
+rebuildPalette();
+render();
+</script>
+</body>
+</html>

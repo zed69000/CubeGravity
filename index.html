@@ -1,0 +1,2554 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
+<meta name="color-scheme" content="only light">
+<title>Gravity Cube Editor V3</title>
+<style>
+
+html,body,*{
+  color-scheme: only light;
+  forced-color-adjust: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+html,body{margin:0;width:100%;height:100%;background:#101018;color:#fff;font-family:Arial,sans-serif;overflow:hidden;touch-action:none}body.biome-cosmic{--bg1:#382cff;--bg2:#090018;--accent:#00e5ff}body.biome-forest{--bg1:#00c853;--bg2:#031407;--accent:#b6ff00}body.biome-desert{--bg1:#ff8a00;--bg2:#210b00;--accent:#ffd000}body.biome-ice{--bg1:#00b8ff;--bg2:#001524;--accent:#d8fbff}body.biome-rainbow{--bg1:#ff2bd6;--bg2:#120018;--accent:#fff000}
+body{display:flex;flex-direction:column}
+#top{padding:6px 8px;background:#05050a;border-bottom:1px solid #303246;font-size:12px;line-height:1.2;max-height:42vh;overflow:auto}
+#title{font-weight:900;font-size:16px;margin-bottom:4px;text-align:center;font-family:monospace;letter-spacing:1px;text-shadow:0 2px 0 #000,0 0 10px var(--accent,#3fc1ff)}
+#bar{display:flex;gap:6px;flex-wrap:wrap;margin-top:5px}.group{display:flex;gap:4px;align-items:center;background:#151827;border:1px solid #2d3150;border-radius:10px;padding:5px}.groupTitle{font-size:9px;opacity:.7;font-weight:900;margin-right:1px;text-transform:uppercase;letter-spacing:.4px}.group.collapsed>*:not(.groupTitle):not(.foldBtn){display:none}.foldBtn{background:#2a2e48;color:#dfe3ff;padding:5px 7px;font-size:11px}
+#stage{flex:1;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle,var(--bg1,#282b46),var(--bg2,#101018) 70%);transition:transform .05s linear;position:relative;overflow:hidden}body.biome-rainbow #stage{background:conic-gradient(from 0deg,#ff2bd6,#ff8a00,#fff000,#00e676,#00b8ff,#7c4dff,#ff2bd6);animation:rainbowBg 8s linear infinite}body.biome-rainbow #stage:before{content:"";position:absolute;inset:0;background:radial-gradient(circle,rgba(16,16,24,.1),rgba(16,16,24,.72) 72%);z-index:0;pointer-events:none}@keyframes rainbowBg{to{filter:hue-rotate(360deg)}}
+svg{width:min(94vw,68vh);height:min(94vw,68vh);background:#171827;border:4px solid #4b4e73;box-shadow:0 14px 34px #000;position:relative;z-index:1;transition:filter .25s ease}.boardWrap{position:relative;z-index:1}.electricEdge{position:absolute;inset:0;border:6px solid #ff3045;border-radius:2px;pointer-events:none;z-index:3;filter:url(#electricNoise);animation:electricPulse .45s steps(3,end) infinite;box-shadow:inset 0 0 18px #ff3045,0 0 16px #ff3045;opacity:.9}.electricEdge:after{content:"";position:absolute;inset:5px;border:2px solid rgba(255,112,36,.75);box-shadow:inset 0 0 10px #ff6a00}@keyframes electricPulse{0%{opacity:.62;filter:url(#electricNoise) brightness(1)}50%{opacity:1;filter:url(#electricNoise) brightness(1.45)}100%{opacity:.72;filter:url(#electricNoise) brightness(1.1)}}.deathPixel{position:absolute;width:7px;height:7px;background:#f1c453;z-index:18;image-rendering:pixelated;animation:deathpix .55s ease-out forwards}@keyframes deathpix{to{transform:translate(var(--dx),var(--dy)) scale(.2);opacity:0}}
+#controls{
+  display:grid;
+  grid-template-columns:1fr auto 1fr;
+  align-items:center;
+  gap:10px;
+  padding:8px 12px calc(10px + env(safe-area-inset-bottom));
+  background:#05050a;
+  border-top:1px solid #303246;
+}
+button,select,input{border:0;border-radius:9px;padding:6px 7px;font-size:12px;font-weight:900;background:#eee;color:#111}
+#controls button{font-size:18px;padding:11px 16px}
+#controls .bottomTurn{
+  font-size:30px;
+  padding:14px 10px;
+  border-radius:18px;
+  background:#f3f3f3;
+  color:#111;
+  min-width:84px;
+}
+#reset{
+  font-size:12px!important;
+  padding:9px 14px!important;
+  border-radius:13px;
+  background:#242638!important;
+  color:#b8bddc!important;
+  border:1px solid #3b3f66;
+  opacity:.82;
+}
+button.active{background:#52f28a;color:#051407}#toggleEdit{background:#242638;color:#b8bddc;border:1px solid #3b3f66}#toggleEdit.active{background:#52f28a;color:#051407;border:0}.lockedWarn{color:#ff7777;font-weight:900}.testOk{color:#52f28a;font-weight:900}.testBad{color:#ff7777;font-weight:900}#lockLevel.locked{background:#ff7777;color:#210000}
+#status{opacity:.9;min-height:16px}
+.hidden{display:none!important}
+.hitcell{pointer-events:all}
+#editPanel.hidden{display:none}#editPanel{display:flex;gap:6px;flex-wrap:wrap;width:100%}
+#playStats{font-weight:900;color:#f1c453}
+#banner{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(5,5,10,.92);border:3px solid #fff;border-radius:18px;padding:18px 22px;text-align:center;box-shadow:0 16px 40px #000;z-index:10;min-width:240px}.danger{background:#ff5c5c!important;color:#210000!important}#confirmBox{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:30;background:rgba(5,5,10,.96);border:3px solid #ff7777;border-radius:18px;padding:18px;min-width:270px;max-width:88vw;text-align:center;box-shadow:0 20px 48px #000}#confirmBox.hidden{display:none}#confirmBox h2{margin:0 0 8px;font-size:20px}#confirmBox p{font-size:13px;line-height:1.35}#confirmBox .row{display:flex;gap:8px;justify-content:center;margin-top:12px}#banner.lose{background:rgba(5,5,10,.58);border-color:rgba(255,255,255,.55);backdrop-filter:blur(3px)}#banner.lose{background:rgba(5,5,10,.58);border-color:rgba(255,255,255,.55);backdrop-filter:blur(3px)}
+#banner.hidden{display:none}
+#bannerTitle{font-size:26px;font-weight:900;margin-bottom:6px}
+#bannerText{font-size:15px;line-height:1.35}
+#stars{font-size:34px;margin-top:8px;letter-spacing:4px;color:#ff7fb3;text-shadow:0 0 10px rgba(255,127,179,.35);font-weight:900}#bannerAction{margin-top:12px;background:#52f28a;color:#051407;font-size:16px;padding:12px 18px}.confetti{position:absolute;width:10px;height:14px;top:-20px;z-index:25;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#fff;text-shadow:0 2px 0 rgba(0,0,0,.35);animation:fallconf 1.6s linear forwards;pointer-events:none}.sideBtn{position:absolute;top:50%;transform:translateY(-50%);z-index:5;width:76px;height:76px;border-radius:22px;font-size:34px;box-shadow:0 10px 26px rgba(0,0,0,.45)}#sideLeft{left:max(10px,calc(50% - min(47vw,34vh) - 96px))}#sideRight{right:max(10px,calc(50% - min(47vw,34vh) - 96px))}#pixelBg{position:absolute;inset:0;z-index:0;pointer-events:none;opacity:.72}.pxshape{position:absolute;width:96px;height:96px;image-rendering:pixelated;opacity:.45;animation:drift 9s ease-in-out infinite}.pxshape svg{width:100%;height:100%;border:0;background:transparent;box-shadow:none}.pxshape:nth-child(2){animation-duration:12s;animation-delay:-3s}.pxshape:nth-child(3){animation-duration:10s;animation-delay:-5s}.pxshape:nth-child(4){animation-duration:14s;animation-delay:-1s}.pxshape:nth-child(5){animation-duration:11s;animation-delay:-7s}@keyframes drift{0%,100%{transform:translate(0,0) rotate(0deg)}25%{transform:translate(18px,-12px) rotate(4deg)}50%{transform:translate(-10px,16px) rotate(-3deg)}75%{transform:translate(12px,8px) rotate(2deg)}}@keyframes fallconf{from{transform:translateY(-20px) rotate(0deg) scale(1);opacity:1}to{transform:translateY(88vh) rotate(900deg) scale(.8);opacity:0}}.heart{position:absolute;z-index:18;font-size:22px;pointer-events:none;animation:heartfloat 1.25s ease-out forwards;text-shadow:0 2px 0 #000}@keyframes heartfloat{from{transform:translate(-50%,0) scale(.8);opacity:1}to{transform:translate(-50%,-85px) scale(1.35);opacity:0}}.bigHeart{position:absolute;z-index:22;font-size:58px;pointer-events:none;animation:bigheart 1.4s ease-out forwards;text-shadow:0 4px 0 #000}.gravel{position:absolute;width:6px;height:6px;background:#b8bddc;z-index:18;image-rendering:pixelated;animation:gravel .45s ease-out forwards}@keyframes bigheart{from{transform:translate(-50%,0) scale(.45);opacity:1}to{transform:translate(-50%,-150px) scale(1.55);opacity:0}}@keyframes gravel{to{transform:translate(var(--dx),var(--dy)) scale(.2);opacity:0}}
+label{background:#22263a;padding:8px;border-radius:10px;font-weight:900}
+#levelName{width:120px}.smallBtn{padding:6px 8px;font-size:11px}
+
+#levelBadge{
+  position:absolute;
+  top:10px;
+  left:50%;
+  transform:translateX(-50%);
+  z-index:6;
+  background:rgba(5,5,10,.72);
+  border:1px solid rgba(255,255,255,.22);
+  border-radius:14px;
+  padding:7px 12px;
+  font-family:monospace;
+  font-weight:900;
+  font-size:13px;
+  letter-spacing:.4px;
+  text-align:center;
+  max-width:88vw;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  box-shadow:0 8px 22px rgba(0,0,0,.35);
+}
+@media (max-width: 700px){
+  #top{
+    padding:6px 7px;
+    max-height:34vh;
+    overflow:auto;
+  }
+  #title{
+    font-size:14px;
+    line-height:1.1;
+  }
+  #status{
+    font-size:11px;
+  }
+  #playStats{
+    font-size:11px;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  #bar{
+    gap:4px;
+    margin-top:4px;
+  }
+  button,select,input{
+    font-size:11px;
+    padding:6px 6px;
+  }
+  .group{
+    padding:4px;
+    gap:3px;
+  }
+  .groupTitle{
+    font-size:8px;
+  }
+  #levelName{
+    width:105px;
+  }
+  svg{
+    width:min(92vw,62vh);
+    height:min(92vw,62vh);
+  }
+  #controls .bottomTurn{
+    min-width:76px;
+    font-size:28px;
+    padding:13px 8px;
+  }
+  #controls{
+    padding:7px 12px calc(8px + env(safe-area-inset-bottom));
+  }
+  #controls button{
+    font-size:15px;
+    padding:10px 14px;
+  }
+  #banner{
+    min-width:220px;
+    max-width:82vw;
+    padding:15px 16px;
+  }
+  #bannerTitle{
+    font-size:22px;
+  }
+  #stars{
+    font-size:28px;
+  }
+}
+@media (max-height: 680px){
+  #top{
+    max-height:30vh;
+  }
+  #status{
+    display:none;
+  }
+  #levelBadge{
+    top:6px;
+    font-size:12px;
+    padding:5px 10px;
+  }
+  svg{
+    width:min(91vw,58vh);
+    height:min(91vw,58vh);
+  }
+}
+
+
+#toggleEdit,#compactEdit{
+  position:relative;
+  z-index:8;
+}
+@media (max-width:700px){
+  #toggleEdit,#compactEdit{
+    position:sticky;
+    top:0;
+  }
+}
+
+
+#controls #sideLeft,#controls #sideRight{
+  position:static!important;
+  transform:none!important;
+  width:auto!important;
+  height:auto!important;
+  box-shadow:none!important;
+}
+@media (orientation:landscape) and (min-width:760px){
+  #controls{
+    max-width:520px;
+    margin:0 auto;
+    width:100%;
+  }
+}
+
+
+/* ===== V32 UX mockup, sans toucher au gameplay ===== */
+#top{
+  position:relative;
+  z-index:30;
+  min-height:96px;
+  padding:8px 10px 10px;
+  background:linear-gradient(180deg,rgba(4,5,11,.98),rgba(4,5,11,.90));
+  overflow:visible;
+}
+#title{
+  text-align:center;
+  font-size:clamp(16px,2.1vw,26px);
+  letter-spacing:2px;
+  margin:0;
+}
+#bar{
+  position:absolute;
+  left:8px;
+  top:8px;
+  max-width:42vw;
+  z-index:31;
+}
+body.editing #top{
+  max-height:42vh;
+  overflow:auto;
+}
+body.editing #bar{
+  position:static;
+  max-width:none;
+  margin-top:8px;
+}
+#status{
+  position:absolute;
+  left:50%;
+  top:30px;
+  transform:translateX(-50%);
+  opacity:.55;
+  font-size:11px;
+  max-width:46vw;
+  text-align:center;
+  white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  pointer-events:none;
+}
+body.editing #status{
+  position:static;
+  transform:none;
+  max-width:none;
+  white-space:normal;
+  text-align:left;
+  margin-top:6px;
+  pointer-events:auto;
+}
+#playStats{
+  position:absolute;
+  left:50%;
+  top:52px;
+  transform:translateX(-50%);
+  width:min(560px,92vw);
+  text-align:center;
+  pointer-events:none;
+}
+body.editing #playStats{
+  display:none;
+}
+.objectiveTitle{
+  display:inline-block;
+  padding:7px 18px 5px;
+  border-radius:0;
+  background:rgba(30,30,55,.72);
+  color:#f5f0ff;
+  font-family:monospace;
+  font-size:clamp(15px,1.8vw,24px);
+  font-weight:900;
+  letter-spacing:1px;
+  line-height:1.05;
+  text-shadow:0 2px 0 #000;
+}
+.objectiveLine{
+  margin-top:3px;
+  font-size:clamp(12px,1.2vw,16px);
+  font-weight:900;
+  color:#ffd95f;
+  text-shadow:0 2px 0 #000;
+}
+#levelBadge{
+  top:12px;
+}
+@media (max-width:700px){
+  #top{
+    min-height:78px;
+  }
+  #title{
+    font-size:14px;
+  }
+  #bar{
+    top:6px;
+    left:6px;
+    max-width:46vw;
+  }
+  #status{
+    display:none;
+  }
+  #playStats{
+    top:38px;
+  }
+  .objectiveTitle{
+    font-size:13px;
+    padding:5px 11px 4px;
+    max-width:78vw;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .objectiveLine{
+    font-size:11px;
+  }
+}
+
+/* Compagnon façon mockup : grosse bande basse, mais passable */
+#companionDock{
+  position:fixed;
+  left:50%;
+  bottom:calc(78px + env(safe-area-inset-bottom));
+  transform:translateX(-50%);
+  width:min(1040px,calc(100vw - 24px));
+  min-height:96px;
+  z-index:40;
+  display:grid;
+  grid-template-columns:92px 1fr auto;
+  gap:18px;
+  align-items:center;
+  padding:14px 18px;
+  background:linear-gradient(180deg,rgba(9,10,22,.78),rgba(7,8,17,.90));
+  border-top:1px solid rgba(255,255,255,.08);
+  box-shadow:0 -18px 45px rgba(0,0,0,.36);
+  backdrop-filter:blur(4px);
+}
+#companionDock.hidden{
+  display:none!important;
+}
+#companionAvatar{
+  position:relative;
+  width:68px;
+  height:68px;
+  background:#f1c453;
+  border:5px solid #6b3f00;
+  box-shadow:inset 0 6px 0 rgba(255,255,255,.17),5px 5px 0 rgba(255,255,255,.16);
+  image-rendering:pixelated;
+}
+#companionAvatar .eye{
+  position:absolute;
+  top:20px;
+  width:15px;
+  height:15px;
+  background:#fff;
+  border:3px solid #333;
+}
+#companionAvatar .eyeL{left:16px}
+#companionAvatar .eyeR{right:16px}
+#companionAvatar .pupil{
+  position:absolute;
+  top:26px;
+  width:4px;
+  height:4px;
+  background:#111;
+  animation:pixLook 3.2s ease-in-out infinite;
+}
+#companionAvatar .pupilL{left:23px}
+#companionAvatar .pupilR{right:23px}
+#companionText{
+  color:#f5f6ff;
+  font-size:clamp(16px,1.8vw,24px);
+  line-height:1.28;
+  text-shadow:0 2px 0 #000;
+}
+#companionSkip{
+  background:#252a4a;
+  color:#eef2ff;
+  border:1px solid rgba(145,155,230,.35);
+  border-radius:14px;
+  padding:10px 14px;
+  font-weight:900;
+}
+#companionHelp{
+  position:fixed;
+  right:14px;
+  bottom:calc(92px + env(safe-area-inset-bottom));
+  z-index:39;
+  width:42px;
+  height:42px;
+  border-radius:14px;
+  background:#252a4a;
+  color:#fff;
+  border:1px solid rgba(145,155,230,.35);
+  font-size:22px;
+  font-weight:900;
+}
+@keyframes pixLook{
+  0%,100%{transform:translateX(0)}
+  35%{transform:translateX(3px)}
+  70%{transform:translateX(-3px)}
+}
+@media (max-width:700px){
+  #companionDock{
+    bottom:calc(74px + env(safe-area-inset-bottom));
+    width:calc(100vw - 14px);
+    min-height:82px;
+    grid-template-columns:62px 1fr auto;
+    gap:10px;
+    padding:10px 11px;
+  }
+  #companionAvatar{
+    width:54px;
+    height:54px;
+    border-width:4px;
+  }
+  #companionAvatar .eye{top:16px;width:12px;height:12px;border-width:2px}
+  #companionAvatar .eyeL{left:12px}
+  #companionAvatar .eyeR{right:12px}
+  #companionAvatar .pupil{top:21px}
+  #companionAvatar .pupilL{left:18px}
+  #companionAvatar .pupilR{right:18px}
+  #companionText{
+    font-size:14px;
+  }
+  #companionSkip{
+    padding:8px 10px;
+    font-size:11px;
+  }
+}
+
+/* Garde les contrôles comme dans ton fichier, pas de réinvention cosmique. */
+#controls{
+  z-index:35;
+  position:relative;
+}
+
+
+/* ===== V40 DA restored from mockup ===== */
+html,body{background:#03051a!important}
+body{color:#eef4ff!important}
+#top{position:relative!important;z-index:30!important;min-height:112px!important;max-height:112px!important;padding:14px 12px 8px!important;background:linear-gradient(180deg,rgba(3,5,24,.98),rgba(3,5,24,.82))!important;border-bottom:1px solid rgba(99,125,255,.18)!important;overflow:visible!important}
+body.editing #top{max-height:42vh!important;overflow:auto!important}
+#title{margin:0!important;text-align:center!important;font-family:monospace!important;font-weight:900!important;font-size:clamp(26px,3.9vw,54px)!important;letter-spacing:1.5px!important;line-height:1!important;text-shadow:0 3px 0 rgba(0,0,0,.45)!important}
+#title .t-gravity{color:#3ddcff;text-shadow:0 0 12px rgba(61,220,255,.45),0 0 28px rgba(61,220,255,.22)}
+#title .t-cube{color:#ff63c6;text-shadow:0 0 12px rgba(255,99,198,.45),0 0 28px rgba(255,99,198,.22)}
+#title .t-mark{color:#73e9ff;text-shadow:0 0 9px rgba(61,220,255,.4)}
+#modeLabel{color:#ffd54a!important;text-shadow:0 0 10px rgba(255,213,74,.34)!important;margin-left:.25em}
+#bar{position:absolute!important;left:10px!important;top:10px!important;z-index:40!important;max-width:160px!important}
+body.editing #bar{position:static!important;max-width:none!important;margin-top:8px!important}
+#toggleEdit,#compactEdit{position:static!important;top:auto!important}
+#toggleEdit{background:rgba(21,27,61,.9)!important;color:#d7ddff!important;border:1px solid rgba(97,110,255,.45)!important;border-radius:14px!important;padding:9px 12px!important}
+#toggleEdit.active{background:#2fe2ff!important;color:#04121f!important;border-color:#2fe2ff!important}
+#compactEdit{background:rgba(255,255,255,.88)!important;color:#132240!important;border-radius:14px!important;padding:9px 12px!important}
+#status{display:none!important}
+#playStats{position:absolute!important;left:50%!important;top:64px!important;transform:translateX(-50%)!important;width:min(800px,95vw)!important;text-align:center!important;pointer-events:none!important}
+body.editing #playStats{display:none!important}
+.objectiveTitle{display:none!important}
+.objectiveLine{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:0!important;align-items:stretch!important;background:rgba(5,11,42,.9)!important;border:2px solid rgba(100,118,255,.45)!important;border-radius:14px!important;overflow:hidden!important;box-shadow:0 0 0 1px rgba(17,255,255,.08),0 10px 26px rgba(0,0,0,.25)!important}
+.objectiveLine .metric{display:flex!important;align-items:center!important;justify-content:center!important;gap:9px!important;padding:10px 12px!important;position:relative!important;min-width:0}
+.objectiveLine .metric:not(:last-child)::after{content:"";position:absolute;right:0;top:12px;bottom:12px;width:1px;background:rgba(160,180,255,.25)}
+.objectiveLine .metric i{font-style:normal;font-size:20px;font-weight:900}
+.objectiveLine .metric small{font-size:12px;color:#eef5ff;opacity:.96;text-transform:none;white-space:nowrap}
+.objectiveLine .metric b{font-size:20px;line-height:1;color:#fff;white-space:nowrap}
+.objectiveLine .metricMoves i,.objectiveLine .metricMoves b{color:#3ddcff}
+.objectiveLine .metricGoal i,.objectiveLine .metricGoal b{color:#ffd54a}
+.objectiveLine .metricDiff i,.objectiveLine .metricDiff b{color:#ff63c6}
+#levelBadge{top:12px!important;background:rgba(15,10,50,.92)!important;border:2px solid rgba(120,88,255,.75)!important;color:#f4f6ff!important;border-radius:14px!important;padding:8px 20px!important;font-size:16px!important;box-shadow:0 0 18px rgba(112,78,255,.25)!important;max-width:min(70vw,640px)!important}
+#stage{background:radial-gradient(circle at 50% 40%, rgba(35,31,118,.42), transparent 36%),radial-gradient(circle at 50% 35%, rgba(9,10,50,.98), #03051a 74%)!important}
+#pixelBg{opacity:.75!important;filter:saturate(1.2) brightness(1.0)!important}
+.pxshape{opacity:.22!important}
+.boardWrap{position:relative!important;padding:10px!important;border-radius:22px!important;background:linear-gradient(90deg, rgba(41,225,255,.13), rgba(255,99,198,.12))!important;box-shadow:0 22px 44px rgba(0,0,0,.45),0 0 30px rgba(60,218,255,.08)!important}
+svg{width:min(88vw,62vh)!important;height:min(88vw,62vh)!important;background:#070d35!important;border:0!important;border-radius:14px!important;box-shadow:inset 0 0 0 1px rgba(130,170,255,.18)!important}
+.electricEdge{inset:0!important;border:3px solid #2fe2ff!important;border-right-color:#ff63c6!important;border-radius:20px!important;filter:none!important;animation:none!important;opacity:1!important;box-shadow:0 0 18px rgba(47,226,255,.28),0 0 18px rgba(255,99,198,.16), inset 0 0 0 1px rgba(255,255,255,.06)!important}
+.electricEdge:after{content:""!important;position:absolute!important;inset:8px!important;border:2px solid rgba(255,99,198,.9)!important;border-left-color:rgba(47,226,255,.9)!important;border-radius:14px!important;box-shadow:none!important}
+svg text{paint-order:stroke;stroke:#091132;stroke-width:3px}
+#controls{display:grid!important;grid-template-columns:1fr auto 1fr!important;gap:16px!important;align-items:center!important;width:min(700px,95vw)!important;max-width:700px!important;margin:0 auto!important;padding:14px 12px calc(14px + env(safe-area-inset-bottom))!important;background:transparent!important;border-top:0!important}
+#controls .bottomTurn{min-width:160px!important;max-width:220px!important;width:100%!important;padding:18px 16px!important;border-radius:18px!important;font-size:48px!important;line-height:1!important;box-shadow:0 12px 24px rgba(0,0,0,.28), inset 0 2px 0 rgba(255,255,255,.18)!important}
+#sideLeft{background:linear-gradient(180deg,#089bff,#0b5acf)!important;border:2px solid #36e1ff!important;color:#ddf8ff!important;text-shadow:0 0 10px rgba(61,220,255,.2)!important}
+#sideRight{background:linear-gradient(180deg,#ff63c6,#c73191)!important;border:2px solid #ff8fdc!important;color:#ffe6f7!important;text-shadow:0 0 10px rgba(255,99,198,.2)!important}
+#reset{background:linear-gradient(180deg,#111a4a,#0b1238)!important;color:#d0dcff!important;border:2px solid rgba(130,146,255,.35)!important;border-radius:18px!important;padding:16px 22px!important;min-width:124px!important;font-size:13px!important;letter-spacing:.7px!important;opacity:1!important;box-shadow:0 10px 24px rgba(0,0,0,.24)!important}
+#reset::before{content:"↻";display:block;font-size:28px;line-height:1;color:#8ea3ff;margin-bottom:4px}
+#companionDock{position:fixed!important;left:50%!important;transform:translateX(-50%)!important;bottom:18px!important;z-index:60!important;width:min(760px,calc(100vw - 26px))!important;min-height:58px!important;padding:10px 14px!important;grid-template-columns:28px 1fr 34px!important;gap:12px!important;align-items:center!important;background:rgba(6,11,43,.96)!important;border:2px solid rgba(87,118,255,.45)!important;border-radius:16px!important;box-shadow:0 12px 24px rgba(0,0,0,.35), inset 0 0 0 1px rgba(47,226,255,.12)!important}
+#companionDock.hidden{display:none!important}
+#companionDock.tipVisible{display:grid!important}
+#companionAvatar{width:24px!important;height:24px!important;border:0!important;background:transparent!important;box-shadow:none!important;display:block!important;position:relative!important}
+#companionAvatar::before{content:"💡";position:absolute;left:0;top:-2px;font-size:22px;line-height:1}
+#companionAvatar .eye,#companionAvatar .pupil{display:none!important}
+#companionText{font-size:12px!important;color:#edf4ff!important;text-shadow:none!important;line-height:1.25!important}
+#companionSkip{width:34px!important;height:34px!important;padding:0!important;border-radius:10px!important;background:#0f1a4d!important;color:#2fe2ff!important;border:2px solid rgba(47,226,255,.35)!important;font-size:18px!important;line-height:1!important}
+#companionHelp{display:none!important}
+@media (max-width:700px){#top{min-height:108px!important;max-height:108px!important;padding:12px 10px 6px!important}#title{font-size:clamp(18px,7vw,30px)!important;padding-left:110px!important;padding-right:8px!important;text-align:left!important}#bar{left:10px!important;top:10px!important;max-width:96px!important}body.editing #title{padding-left:0!important;text-align:center!important}#playStats{top:66px!important;width:calc(100vw - 16px)!important}.objectiveLine .metric{gap:4px!important;padding:8px 5px!important;flex-direction:column!important}.objectiveLine .metric i{font-size:16px!important}.objectiveLine .metric small{font-size:9px!important}.objectiveLine .metric b{font-size:18px!important}#levelBadge{top:10px!important;font-size:13px!important;padding:7px 12px!important;max-width:72vw!important}svg{width:min(92vw,54vh)!important;height:min(92vw,54vh)!important}#controls{width:100%!important;gap:10px!important;padding:12px 10px calc(12px + env(safe-area-inset-bottom))!important}#controls .bottomTurn{min-width:0!important;max-width:none!important;font-size:38px!important;padding:16px 8px!important}#reset{min-width:90px!important;padding:14px 8px!important;font-size:11px!important}#companionDock{bottom:10px!important;width:calc(100vw - 16px)!important;padding:9px 10px!important;grid-template-columns:22px 1fr 30px!important;gap:8px!important}#companionAvatar::before{font-size:18px!important;top:0!important}#companionText{font-size:11px!important}#companionSkip{width:30px!important;height:30px!important;font-size:15px!important}}
+
+
+/* ===== V41 tip/editor/global scale fixes ===== */
+
+/* Échelle commune : top, plateau, boutons et tips suivent ensemble. */
+:root{--uiScale:1}
+
+#top{
+  min-height:calc(112px * var(--uiScale))!important;
+  max-height:calc(112px * var(--uiScale))!important;
+  padding:calc(14px * var(--uiScale)) calc(12px * var(--uiScale)) calc(8px * var(--uiScale))!important;
+}
+#title{
+  font-size:calc(clamp(26px,3.9vw,54px) * var(--uiScale))!important;
+}
+#playStats{
+  top:calc(64px * var(--uiScale))!important;
+}
+.objectiveLine .metric{
+  padding:calc(10px * var(--uiScale)) calc(12px * var(--uiScale))!important;
+  gap:calc(9px * var(--uiScale))!important;
+}
+.objectiveLine .metric i{font-size:calc(20px * var(--uiScale))!important}
+.objectiveLine .metric small{font-size:calc(12px * var(--uiScale))!important}
+.objectiveLine .metric b{font-size:calc(20px * var(--uiScale))!important}
+
+.boardWrap{
+  padding:calc(10px * var(--uiScale))!important;
+}
+svg{
+  width:min(calc(88vw * var(--uiScale)),calc(62vh * var(--uiScale)))!important;
+  height:min(calc(88vw * var(--uiScale)),calc(62vh * var(--uiScale)))!important;
+}
+
+/* Boutons : suivent l'échelle, ne mangent plus l'écran quand la fenêtre diminue. */
+#controls{
+  gap:calc(16px * var(--uiScale))!important;
+  padding:calc(14px * var(--uiScale)) calc(12px * var(--uiScale)) calc((14px * var(--uiScale)) + env(safe-area-inset-bottom))!important;
+  width:min(calc(700px * var(--uiScale)),95vw)!important;
+}
+#controls .bottomTurn{
+  min-width:calc(160px * var(--uiScale))!important;
+  max-width:calc(220px * var(--uiScale))!important;
+  padding:calc(18px * var(--uiScale)) calc(16px * var(--uiScale))!important;
+  font-size:calc(48px * var(--uiScale))!important;
+  border-radius:calc(18px * var(--uiScale))!important;
+}
+#reset{
+  min-width:calc(124px * var(--uiScale))!important;
+  padding:calc(16px * var(--uiScale)) calc(22px * var(--uiScale))!important;
+  font-size:calc(13px * var(--uiScale))!important;
+}
+#reset::before{
+  font-size:calc(28px * var(--uiScale))!important;
+}
+
+/* Tips : revient au comportement d'avant, pas une barre permanente collée au bas. */
+#companionDock{
+  bottom:calc((88px * var(--uiScale)) + env(safe-area-inset-bottom))!important;
+  width:min(calc(760px * var(--uiScale)),calc(100vw - 24px))!important;
+  min-height:calc(76px * var(--uiScale))!important;
+  grid-template-columns:calc(58px * var(--uiScale)) 1fr auto!important;
+  gap:calc(12px * var(--uiScale))!important;
+  padding:calc(10px * var(--uiScale)) calc(14px * var(--uiScale))!important;
+  background:rgba(7,9,28,.72)!important;
+  backdrop-filter:blur(6px)!important;
+}
+#companionDock.tipVisible{
+  display:grid!important;
+}
+#companionAvatar{
+  width:calc(52px * var(--uiScale))!important;
+  height:calc(52px * var(--uiScale))!important;
+  background:#ffd640!important;
+  border:calc(3px * var(--uiScale)) solid #a56500!important;
+  box-shadow:inset 0 5px 0 rgba(255,255,255,.17),4px 4px 0 rgba(255,255,255,.12)!important;
+}
+#companionAvatar::before{display:none!important}
+#companionAvatar .eye{
+  display:block!important;
+  top:calc(14px * var(--uiScale))!important;
+  width:calc(11px * var(--uiScale))!important;
+  height:calc(11px * var(--uiScale))!important;
+  border-width:calc(2px * var(--uiScale))!important;
+}
+#companionAvatar .eyeL{left:calc(11px * var(--uiScale))!important}
+#companionAvatar .eyeR{right:calc(11px * var(--uiScale))!important}
+#companionAvatar .pupil{
+  display:block!important;
+  top:calc(18px * var(--uiScale))!important;
+  width:calc(3px * var(--uiScale))!important;
+  height:calc(3px * var(--uiScale))!important;
+}
+#companionAvatar .pupilL{left:calc(16px * var(--uiScale))!important}
+#companionAvatar .pupilR{right:calc(16px * var(--uiScale))!important}
+#companionText{
+  font-size:calc(14px * var(--uiScale))!important;
+  line-height:1.25!important;
+}
+#companionSkip{
+  width:auto!important;
+  height:auto!important;
+  padding:calc(8px * var(--uiScale)) calc(11px * var(--uiScale))!important;
+  font-size:calc(12px * var(--uiScale))!important;
+  border-radius:calc(12px * var(--uiScale))!important;
+}
+#companionHelp{
+  display:flex!important;
+  position:fixed!important;
+  right:calc(14px * var(--uiScale))!important;
+  bottom:calc((92px * var(--uiScale)) + env(safe-area-inset-bottom))!important;
+  z-index:61!important;
+  width:calc(42px * var(--uiScale))!important;
+  height:calc(42px * var(--uiScale))!important;
+  border-radius:calc(14px * var(--uiScale))!important;
+  align-items:center!important;
+  justify-content:center!important;
+  background:#252a4a!important;
+  color:#fff!important;
+  border:1px solid rgba(145,155,230,.35)!important;
+}
+#companionHelp.hidden{display:none!important}
+
+/* Éditeur : petit bouton roue crantée en play. */
+body:not(.editing) #bar{
+  max-width:calc(46px * var(--uiScale))!important;
+}
+body:not(.editing) #compactEdit{
+  display:none!important;
+}
+#toggleEdit.gearBtn{
+  width:calc(42px * var(--uiScale))!important;
+  height:calc(42px * var(--uiScale))!important;
+  min-width:calc(42px * var(--uiScale))!important;
+  padding:0!important;
+  border-radius:calc(12px * var(--uiScale))!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  font-size:calc(21px * var(--uiScale))!important;
+}
+#toggleEdit.gearBtn.active{
+  width:auto!important;
+  min-width:calc(86px * var(--uiScale))!important;
+  padding:0 calc(10px * var(--uiScale))!important;
+  font-size:calc(12px * var(--uiScale))!important;
+}
+
+/* Mobile : on garde le même comportement, mais tassé homothétiquement. */
+@media (max-width:700px){
+  #top{
+    min-height:calc(108px * var(--uiScale))!important;
+    max-height:calc(108px * var(--uiScale))!important;
+  }
+  #title{
+    padding-left:calc(54px * var(--uiScale))!important;
+    text-align:center!important;
+    font-size:calc(clamp(18px,7vw,30px) * var(--uiScale))!important;
+  }
+  #playStats{
+    top:calc(60px * var(--uiScale))!important;
+  }
+  .objectiveLine .metric{
+    flex-direction:column!important;
+    gap:calc(4px * var(--uiScale))!important;
+    padding:calc(7px * var(--uiScale)) calc(5px * var(--uiScale))!important;
+  }
+  .objectiveLine .metric i{font-size:calc(15px * var(--uiScale))!important}
+  .objectiveLine .metric small{font-size:calc(9px * var(--uiScale))!important}
+  .objectiveLine .metric b{font-size:calc(17px * var(--uiScale))!important}
+
+  svg{
+    width:min(calc(92vw * var(--uiScale)),calc(54vh * var(--uiScale)))!important;
+    height:min(calc(92vw * var(--uiScale)),calc(54vh * var(--uiScale)))!important;
+  }
+  #controls{
+    gap:calc(10px * var(--uiScale))!important;
+    width:100%!important;
+  }
+  #controls .bottomTurn{
+    min-width:0!important;
+    max-width:none!important;
+  }
+  #reset{
+    min-width:calc(86px * var(--uiScale))!important;
+  }
+}
+
+
+/* ===== V42 visible speed controls ===== */
+.speedLabel{
+  display:inline-flex!important;
+  align-items:center!important;
+  gap:5px!important;
+  background:#22263a!important;
+  padding:7px 8px!important;
+  border-radius:10px!important;
+  font-weight:900!important;
+  color:#dfe3ff!important;
+}
+.speedLabel input{
+  width:62px!important;
+  padding:6px 6px!important;
+  font-size:12px!important;
+  border-radius:8px!important;
+}
+
+
+/* ===== V43 mobile fit / readability fix ===== */
+
+/* Autorise les enfants flex à vraiment se réduire, sinon le navigateur mobile fait son petit théâtre. */
+body{
+  min-height:100dvh!important;
+}
+#stage{
+  min-height:0!important;
+}
+
+/* Desktop garde la DA, mais évite les marges molles. */
+#stage{
+  justify-content:center!important;
+}
+
+/* Mobile portrait : le plateau devient prioritaire. */
+@media (max-width:700px){
+  #top{
+    min-height:calc(94px * var(--uiScale))!important;
+    max-height:calc(94px * var(--uiScale))!important;
+    padding:calc(8px * var(--uiScale)) calc(8px * var(--uiScale)) calc(5px * var(--uiScale))!important;
+  }
+
+  #title{
+    font-size:calc(clamp(17px,6.4vw,27px) * var(--uiScale))!important;
+    line-height:.95!important;
+    padding-left:calc(52px * var(--uiScale))!important;
+    padding-right:calc(4px * var(--uiScale))!important;
+  }
+
+  #bar{
+    left:calc(8px * var(--uiScale))!important;
+    top:calc(8px * var(--uiScale))!important;
+  }
+
+  #playStats{
+    top:calc(49px * var(--uiScale))!important;
+    width:calc(100vw - 12px)!important;
+  }
+
+  .objectiveLine{
+    border-radius:calc(13px * var(--uiScale))!important;
+  }
+
+  .objectiveLine .metric{
+    padding:calc(5px * var(--uiScale)) calc(4px * var(--uiScale))!important;
+    gap:calc(2px * var(--uiScale))!important;
+  }
+
+  .objectiveLine .metric i{
+    font-size:calc(13px * var(--uiScale))!important;
+  }
+
+  .objectiveLine .metric small{
+    font-size:calc(8px * var(--uiScale))!important;
+  }
+
+  .objectiveLine .metric b{
+    font-size:calc(16px * var(--uiScale))!important;
+  }
+
+  /* Le badge de niveau reste lisible mais ne crée pas un gros trou vertical. */
+  #levelBadge{
+    top:calc(6px * var(--uiScale))!important;
+    font-size:calc(12px * var(--uiScale))!important;
+    padding:calc(6px * var(--uiScale)) calc(12px * var(--uiScale))!important;
+    max-width:82vw!important;
+  }
+
+  /* Le stage arrête de centrer verticalement le plateau dans un désert de vide. */
+  #stage{
+    justify-content:flex-start!important;
+    align-items:center!important;
+    padding-top:calc(6px * var(--uiScale))!important;
+    padding-bottom:calc(4px * var(--uiScale))!important;
+  }
+
+  .boardWrap{
+    padding:calc(7px * var(--uiScale))!important;
+    margin-top:0!important;
+  }
+
+  /*
+    Plateau plus grand, mais borné par la vraie hauteur disponible :
+    viewport - header - contrôles - marge sécurité.
+  */
+  svg{
+    width:min(97vw, calc(100dvh - (94px * var(--uiScale)) - (128px * var(--uiScale)) - 18px - env(safe-area-inset-bottom)))!important;
+    height:min(97vw, calc(100dvh - (94px * var(--uiScale)) - (128px * var(--uiScale)) - 18px - env(safe-area-inset-bottom)))!important;
+  }
+
+  /* Le décor ne vient plus concurrencer le plateau. */
+  #pixelBg{
+    opacity:.32!important;
+  }
+  .pxshape{
+    opacity:.12!important;
+    transform:scale(.62)!important;
+  }
+
+  /* Boutons visibles au-dessus de la barre navigateur mobile. */
+  #controls{
+    width:100%!important;
+    gap:calc(8px * var(--uiScale))!important;
+    padding:
+      calc(8px * var(--uiScale))
+      calc(10px * var(--uiScale))
+      calc(30px + env(safe-area-inset-bottom))!important;
+    background:linear-gradient(180deg,rgba(3,5,20,.15),rgba(3,5,20,.96))!important;
+  }
+
+  #controls .bottomTurn{
+    min-width:0!important;
+    max-width:none!important;
+    font-size:calc(32px * var(--uiScale))!important;
+    padding:calc(12px * var(--uiScale)) calc(6px * var(--uiScale))!important;
+    border-radius:calc(16px * var(--uiScale))!important;
+  }
+
+  #reset{
+    min-width:calc(78px * var(--uiScale))!important;
+    padding:calc(10px * var(--uiScale)) calc(6px * var(--uiScale))!important;
+    font-size:calc(10px * var(--uiScale))!important;
+    border-radius:calc(15px * var(--uiScale))!important;
+  }
+
+  #reset::before{
+    font-size:calc(22px * var(--uiScale))!important;
+    margin-bottom:calc(2px * var(--uiScale))!important;
+  }
+
+  /* Le bouton ? ne doit pas se poser sur les boutons comme un parasite carré. */
+  #companionHelp{
+    bottom:calc(94px + env(safe-area-inset-bottom))!important;
+    right:calc(10px * var(--uiScale))!important;
+  }
+
+  #companionDock{
+    bottom:calc(96px + env(safe-area-inset-bottom))!important;
+  }
+}
+
+/* Très petits écrans / navigateur avec barres épaisses : on tasse, mais tout reste visible. */
+@media (max-width:700px) and (max-height:760px){
+  #top{
+    min-height:calc(86px * var(--uiScale))!important;
+    max-height:calc(86px * var(--uiScale))!important;
+  }
+
+  #playStats{
+    top:calc(44px * var(--uiScale))!important;
+  }
+
+  .objectiveLine .metric{
+    padding:calc(4px * var(--uiScale)) calc(3px * var(--uiScale))!important;
+  }
+
+  .objectiveLine .metric small{
+    font-size:calc(7.5px * var(--uiScale))!important;
+  }
+
+  .objectiveLine .metric b{
+    font-size:calc(14px * var(--uiScale))!important;
+  }
+
+  svg{
+    width:min(97vw, calc(100dvh - (86px * var(--uiScale)) - (116px * var(--uiScale)) - 16px - env(safe-area-inset-bottom)))!important;
+    height:min(97vw, calc(100dvh - (86px * var(--uiScale)) - (116px * var(--uiScale)) - 16px - env(safe-area-inset-bottom)))!important;
+  }
+
+  #controls{
+    padding-bottom:calc(28px + env(safe-area-inset-bottom))!important;
+  }
+
+  #controls .bottomTurn{
+    font-size:calc(29px * var(--uiScale))!important;
+    padding:calc(10px * var(--uiScale)) calc(5px * var(--uiScale))!important;
+  }
+
+  #reset{
+    min-width:calc(72px * var(--uiScale))!important;
+    padding:calc(8px * var(--uiScale)) calc(5px * var(--uiScale))!important;
+  }
+}
+
+/* En mode PWA / écran haut, on profite de la place sans rendre les boutons énormes. */
+@media (max-width:700px) and (min-height:880px){
+  svg{
+    width:min(98vw, calc(100dvh - (96px * var(--uiScale)) - (132px * var(--uiScale)) - 20px - env(safe-area-inset-bottom)))!important;
+    height:min(98vw, calc(100dvh - (96px * var(--uiScale)) - (132px * var(--uiScale)) - 20px - env(safe-area-inset-bottom)))!important;
+  }
+}
+
+
+/* ===== V44 tile readability polish ===== */
+svg{
+  image-rendering:auto;
+}
+
+
+/* ===== V48 MOCKUP DA SAFE ===== */
+:root{
+  --gc-navy:#040822;
+  --gc-board:#071235;
+  --gc-cyan:#29e7ff;
+  --gc-pink:#ff4f93;
+  --gc-yellow:#ffd640;
+  --gc-purple:#c56dff;
+}
+
+html,body{
+  background:#03051a!important;
+}
+
+#top{
+  background:linear-gradient(180deg,rgba(3,5,24,.98),rgba(3,5,24,.90))!important;
+  border-bottom:1px solid rgba(74,112,255,.24)!important;
+}
+
+#title{
+  font-family:monospace!important;
+  font-weight:900!important;
+  letter-spacing:2px!important;
+  text-shadow:0 3px 0 rgba(0,0,0,.6)!important;
+}
+
+#title .t-gravity,
+#title:not(:has(.t-gravity)){
+  color:var(--gc-cyan)!important;
+}
+
+#title .t-gravity{
+  color:var(--gc-cyan)!important;
+  text-shadow:0 0 12px rgba(41,231,255,.5),0 3px 0 rgba(0,0,0,.55)!important;
+}
+
+#title .t-cube{
+  color:var(--gc-pink)!important;
+  text-shadow:0 0 12px rgba(255,79,147,.5),0 3px 0 rgba(0,0,0,.55)!important;
+}
+
+#modeLabel{
+  color:var(--gc-yellow)!important;
+  text-shadow:0 0 10px rgba(255,214,64,.35)!important;
+}
+
+.objectiveLine{
+  background:rgba(4,10,42,.92)!important;
+  border:2px solid rgba(74,112,255,.55)!important;
+  border-radius:16px!important;
+  box-shadow:0 0 18px rgba(41,231,255,.08)!important;
+}
+
+.objectiveLine .metricMoves i,
+.objectiveLine .metricMoves b{color:var(--gc-cyan)!important}
+.objectiveLine .metricGoal i,
+.objectiveLine .metricGoal b{color:var(--gc-yellow)!important}
+.objectiveLine .metricDiff i,
+.objectiveLine .metricDiff b{color:var(--gc-pink)!important}
+
+#levelBadge{
+  background:rgba(58,8,42,.90)!important;
+  border:2px solid var(--gc-pink)!important;
+  color:#fff!important;
+  border-radius:20px!important;
+  box-shadow:0 0 20px rgba(255,79,147,.25)!important;
+}
+
+#stage{
+  background:
+    radial-gradient(circle at 50% 35%,rgba(18,22,72,.85),transparent 42%),
+    linear-gradient(180deg,#050825,#03051a)!important;
+}
+
+.boardWrap{
+  background:linear-gradient(135deg,rgba(41,231,255,.16),rgba(255,79,147,.14))!important;
+  border-radius:20px!important;
+  box-shadow:0 22px 44px rgba(0,0,0,.48),0 0 30px rgba(255,79,147,.12)!important;
+}
+
+svg{
+  background:var(--gc-board)!important;
+  border-radius:12px!important;
+  box-shadow:inset 0 0 0 1px rgba(94,132,255,.18)!important;
+}
+
+.electricEdge{
+  border:3px solid var(--gc-pink)!important;
+  border-radius:20px!important;
+  box-shadow:0 0 16px rgba(255,79,147,.34), inset 0 0 0 1px rgba(255,255,255,.06)!important;
+}
+
+.electricEdge:after{
+  border:2px solid rgba(41,231,255,.85)!important;
+  border-radius:14px!important;
+  box-shadow:none!important;
+}
+
+#controls{
+  background:linear-gradient(180deg,rgba(3,5,20,.18),rgba(3,5,20,.98))!important;
+}
+
+#sideLeft{
+  background:linear-gradient(180deg,#109dff,#075dcc)!important;
+  border:2px solid var(--gc-cyan)!important;
+  color:white!important;
+}
+
+#sideRight{
+  background:linear-gradient(180deg,#ff5fa8,#c62378)!important;
+  border:2px solid #ff9acc!important;
+  color:white!important;
+}
+
+#reset{
+  background:linear-gradient(180deg,#121a4a,#0b1238)!important;
+  border:2px solid rgba(130,146,255,.45)!important;
+  color:#dce5ff!important;
+}
+
+#companionDock{
+  background:rgba(6,11,43,.88)!important;
+  border:2px solid rgba(74,112,255,.45)!important;
+  border-radius:16px!important;
+  box-shadow:0 12px 24px rgba(0,0,0,.35), inset 0 0 0 1px rgba(41,231,255,.12)!important;
+}
+
+#companionAvatar{
+  background:var(--gc-yellow)!important;
+  border-color:#a56500!important;
+}
+
+#companionSkip{
+  background:#0c2b63!important;
+  color:#79f2ff!important;
+  border:2px solid rgba(41,231,255,.55)!important;
+}
+
+@media (max-width:700px){
+  #title{
+    font-size:calc(clamp(18px,6.4vw,28px) * var(--uiScale))!important;
+  }
+  #controls .bottomTurn{
+    font-size:calc(34px * var(--uiScale))!important;
+  }
+}
+
+
+/* CUSTOM DA ZONE :
+   - sprites gameplay : cherche if(c=="B"), if(c=="S"), if(c=="D"||c=="O"), if(c=="R"||c=="L"), if(c=="X") dans draw()
+   - perso joueur : cherche if(!edit&&!deadPlayer){ ... } dans draw()
+   - bannière de victoire : showBanner(...) + #stars (ici utilisé comme jauge de coeurs)
+   - confettis : fonctions confettiBurst() / startConfetti()
+*/
+/* ===== V49 vraie DA mockup, sans logique touchée ===== */
+:root{
+  --gc-navy:#040822;
+  --gc-board:#071235;
+  --gc-cyan:#29e7ff;
+  --gc-pink:#ff4f93;
+  --gc-yellow:#ffd640;
+  --gc-purple:#c775ff;
+}
+
+html,body{
+  background:#03051a!important;
+}
+
+#top{
+  background:linear-gradient(180deg,rgba(3,5,24,.99),rgba(3,5,24,.90))!important;
+  border-bottom:1px solid rgba(74,112,255,.24)!important;
+}
+
+#title{
+  font-family:monospace!important;
+  font-weight:900!important;
+  letter-spacing:2px!important;
+  text-shadow:0 3px 0 rgba(0,0,0,.62)!important;
+}
+
+#title .t-gravity{
+  color:var(--gc-cyan)!important;
+  text-shadow:0 0 12px rgba(41,231,255,.48),0 3px 0 rgba(0,0,0,.55)!important;
+}
+
+#title .t-cube{
+  color:var(--gc-pink)!important;
+  text-shadow:0 0 12px rgba(255,79,147,.48),0 3px 0 rgba(0,0,0,.55)!important;
+}
+
+#title .t-mark{
+  color:#7df5ff!important;
+}
+
+#modeLabel{
+  color:var(--gc-yellow)!important;
+  text-shadow:0 0 10px rgba(255,214,64,.35)!important;
+}
+
+.objectiveLine{
+  background:rgba(4,10,42,.94)!important;
+  border:2px solid rgba(74,112,255,.58)!important;
+  border-radius:16px!important;
+  box-shadow:0 0 18px rgba(41,231,255,.08)!important;
+}
+
+.objectiveLine .metricMoves i,
+.objectiveLine .metricMoves b{color:var(--gc-cyan)!important}
+.objectiveLine .metricGoal i,
+.objectiveLine .metricGoal b{color:var(--gc-yellow)!important}
+.objectiveLine .metricDiff i,
+.objectiveLine .metricDiff b{color:var(--gc-pink)!important}
+
+#levelBadge{
+  background:rgba(58,8,42,.92)!important;
+  border:2px solid var(--gc-pink)!important;
+  color:#fff!important;
+  border-radius:20px!important;
+  box-shadow:0 0 20px rgba(255,79,147,.26)!important;
+}
+
+#stage{
+  background:
+    radial-gradient(circle at 50% 35%,rgba(18,22,72,.85),transparent 42%),
+    linear-gradient(180deg,#050825,#03051a)!important;
+}
+
+.boardWrap{
+  background:linear-gradient(135deg,rgba(41,231,255,.16),rgba(255,79,147,.14))!important;
+  border-radius:20px!important;
+  box-shadow:0 22px 44px rgba(0,0,0,.48),0 0 30px rgba(255,79,147,.12)!important;
+}
+
+svg{
+  background:var(--gc-board)!important;
+  border-radius:12px!important;
+  box-shadow:inset 0 0 0 1px rgba(94,132,255,.20)!important;
+}
+
+.electricEdge{
+  border:3px solid var(--gc-pink)!important;
+  border-radius:20px!important;
+  box-shadow:0 0 16px rgba(255,79,147,.34), inset 0 0 0 1px rgba(255,255,255,.06)!important;
+}
+
+.electricEdge:after{
+  border:2px solid rgba(41,231,255,.88)!important;
+  border-radius:14px!important;
+  box-shadow:none!important;
+}
+
+#controls{
+  background:linear-gradient(180deg,rgba(3,5,20,.18),rgba(3,5,20,.98))!important;
+}
+
+#sideLeft{
+  background:linear-gradient(180deg,#109dff,#075dcc)!important;
+  border:2px solid var(--gc-cyan)!important;
+  color:white!important;
+}
+
+#sideRight{
+  background:linear-gradient(180deg,#ff5fa8,#c62378)!important;
+  border:2px solid #ff9acc!important;
+  color:white!important;
+}
+
+#reset{
+  background:linear-gradient(180deg,#121a4a,#0b1238)!important;
+  border:2px solid rgba(130,146,255,.45)!important;
+  color:#dce5ff!important;
+}
+
+#companionDock{
+  background:rgba(6,11,43,.90)!important;
+  border:2px solid rgba(74,112,255,.45)!important;
+  border-radius:16px!important;
+  box-shadow:0 12px 24px rgba(0,0,0,.35), inset 0 0 0 1px rgba(41,231,255,.12)!important;
+}
+
+#companionAvatar{
+  background:var(--gc-yellow)!important;
+  border-color:#a56500!important;
+}
+
+#companionSkip{
+  background:#0c2b63!important;
+  color:#79f2ff!important;
+  border:2px solid rgba(41,231,255,.55)!important;
+}
+
+@media (max-width:700px){
+  #title{
+    font-size:calc(clamp(18px,6.4vw,28px) * var(--uiScale))!important;
+  }
+}
+
+</style>
+</head>
+<body>
+<div id="top">
+  <div id="title"><span class="t-mark">▣</span> <span class="t-gravity">GRAVITY</span> <span class="t-cube">CUBE</span> <span class="t-mark">▣</span> <span id="modeLabel"></span></div>
+  <div id="status">Play : les bords font WRAP. ☠ tue. ↻/↺ tournent une fois puis relâchent le cube.</div>
+  <div id="playStats"></div>
+  <div id="bar">
+    <button id="toggleEdit" class="smallBtn">EDIT OFF</button><button id="compactEdit" class="smallBtn">Compact</button>
+    <span id="editPanel">
+      <span class="group"><span class="groupTitle">Peindre</span><button class="foldBtn" data-fold>▾</button>
+        <select id="tool">
+          <option value="#">Mur</option><option value=".">Vide</option><option value="A">Départ A</option><option value="B">Sortie B</option><option value="S">Bouton</option><option value="D">Bloc sorti</option><option value="O">Bloc rentré</option><option value="R">Rotateur droite ↻</option><option value="L">Rotateur gauche ↺</option><option value="X">Mort ☠</option>
+        </select>
+      </span>
+      <span class="group collapsed"><span class="groupTitle">Niveau</span><button class="foldBtn" data-fold>▸</button>
+        <input id="levelName" placeholder="Nom niveau"><label style="background:#22263a;padding:5px;border-radius:8px">Diff <input id="difficultyInput" type="number" min="1" max="10" value="1" style="width:44px"></label><label class="speedLabel">Chute <input id="fallDelayInput" type="number" min="60" max="500" step="10" value="135"></label><label class="speedLabel">Rotation <input id="rotationDurationInput" type="number" min="120" max="1000" step="20" value="320"></label><button id="lockLevel">🔓 Lock</button><button id="soundToggle">🔊 Son</button><button id="calcMoves">Calc coups</button><button id="testGame">Test du jeu</button><button id="addLevel">+ Level</button><button id="genLevel">Générer base</button><button id="clear">Clear</button>
+      </span>
+      <span class="group collapsed"><span class="groupTitle">Navigation</span><button class="foldBtn" data-fold>▸</button>
+        <button id="lvl1">Lvl 1</button><button id="prevLvl">-</button><input id="levelInput" type="number" min="1" value="1" style="width:56px"><button id="goLvl">Go</button><button id="nextLvl">+</button><button id="sortDifficulty">Trier diff</button><button id="resetProgress">Reset progression</button><button id="resetTutorial">Reset tutoriel</button><button id="deleteUnlocked">Delete non-lock</button>
+      </span>
+      <span class="group collapsed"><span class="groupTitle">Sauvegarde</span><button class="foldBtn" data-fold>▸</button>
+        <button id="saveLocal">Save draft</button><button id="loadLocal">Load draft</button><button id="exportJson">Export levels.json</button><button id="importBtn">Import JSON</button><button id="openAssetEditor">Assets</button><input id="importFile" class="hidden" type="file" accept=".json,application/json">
+      </span>
+      <span class="group collapsed"><span class="groupTitle">Biome</span><button class="foldBtn" data-fold>▸</button>
+        <select id="biomeSelect"><option value="cosmic">Cosmic</option><option value="forest">Forêt</option><option value="desert">Désert</option><option value="ice">Glace</option><option value="rainbow">Arc-en-ciel</option></select>
+      </span>
+    </span>
+  </div>
+</div>
+
+<div id="stage">
+  <div id="levelBadge"></div>
+  <div id="pixelBg"></div>
+  
+  <div class="boardWrap"><div class="electricEdge"></div><svg viewBox="0 0 520 520"><defs><filter id="electricNoise"><feTurbulence type="fractalNoise" baseFrequency="0.08" numOctaves="2" seed="4"><animate attributeName="baseFrequency" values="0.04;0.12;0.07;0.16;0.04" dur="0.8s" repeatCount="indefinite"/></feTurbulence><feDisplacementMap in="SourceGraphic" scale="7"/></filter></defs>
+    <g id="rot"><rect width="520" height="520" fill="#060a24"/><g id="grid"></g></g>
+    <text x="392" y="28" fill="#2cf7ff" font-size="16" font-weight="900" font-family="monospace">↓ GRAVITÉ</text>
+  </svg></div>
+  <div id="banner" class="hidden">
+    <div id="bannerTitle"></div>
+    <div id="bannerText"></div>
+    <div id="stars"></div><button id="bannerAction">OK</button>
+  </div>
+  <div id="confirmBox" class="hidden"><h2>Confirmer suppression</h2><p id="confirmText"></p><div class="row"><button id="confirmCancel">Annuler</button><button id="confirmDelete" class="danger">Supprimer</button></div></div>
+</div>
+
+<div id="companionDock" class="hidden">
+  <div id="companionAvatar">
+    <span class="eye eyeL"></span>
+    <span class="eye eyeR"></span>
+    <span class="pupil pupilL"></span>
+    <span class="pupil pupilR"></span>
+  </div>
+  <div id="companionText">Tourne le plateau pour me déplacer. Pas de jambes, pas de problème. Enfin presque.</div>
+  <button id="companionSkip">Passer</button>
+</div>
+<button id="companionHelp" class="hidden">?</button>
+
+<div id="controls">
+  <button id="sideLeft" class="bottomTurn">⟲</button>
+  <button id="reset">RESET</button>
+  <button id="sideRight" class="bottomTurn">⟳</button>
+</div>
+
+<script>
+const W=13,H=13,T=40;
+const grid=document.getElementById("grid"),rot=document.getElementById("rot"),stage=document.getElementById("stage"),svg=document.querySelector("svg");
+const modeLabel=document.getElementById("modeLabel"),status=document.getElementById("status"),tool=document.getElementById("tool");
+const editPanel=document.getElementById("editPanel"),levelNameInput=document.getElementById("levelName"),playStats=document.getElementById("playStats");
+const banner=document.getElementById("banner"),bannerTitle=document.getElementById("bannerTitle"),bannerText=document.getElementById("bannerText"),starsEl=document.getElementById("stars"),bannerAction=document.getElementById("bannerAction");
+
+let levels=[];
+let gameSettings={fallDelayMs:135,rotationDurationMs:320};
+const EMBEDDED_LEVELS_DATA = {"version": 5, "settings": {"fallDelayMs": 60, "rotationDurationMs": 120}, "levels": [{"name": "02 - Base", "maxMoves": 2, "locked": true, "difficulty": 2, "biome": "forest", "solution": "RL", "map": [".............", "...B.........", "..#######....", "..#.....#....", "..#.....#....", "..#.#####....", ".............", ".............", "....###.#.##.", "....#......#.", "....#.....A..", "....########.", "............."]}, {"name": "03 - Base", "maxMoves": 5, "locked": true, "difficulty": 3, "biome": "desert", "solution": "RLLRL", "map": [".............", ".............", "....A........", ".............", ".........##B.", ".....###.....", ".........###.", "..........##.", "..####.......", ".........##..", ".............", ".............", "............."]}, {"name": "04 - Base", "maxMoves": 4, "locked": true, "difficulty": 4, "biome": "ice", "solution": "LLLL", "map": [".............", ".............", "........#..A.", "........#....", ".............", "........#....", ".......B#....", "......#####..", ".....#######.", "........#....", "........#....", ".............", "............."]}, {"name": "05 - Base", "maxMoves": 3, "locked": true, "difficulty": 5, "biome": "rainbow", "solution": "LLL", "map": [".............", ".............", "....A........", ".............", ".......#####.", "........B#...", ".....#####...", ".........#...", "...####..#...", ".........#...", ".#.##....#...", ".............", "............."]}, {"name": "06 - Bouton", "maxMoves": 5, "locked": true, "difficulty": 6, "biome": "cosmic", "solution": "LLLLL", "map": [".............", ".............", ".............", "....#B.......", "..###.##D##..", "....#........", "....#........", "..S.#....A...", "....#........", ".###########.", "....#........", ".............", "............."]}, {"name": "07 - Bouton", "maxMoves": 3, "locked": true, "difficulty": 7, "biome": "forest", "solution": "LRR", "map": [".............", ".............", "..B#.........", "...######....", "...#.........", "..S..........", "...#.........", "...#.........", "...D.........", ".###.........", ".A.#.........", ".............", "............."]}, {"name": "08 - Bouton", "maxMoves": 6, "locked": true, "difficulty": 8, "biome": "desert", "solution": "RLRLRL", "map": [".............", ".............", ".............", ".............", ".....#.......", "....B....##..", "..####.......", ".....####....", ".D...........", ".............", "....S........", "...A.........", "............."]}, {"name": "09 - Bouton", "maxMoves": 5, "locked": true, "difficulty": 9, "biome": "ice", "solution": "LRRLL", "map": [".............", ".............", ".............", ".............", ".....#.O###D.", ".....#.......", ".A...####....", ".....#B......", "...####......", ".....#.......", ".#.###.......", "...........S.", "............."]}, {"name": "10 - Jeanne labyrinthe", "maxMoves": 999, "locked": true, "difficulty": 10, "biome": "desert", "requiredMechanic": "button", "solution": "LRRRLLL", "solutionUses": ["O", "S"], "designNote": "Niveau de Jeanne injecté dans le chapitre bouton/porte.", "validation": {"testedSolvable": true, "mainBrickRequired": true, "forcedPosition": 10, "source": "capture / ancien Nouveau niveau 21"}, "map": [".............", ".....#.......", ".#...#.......", "....S#...##..", "....##..#.#..", "........D.#..", "...#....D.#..", "...#...##.#..", "...#...#B.#..", "...#....##...", "...#.A#......", "...#.##......", "............."]}, {"name": "11 - Bouton", "maxMoves": 5, "locked": true, "difficulty": 11, "biome": "rainbow", "solution": "RRRRR", "map": [".............", ".S...........", ".............", ".............", "....#..####D.", "...B#........", "....#####....", "....#........", "...####......", "....#........", ".##.#........", "...A.........", "............."]}, {"name": "12 - Danger", "maxMoves": 5, "locked": true, "difficulty": 12, "biome": "cosmic", "solution": "LLLLL", "map": [".............", "..........S..", "......#...X..", "......#......", "......#......", "......#......", "..########D..", "......#......", "......#......", "......#B.....", "..A####.##...", ".............", "............."]}, {"name": "13 - Danger", "maxMoves": 5, "locked": true, "difficulty": 13, "biome": "forest", "solution": "LLLLL", "map": [".............", ".......A.....", "....#........", "....#........", "....#....S...", "....#........", "....#X.......", "....#B.......", "..##D##......", ".#.#####O....", "....#........", ".............", "............."]}, {"name": "14 - Danger", "maxMoves": 6, "locked": true, "difficulty": 14, "biome": "desert", "solution": "RRLRLR", "map": [".............", ".............", ".............", "....###......", "...A.........", "........###..", "..###........", "...........X.", ".............", ".##.......S..", ".B..#D##.....", "....###...###", "............."]}, {"name": "15 - Danger", "maxMoves": 8, "locked": true, "difficulty": 15, "biome": "ice", "solution": "LLLLLLRL", "map": [".............", ".............", ".............", "......X......", ".##......O.##", "..###........", "....A###.....", ".............", ".............", ".......#D#...", "........B....", "...S......###", "............."]}, {"name": "16 - Danger", "maxMoves": 3, "locked": true, "difficulty": 16, "biome": "rainbow", "solution": "RRR", "map": [".............", ".............", ".............", ".............", "....X...#....", "..#######.#..", "........#B.S.", "........#....", "........#....", ".#######D###.", "......A.#....", "....X........", "............."]}, {"name": "16 - Danger", "maxMoves": 7, "locked": true, "difficulty": 16, "biome": "rainbow", "solution": "RRRRRRR", "map": [".............", ".............", ".............", ".............", "....X...#....", "..#######.#..", "........#B.S.", "........#....", "........#....", ".#######D###.", "......A.#....", "....X........", "............."]}, {"name": "17 - Rotateur", "maxMoves": 8, "locked": true, "difficulty": 17, "biome": "cosmic", "solution": "RRRLRRRR", "map": [".............", ".###.........", ".B.....R.....", ".....D.##....", "...###.......", ".............", "..####.......", "......##.....", ".............", "....S.....X..", "....AX.......", ".............", "............."]}, {"name": "18 - Rotateur", "maxMoves": 8, "locked": true, "difficulty": 18, "biome": "forest", "solution": "RRRRRRLR", "map": [".............", ".......L.....", "..##.####....", "..#.....#....", "..#.....#....", "..##.####....", "...B.........", ".........X...", ".X..#.######.", "....#...S.AD.", "....#......#.", "....####.###.", "............."]}, {"name": "19 - Rotateur", "maxMoves": 8, "locked": true, "difficulty": 19, "biome": "desert", "solution": "RRLLRRLL", "map": [".............", ".............", "..###A##.....", "..#.....D....", "..#.X..S#....", "..#.#####....", ".............", "....X........", ".....###.###.", "....#........", "....#......#.", ".R.B###.O###.", "............."]}, {"name": "20 - Rotateur", "maxMoves": 12, "locked": true, "difficulty": 20, "biome": "ice", "solution": "LLLLRRLRLLLL", "map": [".............", ".............", "..####..#..R.", "..#.....#....", "..#A....O....", "..#####.#....", "......X......", "...S..L...B..", "....##.#..##.", "...X#......#.", "....#........", "....##D###.#.", "............."]}, {"name": "21 - Rotateur", "maxMoves": 9, "locked": true, "difficulty": 21, "biome": "rainbow", "solution": "RLLLRRRRR", "map": [".............", "..X..........", ".............", "..L..........", ".....X######.", "......#S.A...", "..R..##.#....", "......#......", "...####......", "......#B.....", ".###D.#......", ".............", "............."]}]};
+
+let fallbackLevels=[{"name": "Premier verrou", "maxMoves": 4, "locked": false, "biome": "cosmic", "map": [".............", ".#####.......", ".#A..#.......", ".#.#.#.......", ".#.#.###.....", ".#..S..#.....", ".#####.#.....", ".....#D#.....", ".....#B#.....", ".....###.....", ".............", ".............", "............."]}, {"name": "Détour", "maxMoves": 6, "locked": false, "biome": "forest", "map": [".............", "..######.....", "..#A...#.....", "..#.#..#.....", "..#.#D##.....", "..#.#........", "..#S#####....", "..#.....#....", "..#####.#....", "......#B#....", "......###....", ".............", "............."]}];
+
+let currentLevel=0,baseMap=[],b=[],p={x:0,y:0},start={x:0,y:0},exit={x:0,y:0};
+let door=false,busy=false,edit=false,moves=0,gameOver=false,confettiTimer=null,deadPlayer=false,idleTick=0,painting=false,lastPaintKey='',visualOri=0,squash=0,soundOn=true,audioCtx=null,rotatorCooldown=false;
+
+function E(n,a){let e=document.createElementNS("http://www.w3.org/2000/svg",n);for(let k in a)e.setAttribute(k,a[k]);return e}
+function rect(x,y,w,h,f,s,sw=4){grid.appendChild(E("rect",{x,y,width:w,height:h,fill:f,stroke:s,"stroke-width":sw,"pointer-events":"none"}))}
+function text(x,y,t,f,sz=22){let a=E("text",{x,y,fill:f,"font-size":sz,"font-weight":900,"text-anchor":"middle","font-family":"monospace","pointer-events":"none"});a.textContent=t;grid.appendChild(a)}
+
+/* ===== V51 ASSET RUNTIME ===== */
+let assetPack=null;
+
+async function loadAssets(){
+  try{
+    const res=await fetch("assets.json?ts="+Date.now());
+    if(!res.ok)throw new Error("assets.json introuvable");
+    const data=await res.json();
+    if(!data || !data.assets)throw new Error("assets.json invalide");
+    assetPack=data;
+    console.log("[ASSETS] assets.json chargé", Object.keys(assetPack.assets||{}));
+  }catch(e){
+    assetPack=null;
+    console.warn("[ASSETS] fallback sprites codés en dur :", e.message);
+  }
+}
+
+function getAssetPixels(name){
+  if(!assetPack || !assetPack.assets)return null;
+  const a=assetPack.assets[name];
+  return Array.isArray(a) ? a : null;
+}
+
+function drawPixelAsset(name,x,y,parent=grid,opts={}){
+  const pixels=getAssetPixels(name);
+  if(!pixels || !pixels.length)return false;
+
+  const pal=(assetPack && assetPack.palette) ? assetPack.palette : {};
+  const size=assetPack.assetSize || pixels.length || 16;
+  const scale=T/size;
+  const alpha=opts.alpha==null ? 1 : opts.alpha;
+
+  for(let py=0;py<pixels.length;py++){
+    const row=String(pixels[py]||"");
+    for(let px=0;px<row.length;px++){
+      const key=row[px];
+      let col=pal[key];
+      if(!col || col==="transparent")continue;
+      const r=E("rect",{
+        x:x+px*scale,
+        y:y+py*scale,
+        width:Math.ceil(scale),
+        height:Math.ceil(scale),
+        fill:col,
+        opacity:alpha,
+        "pointer-events":"none"
+      });
+      parent.appendChild(r);
+    }
+  }
+  return true;
+}
+
+function arr(map){return map.map(r=>r.split(""))}
+function map(){return baseMap.map(r=>r.join(""))}
+
+function normalize(){
+  let foundA=false,foundB=false;
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+    if(baseMap[y][x]=="A"){if(foundA)baseMap[y][x]=".";foundA=true;start={x,y}}
+    if(baseMap[y][x]=="B"){if(foundB)baseMap[y][x]=".";foundB=true;exit={x,y}}
+  }
+  if(!foundA){baseMap[1][1]="A";start={x:1,y:1}}
+  if(!foundB){baseMap[H-2][W-2]="B";exit={x:W-2,y:H-2}}
+}
+
+function clampNum(v,min,max,fallback){
+  v=parseInt(v,10);
+  if(!Number.isFinite(v))return fallback;
+  return Math.max(min,Math.min(max,v));
+}
+function getFallDelayMs(){
+  return clampNum(gameSettings.fallDelayMs,60,500,135);
+}
+function getRotationDurationMs(){
+  return clampNum(gameSettings.rotationDurationMs,120,1000,320);
+}
+function syncSpeedInputs(){
+  const f=document.getElementById("fallDelayInput");
+  const r=document.getElementById("rotationDurationInput");
+  if(f)f.value=getFallDelayMs();
+  if(r)r.value=getRotationDurationMs();
+}
+function writeGlobalSettingsFromInputs(){
+  const f=document.getElementById("fallDelayInput");
+  const r=document.getElementById("rotationDurationInput");
+  gameSettings.fallDelayMs=clampNum(f?.value,60,500,135);
+  gameSettings.rotationDurationMs=clampNum(r?.value,120,1000,320);
+}
+
+function writeCurrentLevel(){
+  normalize();
+  levels[currentLevel].map=map();
+  levels[currentLevel].name=levelNameInput.value.trim()||("Level "+(currentLevel+1));
+  levels[currentLevel].biome=document.getElementById("biomeSelect").value||"cosmic";
+  levels[currentLevel].difficulty=parseInt(document.getElementById("difficultyInput").value||levels[currentLevel].difficulty||1,10);
+  levels[currentLevel].maxMoves=parseInt(levels[currentLevel].maxMoves||999,10);
+  writeGlobalSettingsFromInputs();
+}
+function loadFromLevel(idx){
+  currentLevel=Math.max(0,Math.min(levels.length-1,idx));
+  baseMap=arr(levels[currentLevel].map);
+  levelNameInput.value=levels[currentLevel].name||("Level "+(currentLevel+1)); if(!levels[currentLevel].difficulty)levels[currentLevel].difficulty=1; document.getElementById("difficultyInput").value=levels[currentLevel].difficulty; updateLockUI();
+  if(!levels[currentLevel].biome)levels[currentLevel].biome=localStorage.getItem("gravity_cube_biome")||"cosmic";
+  document.getElementById("biomeSelect").value=levels[currentLevel].biome;
+  syncSpeedInputs();
+  applyBiomeVisual(levels[currentLevel].biome);
+  normalize(); resetPlay();
+  scheduleCompanion(true);
+}
+function baseDoorOpen(){
+  // La porte ouverte est maintenant une tuile O, pas un booléen planqué dans un coin. Civilisation.
+  return false;
+}
+function resetPlay(){
+  normalize();
+  levels[currentLevel].map=map();
+  b=arr(levels[currentLevel].map);
+  door=baseDoorOpen();
+  moves=0;busy=false;gameOver=false;deadPlayer=false;rotatorCooldown=false;hideBanner();
+  rot.setAttribute("transform","rotate(0 260 260)");visualOri=0;
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+    if(b[y][x]=="A"){p={x,y};start={x,y};b[y][x]="."}
+    if(b[y][x]=="B")exit={x,y}
+  }
+  draw(); updateStats();
+  if(!edit){busy=true;setTimeout(fall,getFallDelayMs());scheduleCompanion(false)}
+}
+function updateStats(){
+  const max=levels[currentLevel].maxMoves||"?";
+  const name=levels[currentLevel].name||("Niveau "+(currentLevel+1));
+  if(edit){
+    playStats.textContent="";
+  }else{
+    playStats.innerHTML =
+      '<div class="objectiveLine">'+
+        '<span class="metric metricMoves"><i>⟳</i><small>Coups</small><b>'+moves+'</b></span>'+
+        '<span class="metric metricGoal"><i>★</i><small>objectif 3♥</small><b>'+max+'</b></span>'+
+        '<span class="metric metricDiff"><i>✦</i><small>Difficulté</small><b>'+(levels[currentLevel].difficulty||1)+'</b></span>'+
+      '</div>';
+  }
+  const badge=document.getElementById("levelBadge");
+  if(badge)badge.textContent=(currentLevel+1)+" - "+name;
+}
+
+function isLocked(){return !!levels[currentLevel].locked}
+function updateLockUI(){
+  const b=document.getElementById("lockLevel");
+  if(!b)return;
+  b.textContent=isLocked()?"🔒 Locked":"🔓 Lock";
+  b.className=isLocked()?"locked":"";
+}
+function toggleLock(){
+  levels[currentLevel].locked=!levels[currentLevel].locked;
+  updateLockUI();
+  status.textContent=isLocked()?"Niveau protégé. Déverrouille pour modifier.":"Niveau déverrouillé.";
+}
+function ensureAudio(){
+  if(!soundOn)return null;
+  if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+  return audioCtx;
+}
+function beep(freq=440,dur=.08,type="square",gain=.04){
+  const ac=ensureAudio(); if(!ac)return;
+  const o=ac.createOscillator(), g=ac.createGain();
+  o.type=type; o.frequency.value=freq;
+  g.gain.setValueAtTime(gain,ac.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+dur);
+  o.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime+dur);
+}
+function soundMove(){beep(210,.045,"square",.025)}
+function soundLand(d=1){beep(110+Math.min(d,8)*18,.07,"triangle",.04)}
+function soundCrash(){beep(70,.18,"sawtooth",.06);setTimeout(()=>beep(45,.18,"square",.04),70)}
+function soundWin(){beep(440,.09,"square",.04);setTimeout(()=>beep(660,.1,"square",.04),110);setTimeout(()=>beep(880,.16,"triangle",.05),230)}
+function soundLove(){beep(523,.08,"sine",.04);setTimeout(()=>beep(784,.12,"sine",.04),100)}
+function toggleSound(){soundOn=!soundOn;document.getElementById("soundToggle").textContent=soundOn?"🔊 Son":"🔇 Son";status.textContent=soundOn?"Son activé.":"Son coupé."}
+
+function hideBanner(){banner.classList.add("hidden");banner.classList.remove("lose");svg.style.filter="none";stopConfetti()}
+function showBanner(title,msg,stars,kind){hideCompanion(false);
+  bannerTitle.textContent=title; bannerText.textContent=msg; starsEl.textContent=stars||"";
+  bannerAction.textContent=kind==="win"?"NEXT LEVEL":"RESTART LEVEL";
+  bannerAction.onclick=()=>{ if(kind==="win"){goLevel((currentLevel+1)%levels.length)} else resetPlay(); };
+  if(kind==="lose"){svg.style.filter="grayscale(1) brightness(.55)";banner.classList.add("lose")}
+  else banner.classList.remove("lose");
+  banner.classList.remove("hidden");
+}
+function starScore(){
+  const max=levels[currentLevel].maxMoves||999;
+  if(moves<=max)return 3;
+  if(moves<=max+2)return 2;
+  if(moves<=max+4)return 1;
+  return 0;
+}
+
+function draw(){
+  grid.innerHTML="";
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+    grid.appendChild(E("rect",{x:x*T,y:y*T,width:T,height:T,fill:"none",stroke:"rgba(255,255,255,.10)","stroke-width":1,"pointer-events":"none"}));
+    let c=edit?baseMap[y][x]:b[y][x],X=x*T,Y=y*T;
+    if(c=="#"){
+      if(!drawPixelAsset("wall",X,Y)){
+        // Mur fallback DA mockup.
+        grid.appendChild(E("rect",{x:X+2,y:Y+7,width:T-4,height:T-7,rx:2,ry:2,fill:"#6d2aa8",stroke:"#301447","stroke-width":3,"pointer-events":"none"}));
+        grid.appendChild(E("rect",{x:X+2,y:Y+2,width:T-4,height:T-10,rx:2,ry:2,fill:"#c775ff",stroke:"#7d36bf","stroke-width":3,"pointer-events":"none"}));
+        grid.appendChild(E("rect",{x:X+8,y:Y+7,width:T-16,height:5,fill:"rgba(255,255,255,.22)","pointer-events":"none"}));
+        grid.appendChild(E("rect",{x:X+6,y:Y+6,width:T-12,height:T-18,fill:"none",stroke:"rgba(255,230,255,.22)","stroke-width":1,"pointer-events":"none"}));
+      }
+    }
+    if(c=="B"){
+      if(!drawPixelAsset("destination",X,Y)){
+        // Destinée fallback : cube simple, pas petite fille illustrée.
+        rect(X+4,Y+4,T-8,T-8,"#ff4f93","#8a1745");
+        grid.appendChild(E("rect",{x:X+9,y:Y+9,width:T-18,height:5,fill:"rgba(255,255,255,.22)","pointer-events":"none"}));
+        let eyeShift=Math.sin(Date.now()/360)*2.2;
+        grid.appendChild(E("rect",{x:X+10,y:Y+14,width:9,height:9,fill:"#fff",stroke:"#5f1230","stroke-width":1,"pointer-events":"none"}));
+        grid.appendChild(E("rect",{x:X+22,y:Y+14,width:9,height:9,fill:"#fff",stroke:"#5f1230","stroke-width":1,"pointer-events":"none"}));
+        grid.appendChild(E("rect",{x:X+14+eyeShift,y:Y+17,width:3,height:3,fill:"#111","pointer-events":"none"}));
+        grid.appendChild(E("rect",{x:X+26+eyeShift,y:Y+17,width:3,height:3,fill:"#111","pointer-events":"none"}));
+        grid.appendChild(E("rect",{x:X+14,y:Y+28,width:12,height:2,fill:"#ffd6e8","pointer-events":"none"}));
+        grid.appendChild(E("rect",{x:X+25,y:Y+5,width:5,height:5,fill:"#ffd1eb",transform:`rotate(45 ${X+27.5} ${Y+7.5})`,"pointer-events":"none"}));
+      }
+    }
+    if(c=="A"&&edit){
+      if(!drawPixelAsset("player",X,Y)){
+        rect(X+4,Y+4,T-8,T-8,"#ffd640","#a56500");
+        grid.appendChild(E("rect",{x:X+10,y:Y+14,width:8,height:8,fill:"#fff",stroke:"#422600","stroke-width":1,"pointer-events":"none"}));
+        grid.appendChild(E("rect",{x:X+23,y:Y+14,width:8,height:8,fill:"#fff",stroke:"#422600","stroke-width":1,"pointer-events":"none"}));
+        text(X+20,Y+34,"A","#111",12);
+      }
+    }
+    if(c=="S"){
+      const pressed=(typeof buttonIsPressed==="function") ? buttonIsPressed(x,y) : false;
+      const assetName=pressed ? "button_on" : "button_off";
+      if(!drawPixelAsset(assetName,X,Y)){
+        // Bouton fallback : même silhouette ON/OFF, juste la saturation change.
+        const ring=pressed?"#ffd1eb":"#ccb8c7";
+        const core=pressed?"#ff4f93":"#9a7d92";
+        const glow=pressed?"rgba(255,63,145,.55)":"rgba(255,170,220,.20)";
+        grid.appendChild(E("rect",{x:X+12,y:Y+12,width:T-24,height:T-24,rx:4,ry:4,fill:"#171a2d",stroke:ring,"stroke-width":3,"pointer-events":"none"}));
+        grid.appendChild(E("rect",{x:X+16,y:Y+16,width:T-32,height:T-32,rx:3,ry:3,fill:core,stroke:ring,"stroke-width":2,"pointer-events":"none"}));
+        grid.appendChild(E("rect",{x:X+18,y:Y+18,width:T-36,height:3,fill:"rgba(255,255,255,.32)","pointer-events":"none"}));
+        grid.appendChild(E("circle",{cx:X+20,cy:Y+20,r:pressed?8:7,fill:"none",stroke:glow,"stroke-width":2,"pointer-events":"none"}));
+        grid.appendChild(E("rect",{x:X+19,y:Y+19,width:3,height:3,fill:"#fff","pointer-events":"none"}));
+      }
+    }
+    if(c=="R"||c=="L"){
+      const right=c=="R";
+      const assetName=right ? "rotator_right" : "rotator_left";
+      if(!drawPixelAsset(assetName,X,Y)){
+        // Rotateur fallback : carré, flèche nette.
+        grid.appendChild(E("rect",{x:X+5,y:Y+5,width:T-10,height:T-10,rx:3,ry:3,fill:"#073168",stroke:"#29e7ff","stroke-width":4,"pointer-events":"none"}));
+        grid.appendChild(E("rect",{x:X+9,y:Y+9,width:T-18,height:T-18,rx:2,ry:2,fill:"#13295f",stroke:"#8df8ff","stroke-width":1,"pointer-events":"none"}));
+        text(X+20,Y+29,right?"↻":"↺","#eefcff",28);
+      }
+    }
+    if(c=="X"){
+      if(!drawPixelAsset("danger",X,Y)){
+        // Danger fallback : cube piquant rouge à œil.
+        grid.appendChild(E("polygon",{
+          points:`${X+20},${Y+1} ${X+25},${Y+8} ${X+34},${Y+5} ${X+32},${Y+15} ${X+39},${Y+20} ${X+32},${Y+25} ${X+34},${Y+35} ${X+25},${Y+32} ${X+20},${Y+39} ${X+15},${Y+32} ${X+6},${Y+35} ${X+8},${Y+25} ${X+1},${Y+20} ${X+8},${Y+15} ${X+6},${Y+5} ${X+15},${Y+8}`,
+          fill:"#ff304f",
+          stroke:"#5a0010",
+          "stroke-width":3,
+          "pointer-events":"none"
+        }));
+        grid.appendChild(E("rect",{x:X+10,y:Y+10,width:T-20,height:T-20,rx:2,ry:2,fill:"#790019",stroke:"#ff9aaa","stroke-width":2,"pointer-events":"none"}));
+        grid.appendChild(E("rect",{x:X+14,y:Y+15,width:12,height:10,fill:"#fff2f5",stroke:"#39000a","stroke-width":2,"pointer-events":"none"}));
+        grid.appendChild(E("rect",{x:X+19,y:Y+18,width:4,height:4,fill:"#120006","pointer-events":"none"}));
+      }
+    }
+    if(c=="D"||c=="O"){
+      const raised=c=="D";
+      const assetName=raised ? "block_up" : "block_down";
+      if(!drawPixelAsset(assetName,X,Y)){
+        if(raised){
+          // Bloc sorti fallback : lisible, avec une vraie lecture top/side.
+          grid.appendChild(E("rect",{x:X+7,y:Y+16,width:T-14,height:T-12,rx:2,ry:2,fill:"#8f164b",stroke:"#4e0625","stroke-width":3,"pointer-events":"none"}));
+          grid.appendChild(E("rect",{x:X+7,y:Y+7,width:T-14,height:T-20,rx:2,ry:2,fill:"#ff4f93",stroke:"#ffd1eb","stroke-width":3,"pointer-events":"none"}));
+          grid.appendChild(E("rect",{x:X+10,y:Y+10,width:T-20,height:4,fill:"rgba(255,255,255,.34)","pointer-events":"none"}));
+          grid.appendChild(E("rect",{x:X+12,y:Y+17,width:T-24,height:8,fill:"rgba(140,15,73,.35)","pointer-events":"none"}));
+          grid.appendChild(E("rect",{x:X+11,y:Y+11,width:T-22,height:T-28,fill:"none",stroke:"rgba(255,255,255,.34)","stroke-width":2,"pointer-events":"none"}));
+        }else{
+          // Bloc rentré fallback : même empreinte, enfoncé et gris.
+          grid.appendChild(E("rect",{x:X+7,y:Y+14,width:T-14,height:T-20,rx:2,ry:2,fill:"#1a1d24",stroke:"#303541","stroke-width":3,"pointer-events":"none"}));
+          grid.appendChild(E("rect",{x:X+11,y:Y+18,width:T-22,height:T-28,rx:1,ry:1,fill:"#404552",stroke:"#787d8b","stroke-width":2,"pointer-events":"none"}));
+          grid.appendChild(E("rect",{x:X+14,y:Y+21,width:T-28,height:3,fill:"rgba(255,255,255,.10)","pointer-events":"none"}));
+          grid.appendChild(E("rect",{x:X+9,y:Y+31,width:T-18,height:3,fill:"rgba(0,0,0,.36)","pointer-events":"none"}));
+        }
+      }
+    }
+  }
+  if(!edit&&!deadPlayer){
+    let X=p.x*T,Y=p.y*T;
+    let idle=(!busy&&!gameOver)?Math.sin(idleTick*.12)*1.4:0;
+    let sx=1+squash*.22, sy=1-squash*.18;
+    let inv=-visualOri*90;
+    let grp=E("g",{transform:`translate(${X+20} ${Y+20+idle}) rotate(${inv}) scale(${sx} ${sy}) translate(${-20} ${-20})`,"pointer-events":"none"});
+    if(!drawPixelAsset("player",0,0,grp)){
+      grp.appendChild(E("rect",{x:4,y:4,width:T-8,height:T-8,rx:2,ry:2,fill:"#ffd640",stroke:"#a56500","stroke-width":4}));
+      grp.appendChild(E("rect",{x:9,y:9,width:T-18,height:5,fill:"rgba(255,255,255,.25)"}));
+      grp.appendChild(E("rect",{x:11,y:15,width:9,height:9,fill:"#fff",stroke:"#422600","stroke-width":1}));
+      grp.appendChild(E("rect",{x:24,y:15,width:9,height:9,fill:"#fff",stroke:"#422600","stroke-width":1}));
+      grp.appendChild(E("rect",{x:15,y:18,width:3,height:3,fill:"#111"}));
+      grp.appendChild(E("rect",{x:28,y:18,width:3,height:3,fill:"#111"}));
+      grp.appendChild(E("rect",{x:14,y:28,width:12,height:2,fill:"#7a4a00"}));
+    }
+    grid.appendChild(grp);
+  }
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+    let c=E("rect",{x:x*T,y:y*T,width:T,height:T,fill:"rgba(0,0,0,0.001)",stroke:"transparent",class:"hitcell"});
+    c.dataset.x=x;c.dataset.y=y;
+    c.addEventListener("pointerdown",startPaint);
+    c.addEventListener("pointerenter",paintEnter);
+    c.addEventListener("pointermove",paintMove);
+    grid.appendChild(c);
+  }
+  document.body.classList.toggle("editing",edit);
+  modeLabel.textContent=(edit?"EDIT":"PLAY");
+  document.getElementById("toggleEdit").textContent=edit?"ÉDITION":"⚙";
+  document.getElementById("toggleEdit").title=edit?"Quitter l’édition":"Ouvrir les outils";
+  document.getElementById("toggleEdit").className=edit?"active gearBtn":"gearBtn";
+  editPanel.className=edit?"":"hidden";
+  document.getElementById("levelInput").value=currentLevel+1;updateLockUI();
+}
+
+function paintCell(x,y){
+  if(!edit)return;
+  if(isLocked()){
+    status.innerHTML='<span class="lockedWarn">Niveau verrouillé.</span>';
+    return;
+  }
+  const key=x+","+y;
+  if(key===lastPaintKey)return;
+  lastPaintKey=key;
+
+  let v=tool.value;
+  if(v=="A"){
+    for(let yy=0;yy<H;yy++)for(let xx=0;xx<W;xx++)if(baseMap[yy][xx]=="A")baseMap[yy][xx]=".";
+  }
+  if(v=="B"){
+    for(let yy=0;yy<H;yy++)for(let xx=0;xx<W;xx++)if(baseMap[yy][xx]=="B")baseMap[yy][xx]=".";
+  }
+
+  baseMap[y][x]=v;
+  normalize();
+  draw();
+}
+function startPaint(ev){
+  if(!edit)return;
+  ev.preventDefault();
+  painting=true;
+  lastPaintKey="";
+  const t=ev.currentTarget;
+  paintCell(+t.dataset.x,+t.dataset.y);
+}
+function paintEnter(ev){
+  if(!edit||!painting)return;
+  const t=ev.currentTarget;
+  paintCell(+t.dataset.x,+t.dataset.y);
+}
+function paintMove(ev){
+  if(!edit||!painting)return;
+  const el=document.elementFromPoint(ev.clientX,ev.clientY);
+  if(el&&el.dataset&&el.dataset.x!==undefined){
+    paintCell(+el.dataset.x,+el.dataset.y);
+  }
+}
+window.addEventListener("pointerup",()=>{painting=false;lastPaintKey=""});
+window.addEventListener("pointercancel",()=>{painting=false;lastPaintKey=""});
+
+function block(c){return c=="#"||c=="D"} // D bloque. O ne bloque jamais.
+function solid(x,y){return x<0||y<0||x>=W||y>=H||block(b[y][x])}
+function outside(x,y){return x<0||y<0||x>=W||y>=H}
+function cw(m){let o=Array.from({length:H},()=>Array(W).fill("."));for(let y=0;y<H;y++)for(let x=0;x<W;x++)o[x][H-1-y]=m[y][x];return o}
+function ccw(m){let o=Array.from({length:H},()=>Array(W).fill("."));for(let y=0;y<H;y++)for(let x=0;x<W;x++)o[W-1-x][y]=m[y][x];return o}
+function pcw(q){return{x:H-1-q.y,y:q.x}}function pccw(q){return{x:q.y,y:W-1-q.x}}
+function apply(d){visualOri=(visualOri+d+4)%4;if(d>0){b=cw(b);p=pcw(p);exit=pcw(exit)}else{b=ccw(b);p=pccw(p);exit=pccw(exit)}}
+function toggleDoors(){
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){if(b[y][x]=="D")b[y][x]="O";else if(b[y][x]=="O")b[y][x]="D";}
+}
+function turn(d){
+  if(edit||busy||gameOver)return;
+  hideCompanion(false);clearTimeout(companionTimer);clearTimeout(companionIdleTimer);
+  busy=true;moves++;rotatorCooldown=false;soundMove();updateStats();
+  const dur=getRotationDurationMs();
+  const interval=16;
+  const step=Math.max(2,90/(dur/interval));
+  let a=0,target=d*90,timer=setInterval(()=>{
+    a+=d*step;
+    rot.setAttribute("transform","rotate("+a+" 260 260)");
+    if(Math.abs(a)>=Math.abs(target)){
+      clearInterval(timer);
+      rot.setAttribute("transform","rotate(0 260 260)");
+      apply(d);draw();fall();
+    }
+  },interval);
+}
+function shake(dist){if(dist<=0)return;let amp=Math.min(7,1.5+dist*.7),s=[[amp,0],[-amp*.65,0],[amp*.35,0],[0,0]],i=0;(function tick(){let v=s[i++];stage.style.transform=`translate(${v[0]}px,${v[1]}px)`;if(i<s.length)setTimeout(tick,25);else stage.style.transform="translate(0,0)"})()}
+
+function buttonIsPressed(x,y){
+  // V48 runtime fix: le bouton est "appuyé" quand le cube est sur la case.
+  // Et même sinon, son rendu reste cliquable visuellement.
+  return !edit && p && p.x===x && p.y===y && b[y] && b[y][x]==="S";
+}
+
+function touchSwitch(){if(b[p.y]&&b[p.y][p.x]=="S"){toggleDoors();status.textContent="Bouton : portes inversées.";draw();return true}return false}
+
+function dissolvePlayer(){
+  const boardRect=document.querySelector(".boardWrap").getBoundingClientRect();
+  const svgRect=svg.getBoundingClientRect();
+  const scale=svgRect.width/520;
+  const cx=svgRect.left + (p.x*T+20)*scale;
+  const cy=svgRect.top + (p.y*T+20)*scale;
+  const colors=["#f1c453","#ffd978","#5b3600","#ffffff","#111111"];
+  for(let i=0;i<38;i++){
+    let d=document.createElement("div");
+    d.className="deathPixel";
+    d.style.left=(cx-3 + (Math.random()*26-13))+"px";
+    d.style.top=(cy-3 + (Math.random()*26-13))+"px";
+    d.style.background=colors[Math.floor(Math.random()*colors.length)];
+    d.style.setProperty("--dx",(Math.random()*120-60)+"px");
+    d.style.setProperty("--dy",(Math.random()*120-60)+"px");
+    document.body.appendChild(d);
+    setTimeout(()=>d.remove(),700);
+  }
+}
+
+
+function floatingHearts(){
+  const svgRect=svg.getBoundingClientRect();
+  const scale=svgRect.width/520;
+  const cx=svgRect.left + (p.x*T+20)*scale;
+  const cy=svgRect.top + (p.y*T+10)*scale;
+  const hearts=["♥","❤","♡"];
+  for(let i=0;i<10;i++){
+    let h=document.createElement("div");
+    h.className="heart";
+    h.textContent=hearts[i%hearts.length];
+    h.style.left=(cx+(Math.random()*42-21))+"px";
+    h.style.top=(cy+(Math.random()*18-9))+"px";
+    h.style.color=i%2?"#ff6b9b":"#ffd1df";
+    h.style.animationDelay=(i*.08)+"s";
+    document.body.appendChild(h);
+    setTimeout(()=>h.remove(),1700);
+  }
+}
+
+
+
+function bigHeart(){
+  const svgRect=svg.getBoundingClientRect();
+  const scale=svgRect.width/520;
+  const cx=svgRect.left + (p.x*T+20)*scale;
+  const cy=svgRect.top + (p.y*T+12)*scale;
+  let h=document.createElement("div");
+  h.className="bigHeart";
+  h.textContent="♥";
+  h.style.left=cx+"px";
+  h.style.top=cy+"px";
+  h.style.color="#ff6b9b";
+  document.body.appendChild(h);
+  setTimeout(()=>h.remove(),1600);
+}
+function gravelFx(distance){
+  if(distance<=0)return;
+  const svgRect=svg.getBoundingClientRect();
+  const scale=svgRect.width/520;
+  const cx=svgRect.left + (p.x*T+20)*scale;
+  const cy=svgRect.top + (p.y*T+34)*scale;
+  const count=Math.min(22,6+distance*3);
+  const colors=["#8aa0ff","#b8bddc","#74778b","#f1c453"];
+  for(let i=0;i<count;i++){
+    let d=document.createElement("div");
+    d.className="gravel";
+    d.style.left=(cx+(Math.random()*24-12))+"px";
+    d.style.top=(cy+(Math.random()*8-4))+"px";
+    d.style.background=colors[Math.floor(Math.random()*colors.length)];
+    d.style.setProperty("--dx",(Math.random()*70-35)+"px");
+    d.style.setProperty("--dy",(-8-Math.random()*28)+"px");
+    document.body.appendChild(d);
+    setTimeout(()=>d.remove(),650);
+  }
+}
+
+
+function wrapX(x){ return x<0 ? W-1 : (x>=W ? 0 : x); }
+function wrapY(y){ return y<0 ? H-1 : (y>=H ? 0 : y); }
+function isDeathTile(x,y){ return b[y] && b[y][x] === "X"; }
+function isRotatorTile(x,y){ return b[y] && (b[y][x] === "R" || b[y][x] === "L"); }
+function rotatorDir(x,y){ return b[y][x] === "R" ? 1 : -1; }
+
+function autoRotateFromTile(dir){
+  busy=true;
+  rotatorCooldown=true;
+  const dur=getRotationDurationMs();
+  const interval=16;
+  const step=Math.max(2,90/(dur/interval));
+  let a=0,target=dir*90;
+  let timer=setInterval(()=>{
+    a+=dir*step;
+    rot.setAttribute("transform","rotate("+a+" 260 260)");
+    if(Math.abs(a)>=Math.abs(target)){
+      clearInterval(timer);
+      rot.setAttribute("transform","rotate(0 260 260)");
+      apply(dir);
+      draw();
+      setTimeout(()=>fall(),getFallDelayMs());
+    }
+  },interval);
+}
+
+function triggerDeathTile(){
+  gameOver=true;
+  deadPlayer=true;
+  status.textContent="Mort : case ☠.";
+  soundCrash();
+  dissolvePlayer();
+  draw();
+  showBanner("MORT ☠","La tronche de la mort t'a pulvérisé.", "☆☆☆","lose");
+  busy=false;
+}
+
+function fall(){
+  if(edit||gameOver)return;
+  let dist=0;
+  let safety=0;
+
+  const step=()=>{
+    if(edit||gameOver){busy=false;return}
+    if(safety++>160){
+      busy=false;
+      status.textContent="Boucle stoppée pour sécurité.";
+      return;
+    }
+
+    touchSwitch();
+
+    if(isDeathTile(p.x,p.y)){
+      triggerDeathTile();
+      return;
+    }
+
+    // Rotateur : se déclenche une seule fois tant que le cube n’a pas quitté la case.
+    // Sinon il tourne en boucle comme une IA junior en panique. Non merci.
+    if(isRotatorTile(p.x,p.y) && !rotatorCooldown){
+      const d=rotatorDir(p.x,p.y);
+      status.textContent=d>0 ? "Rotateur droite activé." : "Rotateur gauche activé.";
+      autoRotateFromTile(d);
+      return;
+    }
+
+    let nx=wrapX(p.x);
+    let ny=wrapY(p.y+1);
+
+    if(!solid(nx,ny)){
+      const oldKey=p.x+","+p.y;
+      p.y=ny;
+      p.x=nx;
+      const newKey=p.x+","+p.y;
+      if(newKey!==oldKey)rotatorCooldown=false;
+      dist++;
+      draw();
+      setTimeout(step,getFallDelayMs());
+    }else{
+      touchSwitch();
+      shake(dist);
+      soundLand(dist);
+      squash=Math.min(1,0.25+dist*.11);
+      setTimeout(()=>{squash=0;draw()},130);
+      gravelFx(dist);
+      draw();
+      busy=false;
+      if(p.x==exit.x&&p.y==exit.y){
+        gameOver=true;
+        let s=starScore();
+        let stars="♥".repeat(s)+"♡".repeat(3-s);
+        status.textContent="Niveau gagné.";
+        soundLove();
+        soundWin();
+        bigHeart();
+        floatingHearts();
+        startConfetti();
+        saveWinProgress();
+        showBanner("DESTINÉE RETROUVÉE","« "+levels[currentLevel].name+" » · "+moves+" coups · objectif 3♥ : "+levels[currentLevel].maxMoves,stars,"win");
+      }
+    }
+  };
+  step();
+}
+
+function spawnBgDots(clear=false){
+  const bg=document.getElementById("pixelBg");
+  if(clear)bg.innerHTML="";
+  const biome=(localStorage.getItem("gravity_cube_biome")||"cosmic");
+  const palettes={
+    cosmic:["#00e5ff","#ff2bd6","#7c4dff","#fff000","#00e676"],
+    forest:["#00ff66","#b6ff00","#00c853","#ffea00","#31ffb7"],
+    desert:["#ff8a00","#ffd000","#ff3d00","#fff176","#ff6b00"],
+    ice:["#00d5ff","#d8fbff","#59f0ff","#ffffff","#7c9cff"],
+    rainbow:["#ff2bd6","#ff8a00","#fff000","#00e676","#00b8ff"]
+  };
+  const types={
+    cosmic:["cloud","star","rock","plant","spark"],
+    forest:["plant","plant","rock","spark","cloud"],
+    desert:["rock","spark","cloud","rock","star"],
+    ice:["spark","cloud","rock","star","spark"],
+    rainbow:["star","spark","cloud","plant","spark"]
+  };
+  const p=palettes[biome],t=types[biome];
+  const shapes=[
+    {x:"8%",y:"12%",s:88,c:p[0],t:t[0]},
+    {x:"78%",y:"14%",s:74,c:p[1],t:t[1]},
+    {x:"10%",y:"68%",s:104,c:p[2],t:t[2]},
+    {x:"76%",y:"66%",s:96,c:p[3],t:t[3]},
+    {x:"44%",y:"8%",s:70,c:p[4],t:t[4]}
+  ];
+  for(const sh of shapes){
+    const d=document.createElement("div");
+    d.className="pxshape";
+    d.style.left=sh.x; d.style.top=sh.y; d.style.width=sh.s+"px"; d.style.height=sh.s+"px";
+    d.innerHTML=pixelShape(sh.c,sh.t);
+    bg.appendChild(d);
+  }
+}
+function pixelShape(c,t){
+  if(t==="star")return `<svg viewBox="0 0 16 16"><rect x="7" y="1" width="2" height="4" fill="${c}"/><rect x="7" y="11" width="2" height="4" fill="${c}"/><rect x="1" y="7" width="4" height="2" fill="${c}"/><rect x="11" y="7" width="4" height="2" fill="${c}"/><rect x="6" y="6" width="4" height="4" fill="${c}"/></svg>`;
+  if(t==="plant")return `<svg viewBox="0 0 16 16"><rect x="7" y="6" width="2" height="8" fill="${c}"/><rect x="4" y="8" width="3" height="2" fill="${c}"/><rect x="9" y="5" width="4" height="2" fill="${c}"/><rect x="5" y="3" width="2" height="3" fill="${c}"/><rect x="6" y="14" width="4" height="1" fill="${c}"/></svg>`;
+  if(t==="rock")return `<svg viewBox="0 0 16 16"><rect x="3" y="6" width="10" height="6" fill="${c}"/><rect x="5" y="4" width="6" height="2" fill="${c}"/><rect x="2" y="8" width="2" height="3" fill="${c}"/><rect x="12" y="7" width="2" height="4" fill="${c}"/><rect x="5" y="7" width="2" height="1" fill="rgba(255,255,255,.45)"/></svg>`;
+  if(t==="spark")return `<svg viewBox="0 0 16 16"><rect x="7" y="2" width="2" height="12" fill="${c}"/><rect x="2" y="7" width="12" height="2" fill="${c}"/><rect x="5" y="5" width="6" height="6" fill="${c}"/></svg>`;
+  return `<svg viewBox="0 0 16 16"><rect x="3" y="6" width="10" height="4" fill="${c}"/><rect x="5" y="4" width="6" height="2" fill="${c}"/><rect x="2" y="8" width="12" height="3" fill="${c}"/><rect x="5" y="7" width="2" height="1" fill="rgba(255,255,255,.45)"/></svg>`;
+}
+function confettiBurst(count=24){
+  const colors=["#ffd640","#52f28a","#3fc1ff","#ff6b9b","#9b6cff","#ff8fc2"];
+  const glyphs=["","","","♥","✦"];
+  for(let i=0;i<count;i++){
+    let c=document.createElement("div");
+    c.className="confetti";
+    const glyph=glyphs[Math.floor(Math.random()*glyphs.length)];
+    c.style.left=(Math.random()*100)+"vw";
+    c.style.animationDelay=(Math.random()*.18)+"s";
+    c.style.animationDuration=(1.0+Math.random()*1.0)+"s";
+    c.style.transform=`translateY(-20px) rotate(${Math.random()*180}deg)`;
+    if(glyph){
+      c.textContent=glyph;
+      c.style.width='18px';
+      c.style.height='18px';
+      c.style.background='transparent';
+      c.style.color=colors[Math.floor(Math.random()*colors.length)];
+    }else{
+      c.style.background=colors[Math.floor(Math.random()*colors.length)];
+      c.style.borderRadius=(Math.random()>.6?'50%':'2px');
+    }
+    stage.appendChild(c);
+    setTimeout(()=>c.remove(),2600);
+  }
+}
+function startConfetti(){
+  stopConfetti();
+  confettiBurst(52);
+  confettiTimer=setInterval(()=>confettiBurst(18),360);
+}
+function stopConfetti(){
+  if(confettiTimer){clearInterval(confettiTimer);confettiTimer=null}
+}
+
+function applyBiomeVisual(name){
+  document.body.classList.remove("biome-cosmic","biome-forest","biome-desert","biome-ice","biome-rainbow");
+  document.body.classList.add("biome-"+name);
+  spawnBgDots(true);
+}
+function setBiome(name){
+  levels[currentLevel].biome=name;
+  applyBiomeVisual(name);
+  status.textContent="Biome du niveau sauvegardé : "+name+".";
+}
+function saveLocal(){writeCurrentLevel();localStorage.setItem("gravity_cube_levels_draft",JSON.stringify({version:5,settings:gameSettings,levels}));status.textContent="Brouillon local sauvegardé."}
+function loadLocal(){
+  let raw=localStorage.getItem("gravity_cube_levels_draft");
+  if(!raw){status.textContent="Aucune sauvegarde locale.";return false}
+  const data=JSON.parse(raw);
+  if(Array.isArray(data)){
+    levels=data;
+    gameSettings={fallDelayMs:135,rotationDurationMs:320};
+  }else{
+    levels=data.levels||[];
+    gameSettings={...gameSettings,...(data.settings||{})};
+  }
+  syncSpeedInputs();
+  loadFromLevel(Math.min(currentLevel,levels.length-1));
+  status.textContent="Brouillon local chargé.";
+  return true;
+}
+function exportJson(){
+  writeCurrentLevel();
+  let blob=new Blob([JSON.stringify({version:5,settings:gameSettings,levels},null,2)],{type:"application/json"}),a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="levels.json";
+  a.click();
+  URL.revokeObjectURL(a.href);
+  status.textContent="levels.json exporté. Remplace ce fichier sur Netlify.";
+}
+function importJson(file){
+  let r=new FileReader();
+  r.onload=()=>{
+    let data=JSON.parse(r.result);
+    levels=data.levels||data;
+    gameSettings={...gameSettings,...(data.settings||{})};
+    syncSpeedInputs();
+    const fallbackBiome=data.biome||"cosmic";
+    levels.forEach(l=>{if(!l.biome)l.biome=fallbackBiome});
+    currentLevel=0;
+    saveLocal();
+    loadFromLevel(0);
+    status.textContent="JSON importé avec biomes par niveau.";
+  };
+  r.readAsText(file);
+}
+function generatedMap(){
+  const templates=[
+[
+".............",
+"....B........",
+"...###.......",
+".....#.......",
+".....#...X...",
+"...R##.......",
+".....#.......",
+".....#.......",
+"...###.......",
+"...A.........",
+".............",
+".............",
+"............."],
+[
+".............",
+"..B..........",
+"..##.........",
+"...#.....X...",
+"...#.........",
+"...##L.......",
+"....#........",
+"....#........",
+"....###......",
+"......A......",
+".............",
+".............",
+"............."],
+[
+".............",
+".........B...",
+"........###..",
+"...X......#..",
+"..........#..",
+"......R####..",
+"..........#..",
+"......L...#..",
+"......#####..",
+"..A..........",
+".............",
+".............",
+"............."]
+  ];
+  return templates[Math.floor(Math.random()*templates.length)];
+}
+function addLevel(){writeCurrentLevel();levels.push({name:"Nouveau niveau "+(levels.length+1),maxMoves:999,locked:false,difficulty:1,biome:document.getElementById("biomeSelect").value||"cosmic",map:generatedMap()});loadFromLevel(levels.length-1);edit=true;draw();calcMoves();status.textContent="Nouveau niveau ajouté avec une base."}
+function genLevel(){if(isLocked()){status.innerHTML='<span class="lockedWarn">Niveau verrouillé.</span>';return}baseMap=arr(generatedMap());normalize();levels[currentLevel].map=map();resetPlay();edit=true;draw();calcMoves();status.textContent="Base générée pour ce niveau."}
+function clearMap(){if(isLocked()){status.innerHTML='<span class="lockedWarn">Niveau verrouillé.</span>';return}baseMap=Array.from({length:H},()=>Array(W).fill("."));baseMap[1][1]="A";baseMap[H-2][W-2]="B";normalize();levels[currentLevel].map=map();resetPlay();edit=true;draw();status.textContent="Carte vidée."}
+function goLevel(i){writeCurrentLevel();loadFromLevel(i);saveCurrentProgress();status.textContent="Niveau "+(currentLevel+1)+" chargé : "+(levels[currentLevel].name||"sans nom")+"."}
+function goInput(){let n=parseInt(document.getElementById("levelInput").value,10);if(!isNaN(n))goLevel(n-1)}
+
+function simFall(state){
+  let {map,p}=state; let steps=0; let switchesHit=0;
+  const isBlock=(c)=>c=="#"||c=="D";
+  const out=(x,y)=>x<0||y<0||x>=W||y>=H;
+  const sol=(x,y)=>out(x,y)||isBlock(map[y][x]);
+  while(true){
+    if(map[p.y]&&map[p.y][p.x]=="S"){
+      switchesHit++;
+      if(switchesHit>8)return {dead:true};
+      map=map.map(r=>r.map(c=>c=="D"?"O":c=="O"?"D":c));
+    }
+    let nx=p.x,ny=p.y+1;
+    if(out(nx,ny))return {dead:true};
+    if(!sol(nx,ny)){p={x:nx,y:ny};steps++; if(steps>80)return {dead:true}; continue;}
+    if(map[p.y]&&map[p.y][p.x]=="S"){
+      switchesHit++;
+      if(switchesHit>8)return {dead:true};
+      map=map.map(r=>r.map(c=>c=="D"?"O":c=="O"?"D":c));
+    }
+    return {map,p,dead:false};
+  }
+}
+function simRotate(state,d){
+  let map=state.map,p=state.p,ex=state.exit;
+  const rcw=(m)=>{let o=Array.from({length:H},()=>Array(W).fill("."));for(let y=0;y<H;y++)for(let x=0;x<W;x++)o[x][H-1-y]=m[y][x];return o};
+  const rccw=(m)=>{let o=Array.from({length:H},()=>Array(W).fill("."));for(let y=0;y<H;y++)for(let x=0;x<W;x++)o[W-1-x][y]=m[y][x];return o};
+  const qcw=(q)=>({x:H-1-q.y,y:q.x}), qccw=(q)=>({x:q.y,y:W-1-q.x});
+  if(d>0){map=rcw(map);p=qcw(p);ex=qcw(ex)} else {map=rccw(map);p=qccw(p);ex=qccw(ex)}
+  return simFall({map,p,exit:ex});
+}
+function stateKey(s){return s.p.x+","+s.p.y+"|"+s.exit.x+","+s.exit.y+"|"+s.map.map(r=>r.join("")).join("")}
+function calcMoves(){
+  writeCurrentLevel();
+  let m=arr(levels[currentLevel].map),sp={x:0,y:0},ex={x:0,y:0};
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){if(m[y][x]=="A"){sp={x,y};m[y][x]="."}if(m[y][x]=="B")ex={x,y}}
+  let start=simFall({map:m,p:sp,exit:ex});
+  if(start.dead){levels[currentLevel].maxMoves=999;status.textContent="Calcul impossible : le départ tombe hors plateau.";return}
+  start.exit=ex;
+  let q=[{...start,moves:0}],seen=new Set([stateKey(start)]),limit=18;
+  while(q.length){
+    let s=q.shift();
+    if(s.p.x==s.exit.x&&s.p.y==s.exit.y){levels[currentLevel].maxMoves=s.moves;status.textContent="Objectif 3★ calculé : "+s.moves+" coups.";updateStats();return}
+    if(s.moves>=limit)continue;
+    for(let d of [-1,1]){
+      let n=simRotate({map:s.map.map(r=>r.slice()),p:{...s.p},exit:{...s.exit}},d);
+      if(n.dead)continue;
+      n.exit=d>0?pcw(s.exit):pccw(s.exit); // keep exit consistent after rotation
+      let k=stateKey(n);
+      if(!seen.has(k)){seen.add(k);q.push({...n,moves:s.moves+1})}
+    }
+  }
+  levels[currentLevel].maxMoves=999;status.textContent="Aucune solution trouvée jusqu'à 18 coups.";
+}
+
+
+function setGroupState(g,collapsed){
+  g.classList.toggle("collapsed",collapsed);
+  const b=g.querySelector("[data-fold]");
+  if(b)b.textContent=collapsed?"▸":"▾";
+}
+function toggleCompactEditor(){
+  const groups=[...document.querySelectorAll("#editPanel .group")];
+  const anyCollapsed=groups.some(g=>g.classList.contains("collapsed"));
+  if(anyCollapsed){
+    groups.forEach(g=>setGroupState(g,false));
+    document.getElementById("compactEdit").textContent="Compact";
+  }else{
+    groups.forEach((g,i)=>setGroupState(g,i!==0));
+    document.getElementById("compactEdit").textContent="Ouvrir tout";
+  }
+}
+document.querySelectorAll("[data-fold]").forEach(btn=>{
+  btn.onclick=()=>{
+    const g=btn.closest(".group");
+    g.classList.toggle("collapsed");
+    btn.textContent=g.classList.contains("collapsed")?"▸":"▾";
+  };
+});
+document.getElementById("compactEdit").onclick=toggleCompactEditor;
+
+
+function sortByDifficulty(){
+  writeCurrentLevel();
+  levels.sort((a,b)=>(a.difficulty||1)-(b.difficulty||1));
+  currentLevel=savedStartLevel();
+  loadFromLevel(currentLevel);
+  status.textContent="Niveaux triés par difficulté.";
+}
+function askDeleteUnlocked(){
+  writeCurrentLevel();
+  const unlocked=levels.filter(l=>!l.locked).length;
+  const locked=levels.length-unlocked;
+  const box=document.getElementById("confirmBox");
+  document.getElementById("confirmText").innerHTML=
+    "Tu vas supprimer <b>"+unlocked+"</b> niveau(x) non verrouillé(s).<br>Il restera <b>"+locked+"</b> niveau(x) verrouillé(s).<br><br>Export levels.json avant, si tu tiens à tes brouillons. Spoiler : tu y tiens toujours après avoir cliqué.";
+  box.classList.remove("hidden");
+}
+function cancelDeleteUnlocked(){
+  document.getElementById("confirmBox").classList.add("hidden");
+}
+function confirmDeleteUnlocked(){
+  writeCurrentLevel();
+  const kept=levels.filter(l=>l.locked);
+  if(kept.length===0){
+    status.textContent="Suppression annulée : aucun niveau verrouillé à garder.";
+    cancelDeleteUnlocked();
+    return;
+  }
+  levels=kept;
+  currentLevel=0;
+  cancelDeleteUnlocked();
+  loadFromLevel(0);
+  saveLocal();
+  status.textContent="Tous les niveaux non verrouillés ont été supprimés.";
+}
+
+
+function cloneGrid(m){ return m.map(r=>r.slice ? r.slice() : r.split("")); }
+function solverFindPoints(m){
+  let p={x:0,y:0}, ex={x:0,y:0};
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+    if(m[y][x]=="A"){p={x,y};m[y][x]="."}
+    if(m[y][x]=="B"){ex={x,y}}
+  }
+  return {p,ex};
+}
+function solverBlock(c){ return c=="#" || c=="D"; }
+function solverWrapX(x){ return x<0?W-1:(x>=W?0:x); }
+function solverWrapY(y){ return y<0?H-1:(y>=H?0:y); }
+function solverCw(m){
+  let o=Array.from({length:H},()=>Array(W).fill("."));
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++)o[x][H-1-y]=m[y][x];
+  return o;
+}
+function solverCcw(m){
+  let o=Array.from({length:H},()=>Array(W).fill("."));
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++)o[W-1-x][y]=m[y][x];
+  return o;
+}
+function solverPcw(q){return{x:H-1-q.y,y:q.x}}
+function solverPccw(q){return{x:q.y,y:W-1-q.x}}
+function solverToggleDoors(m){
+  return m.map(row=>row.map(c=>c=="D"?"O":c=="O"?"D":c));
+}
+function solverFall(state){
+  let m=cloneGrid(state.m), p={...state.p}, ex={...state.ex};
+  let safety=0, rotCooldown=false;
+  while(true){
+    if(safety++>180)return {dead:true, reason:"boucle pendant la chute"};
+    let c=m[p.y][p.x];
+
+    if(c=="X")return {dead:true, reason:"mort"};
+    if(c=="S"){ m=solverToggleDoors(m); }
+
+    if((c=="R"||c=="L") && !rotCooldown){
+      let d=c=="R"?1:-1;
+      if(d>0){m=solverCw(m); p=solverPcw(p); ex=solverPcw(ex);}
+      else{m=solverCcw(m); p=solverPccw(p); ex=solverPccw(ex);}
+      rotCooldown=true;
+      continue;
+    }
+
+    let nx=solverWrapX(p.x), ny=solverWrapY(p.y+1);
+    if(!solverBlock(m[ny][nx])){
+      let old=p.x+","+p.y;
+      p={x:nx,y:ny};
+      if((p.x+","+p.y)!==old)rotCooldown=false;
+      continue;
+    }
+
+    return {dead:false,m,p,ex};
+  }
+}
+function solverRotate(state,d){
+  let m=cloneGrid(state.m), p={...state.p}, ex={...state.ex};
+  if(d>0){m=solverCw(m); p=solverPcw(p); ex=solverPcw(ex);}
+  else{m=solverCcw(m); p=solverPccw(p); ex=solverPccw(ex);}
+  return solverFall({m,p,ex});
+}
+function solverKey(s){
+  return s.p.x+","+s.p.y+"|"+s.ex.x+","+s.ex.y+"|"+s.m.map(r=>r.join("")).join("");
+}
+function testCurrentLevel(){
+  writeCurrentLevel();
+  let raw=arr(levels[currentLevel].map);
+  let pts=solverFindPoints(raw);
+  let start=solverFall({m:raw,p:pts.p,ex:pts.ex});
+  const maxDepth=24;
+
+  if(start.dead){
+    status.innerHTML='<span class="testBad">Test du jeu : impossible dès le départ ('+start.reason+').</span>';
+    return;
+  }
+
+  let q=[{...start,path:[]}];
+  let seen=new Set([solverKey(start)]);
+
+  while(q.length){
+    let s=q.shift();
+    if(s.p.x==s.ex.x && s.p.y==s.ex.y){
+      const path=s.path.map(d=>d>0?"↻":"↺").join(" ");
+      levels[currentLevel].maxMoves=s.path.length;
+      updateStats();
+      status.innerHTML='<span class="testOk">Test du jeu : OK, finissable en '+s.path.length+' coup(s). Solution : '+(path||"déjà sur la sortie")+'</span>';
+      return;
+    }
+    if(s.path.length>=maxDepth)continue;
+    for(let d of [-1,1]){
+      let n=solverRotate(s,d);
+      if(n.dead)continue;
+      let k=solverKey(n);
+      if(!seen.has(k)){
+        seen.add(k);
+        q.push({...n,path:s.path.concat(d)});
+      }
+    }
+  }
+
+  status.innerHTML='<span class="testBad">Test du jeu : aucune solution trouvée jusqu’à '+maxDepth+' coups. Niveau probablement bloquant.</span>';
+}
+
+
+
+
+const PROGRESS_KEY="gravity_cube_player_progress_v1";
+
+function loadProgress(){
+  try{
+    return JSON.parse(localStorage.getItem(PROGRESS_KEY)||'{"currentLevel":0,"highestLevel":0,"best":{}}');
+  }catch(e){
+    return {currentLevel:0,highestLevel:0,best:{}};
+  }
+}
+function saveProgress(data){
+  try{localStorage.setItem(PROGRESS_KEY,JSON.stringify(data));}catch(e){}
+}
+function saveCurrentProgress(){
+  const pr=loadProgress();
+  pr.currentLevel=currentLevel;
+  pr.highestLevel=Math.max(pr.highestLevel||0,currentLevel);
+  saveProgress(pr);
+}
+function saveWinProgress(){
+  const pr=loadProgress();
+  const stars=starScore();
+  const best=pr.best||{};
+  const old=best[currentLevel];
+  if(!old || moves<old.moves || stars>old.stars){
+    best[currentLevel]={moves:moves,stars:stars};
+  }
+  pr.best=best;
+  pr.currentLevel=Math.min(currentLevel+1,levels.length-1);
+  pr.highestLevel=Math.max(pr.highestLevel||0,currentLevel+1);
+  saveProgress(pr);
+}
+function savedStartLevel(){
+  const pr=loadProgress();
+  let idx=parseInt(pr.currentLevel||0,10);
+  if(!Number.isFinite(idx))idx=0;
+  return Math.max(0,Math.min(levels.length-1,idx));
+}
+
+let companionTimer=null, companionIdleTimer=null;
+const COMPANION_VERSION="v33";
+
+function currentLevelString(){
+  try{return (levels[currentLevel].map||[]).join("");}
+  catch(e){return "";}
+}
+function currentMechanics(){
+  const s=currentLevelString();
+  return {button:/[SDO]/.test(s), death:s.includes("X"), rot:/[RL]/.test(s)};
+}
+function companionStage(){
+  const m=currentMechanics();
+  if(m.rot)return "rotator";
+  if(m.death)return "death";
+  if(m.button)return "button";
+  return currentLevel===0 ? "core" : "";
+}
+function companionSeenKey(stage){
+  return "gravity_cube_companion_"+COMPANION_VERSION+"_seen_"+stage;
+}
+function companionMessage(kind="intro"){
+  const stage=companionStage();
+  if(stage==="core"){
+    return "Tourne le plateau pour me déplacer. Je tombe seulement après la rotation. Cherche surtout où je vais m'arrêter.";
+  }
+  if(stage==="button"){
+    return kind==="hint"
+      ? "Indice : le bouton inverse les portes. Le bon moment compte plus que la vitesse."
+      : "Nouvelle brique : le bouton. Quand je passe dessus, les portes ouvertes se ferment et les portes fermées s'ouvrent.";
+  }
+  if(stage==="death"){
+    return kind==="hint"
+      ? "Indice : vise d'abord une case sûre où atterrir. La sortie vient après."
+      : "Nouvelle brique : la mort. Si je touche la tête de mort, je me désintègre en pixels. Dramatique, mais clair.";
+  }
+  if(stage==="rotator"){
+    return kind==="hint"
+      ? "Indice : le rotateur tourne le monde à ta place. Prévois ma chute après cette rotation forcée."
+      : "Nouvelle brique : le rotateur. Quand je le touche, le plateau tourne automatiquement puis la gravité reprend.";
+  }
+  return kind==="hint"
+    ? "Indice : pense en étapes : rotation, chute, arrêt, prochaine rotation."
+    : "";
+}
+
+function persistentTipText(){
+  const raw = companionMessage("hint") || "Tourne le plateau pour me déplacer.";
+  return raw.startsWith("Indice") || raw.startsWith("Astuce") ? raw : ("Astuce : " + raw);
+}
+
+function showCompanion(msg, markSeen=false){
+  if(edit||gameOver||!msg)return;
+  const dock=document.getElementById("companionDock");
+  const help=document.getElementById("companionHelp");
+  const txt=document.getElementById("companionText");
+  const skip=document.getElementById("companionSkip");
+  if(!dock||!txt)return;
+  txt.textContent=msg;
+  dock.classList.remove("hidden");
+  dock.classList.remove("tipVisible");
+  if(skip)skip.textContent="Passer";
+  if(help)help.classList.add("hidden");
+  if(markSeen){
+    const stage=companionStage();
+    if(stage){
+      try{localStorage.setItem(companionSeenKey(stage),"1")}catch(e){}
+    }
+  }
+}
+function hideCompanion(showHelp=true){
+  const dock=document.getElementById("companionDock");
+  const help=document.getElementById("companionHelp");
+  if(dock){
+    dock.classList.add("hidden");
+    dock.classList.remove("tipVisible");
+  }
+  if(help){
+    if(showHelp&&!edit&&!gameOver)help.classList.remove("hidden");
+    else help.classList.add("hidden");
+  }
+}
+function scheduleCompanion(forceIntro=false){
+  clearTimeout(companionTimer);
+  clearTimeout(companionIdleTimer);
+  if(edit||gameOver)return;
+
+  const help=document.getElementById("companionHelp");
+  if(help)help.classList.remove("hidden");
+
+  const stage=companionStage();
+  if(stage){
+    let seen=false;
+    try{seen=localStorage.getItem(companionSeenKey(stage))==="1"}catch(e){}
+    if(!seen){
+      companionTimer=setTimeout(()=>showCompanion(companionMessage("intro"),true),550);
+      return;
+    }
+  }
+
+  // Aide légère après attente seulement, et le joueur peut la passer.
+  companionIdleTimer=setTimeout(()=>{
+    if(!edit&&!gameOver&&moves===0){
+      showCompanion(companionMessage("hint"),false);
+    }
+  },9000);
+}
+
+document.getElementById("companionSkip").onclick=()=>{
+  const stage=companionStage();
+  if(stage){
+    try{localStorage.setItem(companionSeenKey(stage),"1")}catch(e){}
+  }
+  hideCompanion(true);
+};
+document.getElementById("companionHelp").onclick=()=>showCompanion(companionMessage("hint"),false);
+
+document.getElementById("toggleEdit").onclick=()=>{edit=!edit;if(!edit){resetPlay();scheduleCompanion(true)}else{busy=false;gameOver=false;hideBanner();hideCompanion(false);draw()}};
+document.getElementById("companionSkip").onclick=()=>{
+  const stage=companionStage();
+  if(stage){
+    try{localStorage.setItem(companionSeenKey(stage),"1")}catch(e){}
+  }
+  hideCompanion(true);
+};
+document.getElementById("companionHelp").onclick=()=>showCompanion(companionMessage("hint"),false);
+document.getElementById("sideLeft").onclick=()=>turn(-1);document.getElementById("sideRight").onclick=()=>turn(1);document.getElementById("reset").onclick=resetPlay;
+document.getElementById("saveLocal").onclick=saveLocal;document.getElementById("loadLocal").onclick=loadLocal;
+document.getElementById("exportJson").onclick=exportJson;document.getElementById("importBtn").onclick=()=>document.getElementById("importFile").click();
+document.getElementById("openAssetEditor")?.addEventListener("click",()=>window.open("asset_editor.html","_blank"));
+document.getElementById("importFile").onchange=e=>{if(e.target.files[0])importJson(e.target.files[0])};
+document.getElementById("addLevel").onclick=addLevel;document.getElementById("genLevel").onclick=genLevel;document.getElementById("clear").onclick=clearMap;
+document.getElementById("lvl1").onclick=()=>goLevel(0);document.getElementById("prevLvl").onclick=()=>goLevel(currentLevel-1);document.getElementById("nextLvl").onclick=()=>goLevel(currentLevel+1);document.getElementById("goLvl").onclick=goInput;
+document.getElementById("calcMoves").onclick=calcMoves;
+document.getElementById("testGame").onclick=testCurrentLevel;
+document.getElementById("difficultyInput").onchange=()=>{levels[currentLevel].difficulty=parseInt(document.getElementById("difficultyInput").value||1,10);updateStats();};
+
+document.getElementById("fallDelayInput").oninput=()=>{writeGlobalSettingsFromInputs();status.textContent="Chute globale : "+getFallDelayMs()+" ms.";};
+document.getElementById("rotationDurationInput").oninput=()=>{writeGlobalSettingsFromInputs();status.textContent="Rotation globale : "+getRotationDurationMs()+" ms.";};
+
+document.getElementById("sortDifficulty").onclick=sortByDifficulty;
+document.getElementById("resetProgress").onclick=()=>{localStorage.removeItem(PROGRESS_KEY);status.textContent="Progression joueur remise à zéro.";};
+document.getElementById("resetTutorial").onclick=()=>{
+  ["core","button","death","rotator"].forEach(s=>{
+    try{localStorage.removeItem(companionSeenKey(s))}catch(e){}
+  });
+  status.textContent="Tutoriel compagnon remis à zéro.";
+};
+document.getElementById("deleteUnlocked").onclick=askDeleteUnlocked;
+document.getElementById("confirmCancel").onclick=cancelDeleteUnlocked;
+document.getElementById("confirmDelete").onclick=confirmDeleteUnlocked;
+document.getElementById("lockLevel").onclick=toggleLock;
+document.getElementById("soundToggle").onclick=toggleSound;
+document.getElementById("biomeSelect").onchange=e=>setBiome(e.target.value);
+levelNameInput.onchange=()=>{levels[currentLevel].name=levelNameInput.value.trim()||levels[currentLevel].name;updateStats();draw()};
+window.onkeydown=e=>{
+  const k=e.key.toLowerCase();
+  if(e.key=="ArrowLeft"||k=="a"||k=="q")turn(-1);
+  if(e.key=="ArrowRight"||k=="d")turn(1);
+  if(k=="r")resetPlay();
+};
+
+async function loadStaticLevels(){
+  // V54 ROBUST : charge levels.json si possible.
+  // Si fetch échoue (local file://, Netlify mal déployé, cache, etc.), utilise les niveaux embarqués depuis TON levels.json uploadé.
+  // Aucun vieux draft localStorage, aucun fallbackLevels inventé. On arrête l'archéologie foireuse.
+  let source="levels.json";
+  let data=null;
+
+  try{
+    const url="levels.json?cacheBust="+Date.now();
+    console.log("[LEVELS] Tentative de chargement externe :", url);
+    const res=await fetch(url,{cache:"no-store"});
+    if(!res.ok)throw new Error("HTTP "+res.status);
+    data=await res.json();
+    console.log("[LEVELS] levels.json externe chargé.");
+  }catch(err){
+    console.warn("[LEVELS] levels.json externe indisponible, utilisation des niveaux embarqués dans index.html.", err);
+    data=EMBEDDED_LEVELS_DATA;
+    source="embedded";
+  }
+
+  try{
+    gameSettings={...gameSettings,...(data.settings||{})};
+    syncSpeedInputs();
+
+    levels=data.levels||data;
+    if(!Array.isArray(levels) || !levels.length){
+      throw new Error("Aucun niveau trouvé dans la source "+source);
+    }
+
+    levels.forEach(l=>{
+      if(!l.biome)l.biome="cosmic";
+      if(l.locked===undefined)l.locked=false;
+      if(!l.maxMoves)l.maxMoves=999;
+      if(!l.difficulty)l.difficulty=1;
+    });
+
+    currentLevel=savedStartLevel();
+    if(currentLevel>=levels.length)currentLevel=0;
+
+    console.log("[LEVELS] OK source =",source,"|",levels.length,"niveau(x)",levels.map(l=>l.name));
+    loadFromLevel(currentLevel);
+
+    status.style.display="block";
+    status.textContent="Niveaux chargés depuis "+source+" : "+levels.length+" niveau(x). Niveau courant : "+(currentLevel+1)+".";
+  }catch(err){
+    console.error("[LEVELS] ECHEC TOTAL", err);
+    levels=[];
+    status.style.display="block";
+    status.textContent="ERREUR : impossible de charger les niveaux, même embarqués.";
+    bannerTitle.textContent="Erreur niveaux";
+    bannerText.textContent=String(err.message||err);
+    starsEl.textContent="";
+    bannerAction.textContent="OK";
+    bannerAction.onclick=()=>banner.classList.add("hidden");
+    banner.classList.remove("hidden");
+  }
+}
+
+setInterval(()=>{idleTick++; if(!edit&&!busy&&!gameOver){draw()}},120);
+
+function updateGlobalScale(){
+  const w=window.innerWidth||document.documentElement.clientWidth||1280;
+  const h=window.innerHeight||document.documentElement.clientHeight||720;
+  const portrait=w<h;
+
+  // Référence volontairement simple : tout le HUD suit le même coefficient.
+  // Desktop large ≈ 1, petites fenêtres/iPhone < 1.
+  const refW=portrait ? 390 : 1280;
+  const refH=portrait ? 844 : 720;
+  const s=Math.max(0.74,Math.min(1,Math.min(w/refW,h/refH)));
+  document.documentElement.style.setProperty("--uiScale",s.toFixed(3));
+}
+window.addEventListener("resize",updateGlobalScale);
+window.addEventListener("orientationchange",()=>setTimeout(updateGlobalScale,80));
+updateGlobalScale();
+
+loadAssets().then(loadStaticLevels);
+</script>
+</body></html>
