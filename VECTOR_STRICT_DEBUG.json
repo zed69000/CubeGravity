@@ -1,0 +1,22 @@
+{
+  "version": "V73 strict vector assets",
+  "expected_vector_sha1_10": "3563ce4af1",
+  "layer_counts": {
+    "player": 13,
+    "destination": 9,
+    "button_off": 3,
+    "button_on": 4,
+    "block_up": 3,
+    "block_down": 3,
+    "wall": 3,
+    "danger": 3,
+    "rotator_left": 3,
+    "rotator_right": 3
+  },
+  "what_to_check": [
+    "Ouvre /vector_assets.json directement dans le navigateur.",
+    "Le badge du jeu doit afficher SVG ON.",
+    "Le badge doit afficher player:13 layers si ton fichier est chargé.",
+    "Si badge SVG OFF, le fichier n'est pas au bon endroit ou le navigateur bloque le fetch."
+  ]
+}

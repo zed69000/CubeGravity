@@ -1,0 +1,36 @@
+{
+  "version": "V72 user vector assets loaded",
+  "source_uploaded_file": "/mnt/data/vector_assets(4).json",
+  "fix": "vector_assets(4).json a été renommé en vector_assets.json, le nom exact attendu par le jeu.",
+  "required_assets_missing": [],
+  "asset_layer_counts": {
+    "player": 13,
+    "destination": 9,
+    "button_off": 3,
+    "button_on": 4,
+    "block_up": 3,
+    "block_down": 3,
+    "wall": 3,
+    "danger": 3,
+    "rotator_left": 3,
+    "rotator_right": 3
+  },
+  "deploy_rule": "Sur Netlify, le fichier doit s'appeler exactement vector_assets.json et être au même niveau que index.html.",
+  "expected_files": [
+    "index.html",
+    "levels.json",
+    "assets.json",
+    "vector_assets.json",
+    "asset_svg_editor.html"
+  ],
+  "checks": {
+    "index.html": {
+      "returncode": 0,
+      "stderr": ""
+    },
+    "asset_svg_editor.html": {
+      "returncode": 0,
+      "stderr": ""
+    }
+  }
+}

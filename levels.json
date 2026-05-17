@@ -1,8 +1,8 @@
 {
   "version": 5,
   "settings": {
-    "fallDelayMs": 25,
-    "rotationDurationMs": 40
+    "fallDelayMs": 60,
+    "rotationDurationMs": 120
   },
   "levels": [
     {

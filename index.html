@@ -1194,6 +1194,49 @@ svg{
   }
 }
 
+
+/* ===== V68 vector asset diagnostic ===== */
+#vectorAssetStatus{
+  position:fixed;
+  right:10px;
+  top:10px;
+  z-index:9999;
+  padding:6px 9px;
+  border-radius:10px;
+  font-family:monospace;
+  font-size:11px;
+  font-weight:900;
+  background:rgba(10,12,32,.88);
+  color:#ffd640;
+  border:1px solid rgba(255,255,255,.18);
+  pointer-events:none;
+  box-shadow:0 8px 20px rgba(0,0,0,.28);
+}
+#vectorAssetStatus.ok{color:#52f28a;border-color:#52f28a}
+#vectorAssetStatus.bad{color:#ff7777;border-color:#ff7777}
+body.editing #vectorAssetStatus{top:56px}
+
+
+/* ===== V73 strict vector assets ===== */
+#vectorAssetStatus{
+  position:fixed;
+  right:10px;
+  top:10px;
+  z-index:99999;
+  padding:8px 10px;
+  border-radius:10px;
+  font-family:monospace;
+  font-size:11px;
+  font-weight:900;
+  background:rgba(4,6,24,.94);
+  color:#ffd640;
+  border:2px solid #ffd640;
+  pointer-events:none;
+  white-space:pre-line;
+  box-shadow:0 8px 24px rgba(0,0,0,.4);
+}
+#vectorAssetStatus.ok{color:#52f28a;border-color:#52f28a}
+#vectorAssetStatus.bad{color:#ff6b7a;border-color:#ff6b7a}
 </style>
 </head>
 <body>
@@ -1210,13 +1253,13 @@ svg{
         </select>
       </span>
       <span class="group collapsed"><span class="groupTitle">Niveau</span><button class="foldBtn" data-fold>▸</button>
-        <input id="levelName" placeholder="Nom niveau"><label style="background:#22263a;padding:5px;border-radius:8px">Diff <input id="difficultyInput" type="number" min="1" max="10" value="1" style="width:44px"></label><label class="speedLabel">Chute <input id="fallDelayInput" type="number" min="60" max="500" step="10" value="135"></label><label class="speedLabel">Rotation <input id="rotationDurationInput" type="number" min="120" max="1000" step="20" value="320"></label><button id="lockLevel">🔓 Lock</button><button id="soundToggle">🔊 Son</button><button id="calcMoves">Calc coups</button><button id="testGame">Test du jeu</button><button id="addLevel">+ Level</button><button id="genLevel">Générer base</button><button id="clear">Clear</button>
+        <input id="levelName" placeholder="Nom niveau"><label style="background:#22263a;padding:5px;border-radius:8px">Diff <input id="difficultyInput" type="number" min="1" max="10" value="1" style="width:44px"></label><label class="speedLabel">Chute <input id="fallDelayInput" type="number" min="60" max="500" step="10" value="135"></label><label class="speedLabel">Rotation <input id="rotationDurationInput" type="number" min="120" max="1000" step="20" value="320"></label><button id="lockLevel">🔓 Lock</button><button id="soundToggle">🔊 Son</button><button id="undoLevel">Undo</button><button id="calcMoves">Calc coups</button><button id="testGame">Test du jeu</button><button id="addLevel">+ Level</button><button id="genLevel">Générer base</button><button id="clear">Clear</button>
       </span>
       <span class="group collapsed"><span class="groupTitle">Navigation</span><button class="foldBtn" data-fold>▸</button>
-        <button id="lvl1">Lvl 1</button><button id="prevLvl">-</button><input id="levelInput" type="number" min="1" value="1" style="width:56px"><button id="goLvl">Go</button><button id="nextLvl">+</button><button id="sortDifficulty">Trier diff</button><button id="resetProgress">Reset progression</button><button id="resetTutorial">Reset tutoriel</button><button id="deleteUnlocked">Delete non-lock</button>
+        <button id="lvl1">Lvl 1</button><button id="prevLvl">-</button><input id="levelInput" type="number" min="1" value="1" style="width:56px"><button id="goLvl">Go</button><button id="nextLvl">+</button><button id="sortDifficulty">Trier diff</button><button id="resetProgress">Reset progression</button><button id="resetTutorial">Reset tutoriel</button><button id="deleteLevel">Delete level</button><button id="deleteUnlocked">Delete non-lock</button>
       </span>
       <span class="group collapsed"><span class="groupTitle">Sauvegarde</span><button class="foldBtn" data-fold>▸</button>
-        <button id="saveLocal">Save draft</button><button id="loadLocal">Load draft</button><button id="exportJson">Export levels.json</button><button id="importBtn">Import JSON</button><button id="openAssetEditor">Assets</button><input id="importFile" class="hidden" type="file" accept=".json,application/json">
+        <button id="saveLocal">Save draft</button><button id="loadLocal">Load draft</button><button id="exportJson">Export levels.json</button><button id="importBtn">Import JSON</button><button id="openAssetEditor">Assets pixel</button><button id="openSvgAssetEditor">Assets SVG</button><input id="importFile" class="hidden" type="file" accept=".json,application/json">
       </span>
       <span class="group collapsed"><span class="groupTitle">Biome</span><button class="foldBtn" data-fold>▸</button>
         <select id="biomeSelect"><option value="cosmic">Cosmic</option><option value="forest">Forêt</option><option value="desert">Désert</option><option value="ice">Glace</option><option value="rainbow">Arc-en-ciel</option></select>
@@ -1225,6 +1268,7 @@ svg{
   </div>
 </div>
 
+<div id="vectorAssetStatus">SVG ?</div>
 <div id="stage">
   <div id="levelBadge"></div>
   <div id="pixelBg"></div>
@@ -1268,9 +1312,7 @@ const banner=document.getElementById("banner"),bannerTitle=document.getElementBy
 
 let levels=[];
 let gameSettings={fallDelayMs:135,rotationDurationMs:320};
-const EMBEDDED_LEVELS_DATA = {"version": 5, "settings": {"fallDelayMs": 60, "rotationDurationMs": 120}, "levels": [{"name": "02 - Base", "maxMoves": 2, "locked": true, "difficulty": 2, "biome": "forest", "solution": "RL", "map": [".............", "...B.........", "..#######....", "..#.....#....", "..#.....#....", "..#.#####....", ".............", ".............", "....###.#.##.", "....#......#.", "....#.....A..", "....########.", "............."]}, {"name": "03 - Base", "maxMoves": 5, "locked": true, "difficulty": 3, "biome": "desert", "solution": "RLLRL", "map": [".............", ".............", "....A........", ".............", ".........##B.", ".....###.....", ".........###.", "..........##.", "..####.......", ".........##..", ".............", ".............", "............."]}, {"name": "04 - Base", "maxMoves": 4, "locked": true, "difficulty": 4, "biome": "ice", "solution": "LLLL", "map": [".............", ".............", "........#..A.", "........#....", ".............", "........#....", ".......B#....", "......#####..", ".....#######.", "........#....", "........#....", ".............", "............."]}, {"name": "05 - Base", "maxMoves": 3, "locked": true, "difficulty": 5, "biome": "rainbow", "solution": "LLL", "map": [".............", ".............", "....A........", ".............", ".......#####.", "........B#...", ".....#####...", ".........#...", "...####..#...", ".........#...", ".#.##....#...", ".............", "............."]}, {"name": "06 - Bouton", "maxMoves": 5, "locked": true, "difficulty": 6, "biome": "cosmic", "solution": "LLLLL", "map": [".............", ".............", ".............", "....#B.......", "..###.##D##..", "....#........", "....#........", "..S.#....A...", "....#........", ".###########.", "....#........", ".............", "............."]}, {"name": "07 - Bouton", "maxMoves": 3, "locked": true, "difficulty": 7, "biome": "forest", "solution": "LRR", "map": [".............", ".............", "..B#.........", "...######....", "...#.........", "..S..........", "...#.........", "...#.........", "...D.........", ".###.........", ".A.#.........", ".............", "............."]}, {"name": "08 - Bouton", "maxMoves": 6, "locked": true, "difficulty": 8, "biome": "desert", "solution": "RLRLRL", "map": [".............", ".............", ".............", ".............", ".....#.......", "....B....##..", "..####.......", ".....####....", ".D...........", ".............", "....S........", "...A.........", "............."]}, {"name": "09 - Bouton", "maxMoves": 5, "locked": true, "difficulty": 9, "biome": "ice", "solution": "LRRLL", "map": [".............", ".............", ".............", ".............", ".....#.O###D.", ".....#.......", ".A...####....", ".....#B......", "...####......", ".....#.......", ".#.###.......", "...........S.", "............."]}, {"name": "10 - Jeanne labyrinthe", "maxMoves": 999, "locked": true, "difficulty": 10, "biome": "desert", "requiredMechanic": "button", "solution": "LRRRLLL", "solutionUses": ["O", "S"], "designNote": "Niveau de Jeanne injecté dans le chapitre bouton/porte.", "validation": {"testedSolvable": true, "mainBrickRequired": true, "forcedPosition": 10, "source": "capture / ancien Nouveau niveau 21"}, "map": [".............", ".....#.......", ".#...#.......", "....S#...##..", "....##..#.#..", "........D.#..", "...#....D.#..", "...#...##.#..", "...#...#B.#..", "...#....##...", "...#.A#......", "...#.##......", "............."]}, {"name": "11 - Bouton", "maxMoves": 5, "locked": true, "difficulty": 11, "biome": "rainbow", "solution": "RRRRR", "map": [".............", ".S...........", ".............", ".............", "....#..####D.", "...B#........", "....#####....", "....#........", "...####......", "....#........", ".##.#........", "...A.........", "............."]}, {"name": "12 - Danger", "maxMoves": 5, "locked": true, "difficulty": 12, "biome": "cosmic", "solution": "LLLLL", "map": [".............", "..........S..", "......#...X..", "......#......", "......#......", "......#......", "..########D..", "......#......", "......#......", "......#B.....", "..A####.##...", ".............", "............."]}, {"name": "13 - Danger", "maxMoves": 5, "locked": true, "difficulty": 13, "biome": "forest", "solution": "LLLLL", "map": [".............", ".......A.....", "....#........", "....#........", "....#....S...", "....#........", "....#X.......", "....#B.......", "..##D##......", ".#.#####O....", "....#........", ".............", "............."]}, {"name": "14 - Danger", "maxMoves": 6, "locked": true, "difficulty": 14, "biome": "desert", "solution": "RRLRLR", "map": [".............", ".............", ".............", "....###......", "...A.........", "........###..", "..###........", "...........X.", ".............", ".##.......S..", ".B..#D##.....", "....###...###", "............."]}, {"name": "15 - Danger", "maxMoves": 8, "locked": true, "difficulty": 15, "biome": "ice", "solution": "LLLLLLRL", "map": [".............", ".............", ".............", "......X......", ".##......O.##", "..###........", "....A###.....", ".............", ".............", ".......#D#...", "........B....", "...S......###", "............."]}, {"name": "16 - Danger", "maxMoves": 3, "locked": true, "difficulty": 16, "biome": "rainbow", "solution": "RRR", "map": [".............", ".............", ".............", ".............", "....X...#....", "..#######.#..", "........#B.S.", "........#....", "........#....", ".#######D###.", "......A.#....", "....X........", "............."]}, {"name": "16 - Danger", "maxMoves": 7, "locked": true, "difficulty": 16, "biome": "rainbow", "solution": "RRRRRRR", "map": [".............", ".............", ".............", ".............", "....X...#....", "..#######.#..", "........#B.S.", "........#....", "........#....", ".#######D###.", "......A.#....", "....X........", "............."]}, {"name": "17 - Rotateur", "maxMoves": 8, "locked": true, "difficulty": 17, "biome": "cosmic", "solution": "RRRLRRRR", "map": [".............", ".###.........", ".B.....R.....", ".....D.##....", "...###.......", ".............", "..####.......", "......##.....", ".............", "....S.....X..", "....AX.......", ".............", "............."]}, {"name": "18 - Rotateur", "maxMoves": 8, "locked": true, "difficulty": 18, "biome": "forest", "solution": "RRRRRRLR", "map": [".............", ".......L.....", "..##.####....", "..#.....#....", "..#.....#....", "..##.####....", "...B.........", ".........X...", ".X..#.######.", "....#...S.AD.", "....#......#.", "....####.###.", "............."]}, {"name": "19 - Rotateur", "maxMoves": 8, "locked": true, "difficulty": 19, "biome": "desert", "solution": "RRLLRRLL", "map": [".............", ".............", "..###A##.....", "..#.....D....", "..#.X..S#....", "..#.#####....", ".............", "....X........", ".....###.###.", "....#........", "....#......#.", ".R.B###.O###.", "............."]}, {"name": "20 - Rotateur", "maxMoves": 12, "locked": true, "difficulty": 20, "biome": "ice", "solution": "LLLLRRLRLLLL", "map": [".............", ".............", "..####..#..R.", "..#.....#....", "..#A....O....", "..#####.#....", "......X......", "...S..L...B..", "....##.#..##.", "...X#......#.", "....#........", "....##D###.#.", "............."]}, {"name": "21 - Rotateur", "maxMoves": 9, "locked": true, "difficulty": 21, "biome": "rainbow", "solution": "RLLLRRRRR", "map": [".............", "..X..........", ".............", "..L..........", ".....X######.", "......#S.A...", "..R..##.#....", "......#......", "...####......", "......#B.....", ".###D.#......", ".............", "............."]}]};
-
-let fallbackLevels=[{"name": "Premier verrou", "maxMoves": 4, "locked": false, "biome": "cosmic", "map": [".............", ".#####.......", ".#A..#.......", ".#.#.#.......", ".#.#.###.....", ".#..S..#.....", ".#####.#.....", ".....#D#.....", ".....#B#.....", ".....###.....", ".............", ".............", "............."]}, {"name": "Détour", "maxMoves": 6, "locked": false, "biome": "forest", "map": [".............", "..######.....", "..#A...#.....", "..#.#..#.....", "..#.#D##.....", "..#.#........", "..#S#####....", "..#.....#....", "..#####.#....", "......#B#....", "......###....", ".............", "............."]}];
+let fallbackLevels=[]; // V57: aucun niveau de gameplay en dur. levels.json est obligatoire.
 
 let currentLevel=0,baseMap=[],b=[],p={x:0,y:0},start={x:0,y:0},exit={x:0,y:0};
 let door=false,busy=false,edit=false,moves=0,gameOver=false,confettiTimer=null,deadPlayer=false,idleTick=0,painting=false,lastPaintKey='',visualOri=0,squash=0,soundOn=true,audioCtx=null,rotatorCooldown=false;
@@ -1283,23 +1325,37 @@ function text(x,y,t,f,sz=22){let a=E("text",{x,y,fill:f,"font-size":sz,"font-wei
 let assetPack=null;
 
 async function loadAssets(){
-  try{
-    const res=await fetch("assets.json?ts="+Date.now());
-    if(!res.ok)throw new Error("assets.json introuvable");
-    const data=await res.json();
-    if(!data || !data.assets)throw new Error("assets.json invalide");
-    assetPack=data;
-    console.log("[ASSETS] assets.json chargé", Object.keys(assetPack.assets||{}));
-  }catch(e){
-    assetPack=null;
-    console.warn("[ASSETS] fallback sprites codés en dur :", e.message);
+  // V57 : assets.json externe obligatoire en priorité, mais on teste plusieurs chemins.
+  // Aucun asset gameplay n'est embarqué ici : si assets.json manque, on tombe seulement sur les fallbacks graphiques codés.
+  const candidates=["./assets.json","assets.json","/assets.json"];
+  let lastErr=null;
+  for(const path of candidates){
+    try{
+      const url=path+"?cacheBust="+Date.now();
+      console.log("[ASSETS] tentative", url);
+      const res=await fetch(url,{cache:"no-store"});
+      if(!res.ok)throw new Error("HTTP "+res.status+" sur "+path);
+      const data=await res.json();
+      if(!data || !data.assets || !data.palette)throw new Error("assets.json invalide : assets/palette manquants");
+      assetPack=data;
+      console.log("[ASSETS] OK depuis", path, Object.keys(assetPack.assets||{}));
+      return true;
+    }catch(e){
+      lastErr=e;
+      console.warn("[ASSETS] échec", path, e);
+    }
   }
+  assetPack=null;
+  console.error("[ASSETS] ECHEC assets.json après tous les chemins", lastErr);
+  return false;
 }
 
 function getAssetPixels(name){
   if(!assetPack || !assetPack.assets)return null;
   const a=assetPack.assets[name];
-  return Array.isArray(a) ? a : null;
+  if(Array.isArray(a))return a;
+  if(a && Array.isArray(a.pixels))return a.pixels;
+  return null;
 }
 
 function drawPixelAsset(name,x,y,parent=grid,opts={}){
@@ -1311,22 +1367,38 @@ function drawPixelAsset(name,x,y,parent=grid,opts={}){
   const scale=T/size;
   const alpha=opts.alpha==null ? 1 : opts.alpha;
 
+  const anim=assetPack && assetPack.animation;
+  const shouldEyeShift=anim && anim.enabled && Array.isArray(anim.eyeShiftAssets) && anim.eyeShiftAssets.includes(name);
+  let eyeShift=0;
+  if(shouldEyeShift){
+    const seq=anim.eyeShiftPixels || [0,1,0,-1];
+    const interval=anim.eyeShiftIntervalMs || 420;
+    eyeShift=seq[Math.floor(Date.now()/interval)%seq.length] || 0;
+  }
+
   for(let py=0;py<pixels.length;py++){
     const row=String(pixels[py]||"");
     for(let px=0;px<row.length;px++){
       const key=row[px];
       let col=pal[key];
       if(!col || col==="transparent")continue;
-      const r=E("rect",{
-        x:x+px*scale,
+
+      let dx=0;
+      if(shouldEyeShift && key==="0" && py>=3 && py<=8){
+        dx=eyeShift;
+        const targetX=px+dx;
+        if(targetX<0 || targetX>=row.length) dx=0;
+      }
+
+      parent.appendChild(E("rect",{
+        x:x+(px+dx)*scale,
         y:y+py*scale,
         width:Math.ceil(scale),
         height:Math.ceil(scale),
         fill:col,
         opacity:alpha,
         "pointer-events":"none"
-      });
-      parent.appendChild(r);
+      }));
     }
   }
   return true;
@@ -1473,99 +1545,168 @@ function starScore(){
   return 0;
 }
 
+
+/* ===== V67 VECTOR ASSET RUNTIME ===== */
+let vectorAssetPack=null;
+
+function setVectorStatus(text,kind=""){
+  const el=document.getElementById("vectorAssetStatus");
+  if(!el)return;
+  el.textContent=text;
+  el.className=kind;
+}
+
+function validateVectorAssetsData(data){
+  if(!data || !data.assets)throw new Error("vector_assets.json invalide : assets manquant");
+  const required=["player","destination","button_off","button_on","block_up","block_down","wall","danger","rotator_left","rotator_right"];
+  const missing=required.filter(k=>!data.assets[k]);
+  if(missing.length)throw new Error("vector_assets.json incomplet : "+missing.join(", "));
+  return true;
+}
+
+async function loadVectorAssets(){
+  const candidates=["./vector_assets.json","vector_assets.json","/vector_assets.json"];
+  let lastErr=null;
+  setVectorStatus("SVG loading...\\nexpected 3563ce4af1","");
+  for(const path of candidates){
+    try{
+      const url=path+"?cacheBust="+Date.now();
+      console.log("[VECTOR_ASSETS] tentative",url);
+      const res=await fetch(url,{cache:"no-store"});
+      if(!res.ok)throw new Error("HTTP "+res.status+" sur "+path);
+      const data=await res.json();
+      validateVectorAssetsData(data);
+      vectorAssetPack=data;
+      window.__vectorAssetsLoadedFrom=path;
+      window.__vectorDrawCount=0;
+      const counts=Object.entries(data.assets).map(([k,v])=>k+":"+(v.layers?v.layers.length:0)).join(" | ");
+      console.log("[VECTOR_ASSETS] OK",path,counts);
+      setVectorStatus("SVG ON\\n"+path+"\\nplayer:"+(data.assets.player.layers||[]).length+" layers\\nexpected:3563ce4af1","ok");
+      return true;
+    }catch(e){
+      lastErr=e;
+      console.warn("[VECTOR_ASSETS] échec",path,e);
+    }
+  }
+  vectorAssetPack=null;
+  window.__vectorAssetsLoadedFrom=null;
+  setVectorStatus("SVG OFF\\nvector_assets.json introuvable","bad");
+  showVectorAssetsError(lastErr);
+  throw lastErr || new Error("vector_assets.json introuvable");
+}
+function vectorAsset(name){return vectorAssetPack&&vectorAssetPack.assets?vectorAssetPack.assets[name]:null}
+function vectorAnimTransform(l,t){
+  const a=l.anim;if(!a||!a.type)return "";
+  const speed=Number(a.speed??0.004), amp=Number(a.amp??1), ampX=Number(a.ampX??amp);
+  const s=Math.sin(t*speed);
+  if(a.type==="look")return `translate(${s*ampX} 0)`;
+  if(a.type==="bob")return `translate(0 ${s*amp})`;
+  if(a.type==="shake")return `translate(${Math.sin(t*speed*5)*amp} ${Math.cos(t*speed*7)*amp})`;
+  if(a.type==="spin"){const cx=(Number(l.x)||20)+((Number(l.w)||0)/2), cy=(Number(l.y)||20)+((Number(l.h)||0)/2);return `rotate(${s*amp} ${cx} ${cy})`;}
+  if(a.type==="pulse"){const cx=Number(l.x??20), cy=Number(l.y??20), sc=1+s*amp;return `translate(${cx} ${cy}) scale(${sc}) translate(${-cx} ${-cy})`;}
+  return "";
+}
+function vectorAnimOpacity(l,t){
+  const a=l.anim;if(!a||a.type!=="blink")return l.opacity??1;
+  return Math.sin(t*Number(a.speed??0.006))>0?1:0.2;
+}
+function appendVectorLayer(parent,l,t){
+  let el; const shape=l.shape||"rect";
+  if(shape==="circle"){
+    el=E("circle",{cx:l.x??20,cy:l.y??20,r:l.r??8});
+  }else if(shape==="polygon"){
+    const pts=(l.points||[]).map(p=>Array.isArray(p)?p.join(","):p).join(" ");
+    el=E("polygon",{points:pts});
+  }else if(shape==="text"){
+    el=E("text",{x:l.x??20,y:l.y??20,"font-size":l.fontSize??12,"font-weight":900,"font-family":"monospace","text-anchor":"middle"});
+    el.textContent=l.text??"?";
+  }else{
+    el=E("rect",{x:l.x??0,y:l.y??0,width:l.w??10,height:l.h??10,rx:l.rx??0,ry:l.rx??0});
+  }
+  el.setAttribute("fill",l.fill??"transparent");
+  el.setAttribute("stroke",l.stroke??"transparent");
+  el.setAttribute("stroke-width",l.strokeWidth??0);
+  el.setAttribute("opacity",vectorAnimOpacity(l,t));
+  const tr=vectorAnimTransform(l,t); if(tr)el.setAttribute("transform",tr);
+  el.setAttribute("pointer-events","none");
+  parent.appendChild(el);
+}
+function drawVectorAsset(name,X,Y,parent=grid,opts={}){
+  const a=vectorAsset(name);
+  if(!a || !Array.isArray(a.layers)){
+    console.error("[VECTOR DRAW FAIL] asset absent ou invalide", name, a);
+    return false;
+  }
+  const canvas=vectorAssetPack.canvasSize||40;
+  const scale=T/canvas;
+  const g=E("g",{transform:`translate(${X} ${Y}) scale(${scale})`,"pointer-events":"none","data-vector-asset":name});
+  const t=Date.now();
+  a.layers.forEach(l=>appendVectorLayer(g,l,t));
+  parent.appendChild(g);
+
+  window.__vectorDrawCount=(window.__vectorDrawCount||0)+1;
+  window.__lastVectorAssetDrawn=name;
+  if(window.__vectorDrawCount<=8 || window.__vectorDrawCount%25===0){
+    const layerCount=(a.layers||[]).length;
+    const first=(a.layers||[]).slice(0,3).map(l=>l.id).join(",");
+    setVectorStatus("SVG ON\\n"+(window.__vectorAssetsLoadedFrom||"?")+"\\ndraw:"+window.__vectorDrawCount+" · "+name+"\\nlayers:"+layerCount+" · "+first,"ok");
+    console.log("[VECTOR DRAW]", name, "layers=", layerCount, "first=", first);
+  }
+  return true;
+}
+
 function draw(){
   grid.innerHTML="";
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){
     grid.appendChild(E("rect",{x:x*T,y:y*T,width:T,height:T,fill:"none",stroke:"rgba(255,255,255,.10)","stroke-width":1,"pointer-events":"none"}));
     let c=edit?baseMap[y][x]:b[y][x],X=x*T,Y=y*T;
     if(c=="#"){
-      if(!drawPixelAsset("wall",X,Y)){
-        // Mur fallback DA mockup.
+      if(drawVectorAsset("wall",X,Y)){}else if(!drawPixelAsset("wall",X,Y)){
         grid.appendChild(E("rect",{x:X+2,y:Y+7,width:T-4,height:T-7,rx:2,ry:2,fill:"#6d2aa8",stroke:"#301447","stroke-width":3,"pointer-events":"none"}));
         grid.appendChild(E("rect",{x:X+2,y:Y+2,width:T-4,height:T-10,rx:2,ry:2,fill:"#c775ff",stroke:"#7d36bf","stroke-width":3,"pointer-events":"none"}));
-        grid.appendChild(E("rect",{x:X+8,y:Y+7,width:T-16,height:5,fill:"rgba(255,255,255,.22)","pointer-events":"none"}));
-        grid.appendChild(E("rect",{x:X+6,y:Y+6,width:T-12,height:T-18,fill:"none",stroke:"rgba(255,230,255,.22)","stroke-width":1,"pointer-events":"none"}));
       }
     }
     if(c=="B"){
-      if(!drawPixelAsset("destination",X,Y)){
-        // Destinée fallback : cube simple, pas petite fille illustrée.
+      if(drawVectorAsset("destination",X,Y)){}else if(!drawPixelAsset("destination",X,Y)){
         rect(X+4,Y+4,T-8,T-8,"#ff4f93","#8a1745");
-        grid.appendChild(E("rect",{x:X+9,y:Y+9,width:T-18,height:5,fill:"rgba(255,255,255,.22)","pointer-events":"none"}));
-        let eyeShift=Math.sin(Date.now()/360)*2.2;
-        grid.appendChild(E("rect",{x:X+10,y:Y+14,width:9,height:9,fill:"#fff",stroke:"#5f1230","stroke-width":1,"pointer-events":"none"}));
-        grid.appendChild(E("rect",{x:X+22,y:Y+14,width:9,height:9,fill:"#fff",stroke:"#5f1230","stroke-width":1,"pointer-events":"none"}));
-        grid.appendChild(E("rect",{x:X+14+eyeShift,y:Y+17,width:3,height:3,fill:"#111","pointer-events":"none"}));
-        grid.appendChild(E("rect",{x:X+26+eyeShift,y:Y+17,width:3,height:3,fill:"#111","pointer-events":"none"}));
-        grid.appendChild(E("rect",{x:X+14,y:Y+28,width:12,height:2,fill:"#ffd6e8","pointer-events":"none"}));
-        grid.appendChild(E("rect",{x:X+25,y:Y+5,width:5,height:5,fill:"#ffd1eb",transform:`rotate(45 ${X+27.5} ${Y+7.5})`,"pointer-events":"none"}));
       }
     }
     if(c=="A"&&edit){
-      if(!drawPixelAsset("player",X,Y)){
+      if(drawVectorAsset("player",X,Y)){}else if(!drawPixelAsset("player",X,Y)){
         rect(X+4,Y+4,T-8,T-8,"#ffd640","#a56500");
-        grid.appendChild(E("rect",{x:X+10,y:Y+14,width:8,height:8,fill:"#fff",stroke:"#422600","stroke-width":1,"pointer-events":"none"}));
-        grid.appendChild(E("rect",{x:X+23,y:Y+14,width:8,height:8,fill:"#fff",stroke:"#422600","stroke-width":1,"pointer-events":"none"}));
         text(X+20,Y+34,"A","#111",12);
       }
     }
     if(c=="S"){
       const pressed=(typeof buttonIsPressed==="function") ? buttonIsPressed(x,y) : false;
       const assetName=pressed ? "button_on" : "button_off";
-      if(!drawPixelAsset(assetName,X,Y)){
-        // Bouton fallback : même silhouette ON/OFF, juste la saturation change.
+      if(drawVectorAsset(assetName,X,Y)){}else if(!drawPixelAsset(assetName,X,Y)){
         const ring=pressed?"#ffd1eb":"#ccb8c7";
         const core=pressed?"#ff4f93":"#9a7d92";
-        const glow=pressed?"rgba(255,63,145,.55)":"rgba(255,170,220,.20)";
         grid.appendChild(E("rect",{x:X+12,y:Y+12,width:T-24,height:T-24,rx:4,ry:4,fill:"#171a2d",stroke:ring,"stroke-width":3,"pointer-events":"none"}));
         grid.appendChild(E("rect",{x:X+16,y:Y+16,width:T-32,height:T-32,rx:3,ry:3,fill:core,stroke:ring,"stroke-width":2,"pointer-events":"none"}));
-        grid.appendChild(E("rect",{x:X+18,y:Y+18,width:T-36,height:3,fill:"rgba(255,255,255,.32)","pointer-events":"none"}));
-        grid.appendChild(E("circle",{cx:X+20,cy:Y+20,r:pressed?8:7,fill:"none",stroke:glow,"stroke-width":2,"pointer-events":"none"}));
-        grid.appendChild(E("rect",{x:X+19,y:Y+19,width:3,height:3,fill:"#fff","pointer-events":"none"}));
       }
     }
     if(c=="R"||c=="L"){
       const right=c=="R";
       const assetName=right ? "rotator_right" : "rotator_left";
-      if(!drawPixelAsset(assetName,X,Y)){
-        // Rotateur fallback : carré, flèche nette.
+      if(drawVectorAsset(assetName,X,Y)){}else if(!drawPixelAsset(assetName,X,Y)){
         grid.appendChild(E("rect",{x:X+5,y:Y+5,width:T-10,height:T-10,rx:3,ry:3,fill:"#073168",stroke:"#29e7ff","stroke-width":4,"pointer-events":"none"}));
-        grid.appendChild(E("rect",{x:X+9,y:Y+9,width:T-18,height:T-18,rx:2,ry:2,fill:"#13295f",stroke:"#8df8ff","stroke-width":1,"pointer-events":"none"}));
         text(X+20,Y+29,right?"↻":"↺","#eefcff",28);
       }
     }
     if(c=="X"){
-      if(!drawPixelAsset("danger",X,Y)){
-        // Danger fallback : cube piquant rouge à œil.
-        grid.appendChild(E("polygon",{
-          points:`${X+20},${Y+1} ${X+25},${Y+8} ${X+34},${Y+5} ${X+32},${Y+15} ${X+39},${Y+20} ${X+32},${Y+25} ${X+34},${Y+35} ${X+25},${Y+32} ${X+20},${Y+39} ${X+15},${Y+32} ${X+6},${Y+35} ${X+8},${Y+25} ${X+1},${Y+20} ${X+8},${Y+15} ${X+6},${Y+5} ${X+15},${Y+8}`,
-          fill:"#ff304f",
-          stroke:"#5a0010",
-          "stroke-width":3,
-          "pointer-events":"none"
-        }));
-        grid.appendChild(E("rect",{x:X+10,y:Y+10,width:T-20,height:T-20,rx:2,ry:2,fill:"#790019",stroke:"#ff9aaa","stroke-width":2,"pointer-events":"none"}));
-        grid.appendChild(E("rect",{x:X+14,y:Y+15,width:12,height:10,fill:"#fff2f5",stroke:"#39000a","stroke-width":2,"pointer-events":"none"}));
-        grid.appendChild(E("rect",{x:X+19,y:Y+18,width:4,height:4,fill:"#120006","pointer-events":"none"}));
+      if(drawVectorAsset("danger",X,Y)){}else if(!drawPixelAsset("danger",X,Y)){
+        grid.appendChild(E("rect",{x:X+6,y:Y+6,width:T-12,height:T-12,rx:2,ry:2,fill:"#ff304f",stroke:"#5a0010","stroke-width":3,"pointer-events":"none"}));
       }
     }
     if(c=="D"||c=="O"){
-      const raised=c=="D";
-      const assetName=raised ? "block_up" : "block_down";
-      if(!drawPixelAsset(assetName,X,Y)){
-        if(raised){
-          // Bloc sorti fallback : lisible, avec une vraie lecture top/side.
-          grid.appendChild(E("rect",{x:X+7,y:Y+16,width:T-14,height:T-12,rx:2,ry:2,fill:"#8f164b",stroke:"#4e0625","stroke-width":3,"pointer-events":"none"}));
+      const assetName=c=="D" ? "block_up" : "block_down";
+      if(drawVectorAsset(assetName,X,Y)){}else if(!drawPixelAsset(assetName,X,Y)){
+        if(c=="D"){
           grid.appendChild(E("rect",{x:X+7,y:Y+7,width:T-14,height:T-20,rx:2,ry:2,fill:"#ff4f93",stroke:"#ffd1eb","stroke-width":3,"pointer-events":"none"}));
-          grid.appendChild(E("rect",{x:X+10,y:Y+10,width:T-20,height:4,fill:"rgba(255,255,255,.34)","pointer-events":"none"}));
-          grid.appendChild(E("rect",{x:X+12,y:Y+17,width:T-24,height:8,fill:"rgba(140,15,73,.35)","pointer-events":"none"}));
-          grid.appendChild(E("rect",{x:X+11,y:Y+11,width:T-22,height:T-28,fill:"none",stroke:"rgba(255,255,255,.34)","stroke-width":2,"pointer-events":"none"}));
         }else{
-          // Bloc rentré fallback : même empreinte, enfoncé et gris.
-          grid.appendChild(E("rect",{x:X+7,y:Y+14,width:T-14,height:T-20,rx:2,ry:2,fill:"#1a1d24",stroke:"#303541","stroke-width":3,"pointer-events":"none"}));
-          grid.appendChild(E("rect",{x:X+11,y:Y+18,width:T-22,height:T-28,rx:1,ry:1,fill:"#404552",stroke:"#787d8b","stroke-width":2,"pointer-events":"none"}));
-          grid.appendChild(E("rect",{x:X+14,y:Y+21,width:T-28,height:3,fill:"rgba(255,255,255,.10)","pointer-events":"none"}));
-          grid.appendChild(E("rect",{x:X+9,y:Y+31,width:T-18,height:3,fill:"rgba(0,0,0,.36)","pointer-events":"none"}));
+          grid.appendChild(E("rect",{x:X+11,y:Y+18,width:T-22,height:T-28,rx:1,ry:1,fill:"#404552",stroke:"#737987","stroke-width":2,"pointer-events":"none"}));
         }
       }
     }
@@ -1576,14 +1717,8 @@ function draw(){
     let sx=1+squash*.22, sy=1-squash*.18;
     let inv=-visualOri*90;
     let grp=E("g",{transform:`translate(${X+20} ${Y+20+idle}) rotate(${inv}) scale(${sx} ${sy}) translate(${-20} ${-20})`,"pointer-events":"none"});
-    if(!drawPixelAsset("player",0,0,grp)){
+    if(drawVectorAsset("player",0,0,grp)){}else if(!drawPixelAsset("player",0,0,grp)){
       grp.appendChild(E("rect",{x:4,y:4,width:T-8,height:T-8,rx:2,ry:2,fill:"#ffd640",stroke:"#a56500","stroke-width":4}));
-      grp.appendChild(E("rect",{x:9,y:9,width:T-18,height:5,fill:"rgba(255,255,255,.25)"}));
-      grp.appendChild(E("rect",{x:11,y:15,width:9,height:9,fill:"#fff",stroke:"#422600","stroke-width":1}));
-      grp.appendChild(E("rect",{x:24,y:15,width:9,height:9,fill:"#fff",stroke:"#422600","stroke-width":1}));
-      grp.appendChild(E("rect",{x:15,y:18,width:3,height:3,fill:"#111"}));
-      grp.appendChild(E("rect",{x:28,y:18,width:3,height:3,fill:"#111"}));
-      grp.appendChild(E("rect",{x:14,y:28,width:12,height:2,fill:"#7a4a00"}));
     }
     grid.appendChild(grp);
   }
@@ -1604,12 +1739,54 @@ function draw(){
   document.getElementById("levelInput").value=currentLevel+1;updateLockUI();
 }
 
+
+let levelUndoStack=[];
+let paintSessionUndo=false;
+const LEVEL_UNDO_LIMIT=100;
+function currentLevelSnapshot(){
+  return JSON.stringify({
+    map:map(),
+    name:levels[currentLevel]?.name,
+    maxMoves:levels[currentLevel]?.maxMoves,
+    locked:levels[currentLevel]?.locked,
+    difficulty:levels[currentLevel]?.difficulty,
+    biome:levels[currentLevel]?.biome
+  });
+}
+function pushLevelUndo(reason="edit"){
+  if(!levels[currentLevel])return;
+  const snap=currentLevelSnapshot();
+  if(levelUndoStack[levelUndoStack.length-1]===snap)return;
+  levelUndoStack.push(snap);
+  if(levelUndoStack.length>LEVEL_UNDO_LIMIT)levelUndoStack.shift();
+}
+function undoLevelEdit(){
+  if(!edit){status.textContent="Undo disponible en mode édition.";return;}
+  const snap=levelUndoStack.pop();
+  if(!snap){status.textContent="Rien à annuler.";return;}
+  const s=JSON.parse(snap);
+  baseMap=arr(s.map);
+  Object.assign(levels[currentLevel],s,{map:s.map});
+  levelNameInput.value=s.name||levelNameInput.value;
+  document.getElementById("difficultyInput").value=s.difficulty||1;
+  document.getElementById("biomeSelect").value=s.biome||"cosmic";
+  normalize();
+  draw();
+  status.textContent="Undo : modification annulée.";
+}
+function stopPaint(){
+  painting=false;
+  lastPaintKey="";
+  paintSessionUndo=false;
+}
+
 function paintCell(x,y){
   if(!edit)return;
   if(isLocked()){
     status.innerHTML='<span class="lockedWarn">Niveau verrouillé.</span>';
     return;
   }
+  if(!paintSessionUndo){pushLevelUndo("paint");paintSessionUndo=true;}
   const key=x+","+y;
   if(key===lastPaintKey)return;
   lastPaintKey=key;
@@ -1630,7 +1807,9 @@ function startPaint(ev){
   if(!edit)return;
   ev.preventDefault();
   painting=true;
+  paintSessionUndo=false;
   lastPaintKey="";
+  try{ev.currentTarget.setPointerCapture(ev.pointerId)}catch(e){}
   const t=ev.currentTarget;
   paintCell(+t.dataset.x,+t.dataset.y);
 }
@@ -1646,8 +1825,11 @@ function paintMove(ev){
     paintCell(+el.dataset.x,+el.dataset.y);
   }
 }
-window.addEventListener("pointerup",()=>{painting=false;lastPaintKey=""});
-window.addEventListener("pointercancel",()=>{painting=false;lastPaintKey=""});
+window.addEventListener("pointerup",stopPaint);
+window.addEventListener("pointercancel",stopPaint);
+window.addEventListener("blur",stopPaint);
+document.addEventListener("mouseleave",stopPaint);
+document.addEventListener("visibilitychange",()=>{if(document.hidden)stopPaint()});
 
 function block(c){return c=="#"||c=="D"} // D bloque. O ne bloque jamais.
 function solid(x,y){return x<0||y<0||x>=W||y>=H||block(b[y][x])}
@@ -2044,8 +2226,8 @@ function generatedMap(){
   return templates[Math.floor(Math.random()*templates.length)];
 }
 function addLevel(){writeCurrentLevel();levels.push({name:"Nouveau niveau "+(levels.length+1),maxMoves:999,locked:false,difficulty:1,biome:document.getElementById("biomeSelect").value||"cosmic",map:generatedMap()});loadFromLevel(levels.length-1);edit=true;draw();calcMoves();status.textContent="Nouveau niveau ajouté avec une base."}
-function genLevel(){if(isLocked()){status.innerHTML='<span class="lockedWarn">Niveau verrouillé.</span>';return}baseMap=arr(generatedMap());normalize();levels[currentLevel].map=map();resetPlay();edit=true;draw();calcMoves();status.textContent="Base générée pour ce niveau."}
-function clearMap(){if(isLocked()){status.innerHTML='<span class="lockedWarn">Niveau verrouillé.</span>';return}baseMap=Array.from({length:H},()=>Array(W).fill("."));baseMap[1][1]="A";baseMap[H-2][W-2]="B";normalize();levels[currentLevel].map=map();resetPlay();edit=true;draw();status.textContent="Carte vidée."}
+function genLevel(){if(isLocked()){status.innerHTML='<span class="lockedWarn">Niveau verrouillé.</span>';return}pushLevelUndo("gen");baseMap=arr(generatedMap());normalize();levels[currentLevel].map=map();resetPlay();edit=true;draw();calcMoves();status.textContent="Base générée pour ce niveau."}
+function clearMap(){if(isLocked()){status.innerHTML='<span class="lockedWarn">Niveau verrouillé.</span>';return}pushLevelUndo("clear");baseMap=Array.from({length:H},()=>Array(W).fill("."));baseMap[1][1]="A";baseMap[H-2][W-2]="B";normalize();levels[currentLevel].map=map();resetPlay();edit=true;draw();status.textContent="Carte vidée."}
 function goLevel(i){writeCurrentLevel();loadFromLevel(i);saveCurrentProgress();status.textContent="Niveau "+(currentLevel+1)+" chargé : "+(levels[currentLevel].name||"sans nom")+"."}
 function goInput(){let n=parseInt(document.getElementById("levelInput").value,10);if(!isNaN(n))goLevel(n-1)}
 
@@ -2081,26 +2263,47 @@ function simRotate(state,d){
 }
 function stateKey(s){return s.p.x+","+s.p.y+"|"+s.exit.x+","+s.exit.y+"|"+s.map.map(r=>r.join("")).join("")}
 function calcMoves(){
-  writeCurrentLevel();
-  let m=arr(levels[currentLevel].map),sp={x:0,y:0},ex={x:0,y:0};
-  for(let y=0;y<H;y++)for(let x=0;x<W;x++){if(m[y][x]=="A"){sp={x,y};m[y][x]="."}if(m[y][x]=="B")ex={x,y}}
-  let start=simFall({map:m,p:sp,exit:ex});
-  if(start.dead){levels[currentLevel].maxMoves=999;status.textContent="Calcul impossible : le départ tombe hors plateau.";return}
-  start.exit=ex;
-  let q=[{...start,moves:0}],seen=new Set([stateKey(start)]),limit=18;
-  while(q.length){
-    let s=q.shift();
-    if(s.p.x==s.exit.x&&s.p.y==s.exit.y){levels[currentLevel].maxMoves=s.moves;status.textContent="Objectif 3★ calculé : "+s.moves+" coups.";updateStats();return}
-    if(s.moves>=limit)continue;
-    for(let d of [-1,1]){
-      let n=simRotate({map:s.map.map(r=>r.slice()),p:{...s.p},exit:{...s.exit}},d);
-      if(n.dead)continue;
-      n.exit=d>0?pcw(s.exit):pccw(s.exit); // keep exit consistent after rotation
-      let k=stateKey(n);
-      if(!seen.has(k)){seen.add(k);q.push({...n,moves:s.moves+1})}
+  try{
+    writeCurrentLevel();
+    let raw=arr(levels[currentLevel].map);
+    let pts=solverFindPoints(raw);
+    let start=solverFall({m:raw,p:pts.p,ex:pts.ex});
+    const maxDepth=32;
+    if(start.dead){
+      levels[currentLevel].maxMoves=999;
+      status.innerHTML='<span class="testBad">Calc coups : impossible dès le départ ('+start.reason+').</span>';
+      updateStats();
+      return;
     }
+    let q=[{...start,path:[]}];
+    let seen=new Set([solverKey(start)]);
+    while(q.length){
+      let s=q.shift();
+      if(s.p.x==s.ex.x && s.p.y==s.ex.y){
+        levels[currentLevel].maxMoves=s.path.length;
+        levels[currentLevel].solution=s.path.map(d=>d>0?'R':'L').join('');
+        updateStats();
+        status.innerHTML='<span class="testOk">Calc coups : objectif 3♥ = '+s.path.length+' coup(s). Solution : '+(levels[currentLevel].solution||'déjà sur la sortie')+'</span>';
+        return;
+      }
+      if(s.path.length>=maxDepth)continue;
+      for(let d of [-1,1]){
+        let n=solverRotate(s,d);
+        if(n.dead)continue;
+        let k=solverKey(n);
+        if(!seen.has(k)){
+          seen.add(k);
+          q.push({...n,path:s.path.concat(d)});
+        }
+      }
+    }
+    levels[currentLevel].maxMoves=999;
+    updateStats();
+    status.innerHTML='<span class="testBad">Calc coups : aucune solution trouvée jusqu’à '+maxDepth+' coups.</span>';
+  }catch(e){
+    console.error('[CALC] erreur',e);
+    status.innerHTML='<span class="testBad">Calc coups : erreur JS - '+(e.message||e)+'</span>';
   }
-  levels[currentLevel].maxMoves=999;status.textContent="Aucune solution trouvée jusqu'à 18 coups.";
 }
 
 
@@ -2165,6 +2368,21 @@ function confirmDeleteUnlocked(){
   status.textContent="Tous les niveaux non verrouillés ont été supprimés.";
 }
 
+
+
+function deleteCurrentLevel(){
+  if(!levels.length){status.textContent="Aucun niveau à supprimer.";return;}
+  const label=(currentLevel+1)+" - "+(levels[currentLevel].name||"sans nom");
+  if(!confirm("Supprimer le niveau courant : "+label+" ?\n\nCette action modifie la liste en mémoire. Exporte ensuite levels.json."))return;
+  levels.splice(currentLevel,1);
+  if(!levels.length){
+    levels.push({name:"Nouveau niveau 1",maxMoves:999,locked:false,difficulty:1,biome:"cosmic",map:generatedMap()});
+  }
+  currentLevel=Math.max(0,Math.min(currentLevel,levels.length-1));
+  levelUndoStack=[];
+  loadFromLevel(currentLevel);
+  status.textContent="Niveau supprimé. Exporte levels.json pour conserver ce changement.";
+}
 
 function cloneGrid(m){ return m.map(r=>r.slice ? r.slice() : r.split("")); }
 function solverFindPoints(m){
@@ -2232,42 +2450,48 @@ function solverKey(s){
   return s.p.x+","+s.p.y+"|"+s.ex.x+","+s.ex.y+"|"+s.m.map(r=>r.join("")).join("");
 }
 function testCurrentLevel(){
-  writeCurrentLevel();
-  let raw=arr(levels[currentLevel].map);
-  let pts=solverFindPoints(raw);
-  let start=solverFall({m:raw,p:pts.p,ex:pts.ex});
-  const maxDepth=24;
+  try{
+    writeCurrentLevel();
+    let raw=arr(levels[currentLevel].map);
+    let pts=solverFindPoints(raw);
+    let start=solverFall({m:raw,p:pts.p,ex:pts.ex});
+    const maxDepth=32;
 
-  if(start.dead){
-    status.innerHTML='<span class="testBad">Test du jeu : impossible dès le départ ('+start.reason+').</span>';
-    return;
-  }
-
-  let q=[{...start,path:[]}];
-  let seen=new Set([solverKey(start)]);
-
-  while(q.length){
-    let s=q.shift();
-    if(s.p.x==s.ex.x && s.p.y==s.ex.y){
-      const path=s.path.map(d=>d>0?"↻":"↺").join(" ");
-      levels[currentLevel].maxMoves=s.path.length;
-      updateStats();
-      status.innerHTML='<span class="testOk">Test du jeu : OK, finissable en '+s.path.length+' coup(s). Solution : '+(path||"déjà sur la sortie")+'</span>';
+    if(start.dead){
+      status.innerHTML='<span class="testBad">Test du jeu : impossible dès le départ ('+start.reason+').</span>';
       return;
     }
-    if(s.path.length>=maxDepth)continue;
-    for(let d of [-1,1]){
-      let n=solverRotate(s,d);
-      if(n.dead)continue;
-      let k=solverKey(n);
-      if(!seen.has(k)){
-        seen.add(k);
-        q.push({...n,path:s.path.concat(d)});
+
+    let q=[{...start,path:[]}];
+    let seen=new Set([solverKey(start)]);
+
+    while(q.length){
+      let s=q.shift();
+      if(s.p.x==s.ex.x && s.p.y==s.ex.y){
+        const path=s.path.map(d=>d>0?"↻":"↺").join(" ");
+        levels[currentLevel].maxMoves=s.path.length;
+        levels[currentLevel].solution=s.path.map(d=>d>0?'R':'L').join('');
+        updateStats();
+        status.innerHTML='<span class="testOk">Test du jeu : OK, finissable en '+s.path.length+' coup(s). Solution : '+(path||"déjà sur la sortie")+'</span>';
+        return;
+      }
+      if(s.path.length>=maxDepth)continue;
+      for(let d of [-1,1]){
+        let n=solverRotate(s,d);
+        if(n.dead)continue;
+        let k=solverKey(n);
+        if(!seen.has(k)){
+          seen.add(k);
+          q.push({...n,path:s.path.concat(d)});
+        }
       }
     }
-  }
 
-  status.innerHTML='<span class="testBad">Test du jeu : aucune solution trouvée jusqu’à '+maxDepth+' coups. Niveau probablement bloquant.</span>';
+    status.innerHTML='<span class="testBad">Test du jeu : aucune solution trouvée jusqu’à '+maxDepth+' coups. Niveau probablement bloquant.</span>';
+  }catch(e){
+    console.error('[TEST] erreur',e);
+    status.innerHTML='<span class="testBad">Test du jeu : erreur JS - '+(e.message||e)+'</span>';
+  }
 }
 
 
@@ -2441,9 +2665,11 @@ document.getElementById("sideLeft").onclick=()=>turn(-1);document.getElementById
 document.getElementById("saveLocal").onclick=saveLocal;document.getElementById("loadLocal").onclick=loadLocal;
 document.getElementById("exportJson").onclick=exportJson;document.getElementById("importBtn").onclick=()=>document.getElementById("importFile").click();
 document.getElementById("openAssetEditor")?.addEventListener("click",()=>window.open("asset_editor.html","_blank"));
+document.getElementById("openSvgAssetEditor")?.addEventListener("click",()=>window.open("asset_svg_editor.html","_blank"));
 document.getElementById("importFile").onchange=e=>{if(e.target.files[0])importJson(e.target.files[0])};
 document.getElementById("addLevel").onclick=addLevel;document.getElementById("genLevel").onclick=genLevel;document.getElementById("clear").onclick=clearMap;
 document.getElementById("lvl1").onclick=()=>goLevel(0);document.getElementById("prevLvl").onclick=()=>goLevel(currentLevel-1);document.getElementById("nextLvl").onclick=()=>goLevel(currentLevel+1);document.getElementById("goLvl").onclick=goInput;
+document.getElementById("undoLevel").onclick=undoLevelEdit;
 document.getElementById("calcMoves").onclick=calcMoves;
 document.getElementById("testGame").onclick=testCurrentLevel;
 document.getElementById("difficultyInput").onchange=()=>{levels[currentLevel].difficulty=parseInt(document.getElementById("difficultyInput").value||1,10);updateStats();};
@@ -2459,6 +2685,7 @@ document.getElementById("resetTutorial").onclick=()=>{
   });
   status.textContent="Tutoriel compagnon remis à zéro.";
 };
+document.getElementById("deleteLevel").onclick=deleteCurrentLevel;
 document.getElementById("deleteUnlocked").onclick=askDeleteUnlocked;
 document.getElementById("confirmCancel").onclick=cancelDeleteUnlocked;
 document.getElementById("confirmDelete").onclick=confirmDeleteUnlocked;
@@ -2473,61 +2700,105 @@ window.onkeydown=e=>{
   if(k=="r")resetPlay();
 };
 
-async function loadStaticLevels(){
-  // V54 ROBUST : charge levels.json si possible.
-  // Si fetch échoue (local file://, Netlify mal déployé, cache, etc.), utilise les niveaux embarqués depuis TON levels.json uploadé.
-  // Aucun vieux draft localStorage, aucun fallbackLevels inventé. On arrête l'archéologie foireuse.
-  let source="levels.json";
-  let data=null;
+async function fetchJsonFromCandidates(kind,candidates){
+  let lastErr=null;
+  for(const path of candidates){
+    try{
+      const url=path+"?cacheBust="+Date.now();
+      console.log("["+kind+"] tentative", url);
+      const res=await fetch(url,{cache:"no-store"});
+      if(!res.ok)throw new Error("HTTP "+res.status+" sur "+path);
+      const data=await res.json();
+      console.log("["+kind+"] OK depuis", path);
+      return {data,path};
+    }catch(e){
+      lastErr=e;
+      console.warn("["+kind+"] échec", path, e);
+    }
+  }
+  throw lastErr || new Error(kind+" introuvable");
+}
 
-  try{
-    const url="levels.json?cacheBust="+Date.now();
-    console.log("[LEVELS] Tentative de chargement externe :", url);
-    const res=await fetch(url,{cache:"no-store"});
-    if(!res.ok)throw new Error("HTTP "+res.status);
-    data=await res.json();
-    console.log("[LEVELS] levels.json externe chargé.");
-  }catch(err){
-    console.warn("[LEVELS] levels.json externe indisponible, utilisation des niveaux embarqués dans index.html.", err);
-    data=EMBEDDED_LEVELS_DATA;
-    source="embedded";
+function applyLevelsData(data,source){
+  gameSettings={...gameSettings,...(data.settings||{})};
+  syncSpeedInputs();
+
+  levels=data.levels||data;
+  if(!Array.isArray(levels) || !levels.length){
+    throw new Error("levels.json chargé depuis "+source+" mais aucun niveau trouvé.");
   }
 
-  try{
-    gameSettings={...gameSettings,...(data.settings||{})};
-    syncSpeedInputs();
+  levels.forEach(l=>{
+    if(!l.biome)l.biome="cosmic";
+    if(l.locked===undefined)l.locked=false;
+    if(!l.maxMoves)l.maxMoves=999;
+    if(!l.difficulty)l.difficulty=1;
+  });
 
-    levels=data.levels||data;
-    if(!Array.isArray(levels) || !levels.length){
-      throw new Error("Aucun niveau trouvé dans la source "+source);
+  currentLevel=savedStartLevel();
+  if(currentLevel>=levels.length)currentLevel=0;
+
+  console.log("[LEVELS] OK source =",source,"|",levels.length,"niveau(x)",levels.map(l=>l.name));
+  loadFromLevel(currentLevel);
+
+  status.style.display="block";
+  status.textContent="OK : niveaux chargés depuis "+source+" ("+levels.length+" niveau(x)).";
+}
+
+function showLevelsJsonError(err){
+  console.error("[LEVELS] ECHEC CHARGEMENT levels.json", err);
+  levels=[];
+  status.style.display="block";
+  const proto=location.protocol || "";
+  const localHint=proto==="file:" ? " Tu ouvres le jeu en file:// : lance run_local_server.bat ou importe le fichier manuellement." : "";
+  status.textContent="ERREUR : levels.json non chargé. Vérifie que levels.json est à côté de index.html."+localHint;
+
+  bannerTitle.textContent="levels.json introuvable";
+  bannerText.innerHTML=
+    "Le jeu ne charge aucun niveau en dur.<br>"+
+    "Fichiers attendus au même niveau : <b>index.html</b>, <b>levels.json</b>, <b>assets.json</b>.<br>"+
+    "Protocole actuel : <b>"+proto+"</b><br>"+
+    (proto==="file:" ? "En local, utilise <b>run_local_server.bat</b> ou le bouton Importer levels.json.<br>" : "")+
+    "<button id='manualLevelsImport' style='margin-top:12px;background:#52f28a;color:#051407;font-size:16px;padding:12px 18px;border-radius:12px'>Importer levels.json</button>";
+  starsEl.textContent="";
+  bannerAction.textContent="Fermer";
+  bannerAction.onclick=()=>banner.classList.add("hidden");
+  banner.classList.remove("hidden");
+
+  setTimeout(()=>{
+    const btn=document.getElementById("manualLevelsImport");
+    if(btn)btn.onclick=manualImportLevelsJson;
+  },0);
+}
+
+function manualImportLevelsJson(){
+  const input=document.createElement("input");
+  input.type="file";
+  input.accept=".json,application/json";
+  input.onchange=async()=>{
+    const file=input.files && input.files[0];
+    if(!file)return;
+    try{
+      const text=await file.text();
+      const data=JSON.parse(text);
+      applyLevelsData(data,"import manuel "+file.name);
+      banner.classList.add("hidden");
+    }catch(e){
+      console.error("[LEVELS] import manuel échoué", e);
+      alert("Import levels.json impossible : "+(e.message||e));
     }
+  };
+  input.click();
+}
 
-    levels.forEach(l=>{
-      if(!l.biome)l.biome="cosmic";
-      if(l.locked===undefined)l.locked=false;
-      if(!l.maxMoves)l.maxMoves=999;
-      if(!l.difficulty)l.difficulty=1;
-    });
-
-    currentLevel=savedStartLevel();
-    if(currentLevel>=levels.length)currentLevel=0;
-
-    console.log("[LEVELS] OK source =",source,"|",levels.length,"niveau(x)",levels.map(l=>l.name));
-    loadFromLevel(currentLevel);
-
-    status.style.display="block";
-    status.textContent="Niveaux chargés depuis "+source+" : "+levels.length+" niveau(x). Niveau courant : "+(currentLevel+1)+".";
+async function loadStaticLevels(){
+  // V57 STRICT EXTERNAL : aucun niveau embarqué, aucun fallback localStorage.
+  // On teste plusieurs chemins pour éviter le gag du fichier au mauvais niveau.
+  try{
+    const result=await fetchJsonFromCandidates("LEVELS",["./levels.json","levels.json","/levels.json"]);
+    applyLevelsData(result.data,result.path);
   }catch(err){
-    console.error("[LEVELS] ECHEC TOTAL", err);
-    levels=[];
-    status.style.display="block";
-    status.textContent="ERREUR : impossible de charger les niveaux, même embarqués.";
-    bannerTitle.textContent="Erreur niveaux";
-    bannerText.textContent=String(err.message||err);
-    starsEl.textContent="";
-    bannerAction.textContent="OK";
-    bannerAction.onclick=()=>banner.classList.add("hidden");
-    banner.classList.remove("hidden");
+    showLevelsJsonError(err);
   }
 }
 
@@ -2549,6 +2820,32 @@ window.addEventListener("resize",updateGlobalScale);
 window.addEventListener("orientationchange",()=>setTimeout(updateGlobalScale,80));
 updateGlobalScale();
 
-loadAssets().then(loadStaticLevels);
+
+window.debugVectorAssets=function(){
+  return {
+    loadedFrom:window.__vectorAssetsLoadedFrom||null,
+    drawCount:window.__vectorDrawCount||0,
+    lastDrawn:window.__lastVectorAssetDrawn||null,
+    playerLayers:vectorAssetPack?.assets?.player?.layers?.map(l=>l.id)||null,
+    destinationLayers:vectorAssetPack?.assets?.destination?.layers?.map(l=>l.id)||null,
+    rawPack:vectorAssetPack
+  };
+};
+
+loadAssets()
+  .then(()=>loadVectorAssets())
+  .then(()=>loadStaticLevels())
+  .catch(err=>{
+    console.error("[BOOT] arrêt volontaire : vector_assets.json obligatoire",err);
+    setVectorStatus("SVG OFF\nBOOT STOP","bad");
+    if(typeof banner!=="undefined"){
+      bannerTitle.textContent="vector_assets.json obligatoire";
+      bannerText.innerHTML="Le jeu est en mode strict SVG.<br>Il faut un fichier <b>vector_assets.json</b> au même niveau que <b>index.html</b>.<br><br>Erreur : "+String(err.message||err);
+      starsEl.textContent="";
+      bannerAction.textContent="OK";
+      bannerAction.onclick=()=>banner.classList.add("hidden");
+      banner.classList.remove("hidden");
+    }
+  });
 </script>
 </body></html>

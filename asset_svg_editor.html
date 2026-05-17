@@ -1,0 +1,1528 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Gravity Cube - Simple SVG Editor V69</title>
+<style>
+:root{
+  --bg:#050720;
+  --panel:#0b1030;
+  --panel2:#121845;
+  --cyan:#29e7ff;
+  --pink:#ff4f93;
+  --yellow:#ffd640;
+  --green:#52f28a;
+  --bad:#ff6b7a;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  min-height:100vh;
+  background:radial-gradient(circle at 50% 20%,#182063,#050720 70%);
+  color:#eef4ff;
+  font-family:Arial,sans-serif;
+  overflow:hidden;
+}
+header{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  gap:12px;
+  padding:10px 12px;
+  background:rgba(3,5,24,.94);
+  border-bottom:1px solid rgba(41,231,255,.24);
+}
+h1{margin:0;font-family:monospace;font-size:20px}
+h1 .a{color:var(--cyan)}
+h1 .b{color:var(--pink)}
+main{
+  height:calc(100vh - 58px);
+  display:grid;
+  grid-template-columns:280px 1fr 360px;
+  gap:10px;
+  padding:10px;
+}
+.panel{
+  min-height:0;
+  overflow:auto;
+  background:rgba(8,12,42,.92);
+  border:1px solid rgba(99,125,255,.26);
+  border-radius:16px;
+  padding:10px;
+  box-shadow:0 14px 28px rgba(0,0,0,.25);
+}
+label{display:block;margin:8px 0 4px;font-size:12px;font-weight:900;color:#cbd6ff}
+select,input,button,textarea{
+  font:inherit;
+  border:0;
+  border-radius:9px;
+  padding:8px 9px;
+  font-weight:900;
+}
+select,input,textarea{
+  width:100%;
+  background:#eef4ff;
+  color:#0b1030;
+}
+input[type=color]{padding:2px;height:36px}
+button{
+  background:#20295f;
+  color:#eaf7ff;
+  border:1px solid rgba(41,231,255,.25);
+  cursor:pointer;
+}
+button.active{
+  background:#2c3d91;
+  outline:3px solid var(--yellow);
+}
+button.primary{background:linear-gradient(180deg,#0c9eff,#075dcc);border-color:#29e7ff}
+button.pink{background:linear-gradient(180deg,#ff5fa8,#c62378);border-color:#ff9acc}
+button.green{background:linear-gradient(180deg,#52f28a,#1da75d);color:#031407}
+button.warn{background:#4b2435}
+.row{display:flex;gap:7px;flex-wrap:wrap}
+.row button{flex:1}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:7px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:7px}
+#canvasPanel{
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+}
+#previewWrap{
+  flex:1;
+  min-height:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+}
+.previewBox{
+  width:min(72vh,70vw);
+  height:min(72vh,70vw);
+  max-width:620px;
+  max-height:620px;
+  background:#071235;
+  border:4px solid #29e7ff;
+  border-radius:18px;
+  box-shadow:0 24px 44px rgba(0,0,0,.45), inset 0 0 0 1px rgba(255,255,255,.08);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+#svgPreview{
+  width:90%;
+  height:90%;
+  background:#071235;
+  touch-action:none;
+  cursor:crosshair;
+}
+#layers{
+  display:flex;
+  flex-direction:column;
+  gap:5px;
+  max-height:290px;
+  overflow:auto;
+  padding-right:2px;
+}
+.layerItem{
+  display:grid;
+  grid-template-columns:auto 1fr auto;
+  gap:6px;
+  align-items:center;
+  padding:7px;
+  border-radius:10px;
+  background:#151b49;
+  border:1px solid rgba(255,255,255,.06);
+}
+.layerItem.active{
+  outline:2px solid var(--yellow);
+  background:#202a68;
+}
+.layerName{font-weight:900;font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.layerMini{display:flex;gap:3px}
+.layerMini button{padding:3px 5px;font-size:10px}
+textarea{min-height:160px;font-family:monospace;font-size:11px}
+small{display:block;color:#aab6e8;line-height:1.35}
+#status{
+  font-size:12px;
+  color:#ffd640;
+  font-weight:900;
+}
+#toolHelp{
+  padding:8px;
+  background:#11183e;
+  border-radius:10px;
+  font-size:12px;
+  color:#cbd6ff;
+  line-height:1.35;
+}
+hr{border:0;border-top:1px solid rgba(255,255,255,.1);margin:10px 0}
+@media(max-width:1100px){
+  body{overflow:auto}
+  main{height:auto;grid-template-columns:1fr}
+  .previewBox{width:min(90vw,560px);height:min(90vw,560px)}
+}
+
+/* ===== V71 undo scale pivot ===== */
+#undoBtn,#redoBtn{background:#26336f}
+#undoBtn:disabled,#redoBtn:disabled{opacity:.35;cursor:not-allowed}
+.layerItem .shapeTag{font-size:10px;opacity:.72;color:#aab6e8}
+small b{color:#ffd640}
+
+</style>
+</head>
+<body>
+<header>
+  <h1><span class="a">GRAVITY</span> <span class="b">CUBE</span> SVG Editor Simple</h1>
+  <div class="row">
+    <button id="undoBtn">Undo Ctrl+Z</button>
+    <button id="redoBtn">Redo Ctrl+Y</button>
+    <button id="copyJson">Copier JSON</button>
+    <button id="downloadJson" class="primary">Télécharger vector_assets.json</button>
+  </div>
+</header>
+
+<main>
+  <section class="panel">
+    <label>Asset</label>
+    <select id="assetSelect"></select>
+
+    <label>Outils de tracé</label>
+    <div class="row">
+      <button id="toolSelect" class="active">Sélection</button>
+      <button id="toolRect">Rectangle</button>
+      <button id="toolCircle">Cercle</button>
+      <button id="toolFree">Forme libre</button>
+    </div>
+    <div id="toolHelp">
+      <b>Sélection</b> = choisir des layers dans la liste pour les modifier ensemble.<br>
+      Rectangle/Cercle : clique-glisse sur le canvas.<br>
+      Forme libre : maintiens et dessine, relâche pour créer une forme fermée.
+    </div>
+
+    <label>Couleurs avec transparence</label>
+    <div class="grid2">
+      <div>
+        <label>Fill</label>
+        <input id="fillColor" type="color" value="#ff4f93">
+        <input id="fillAlpha" type="range" min="0" max="1" step="0.05" value="1">
+      </div>
+      <div>
+        <label>Stroke</label>
+        <input id="strokeColor" type="color" value="#ffd1eb">
+        <input id="strokeAlpha" type="range" min="0" max="1" step="0.05" value="1">
+      </div>
+    </div>
+    <label>Stroke width</label>
+    <input id="strokeWidth" type="number" step="0.5" value="2">
+    <div class="row" style="margin-top:8px">
+      <button id="applyFillToSelection">Appliquer fill</button>
+      <button id="applyStrokeToSelection">Appliquer stroke</button>
+      <button id="applyColorsToSelection" class="pink">Fill + Stroke</button>
+    </div>
+    <small>Ces boutons modifient la couleur des layers déjà sélectionnés.</small>
+
+    <hr>
+
+    <label>Copier / coller</label>
+    <div class="row">
+      <button id="copySelected">Copier sélection</button>
+      <button id="copyAll">Copier tout asset</button>
+      <button id="pasteLayers" class="green">Coller ici</button>
+    </div>
+
+    <label>Layers</label>
+    <div class="row">
+      <button id="selectAll">Tout sélectionner</button>
+      <button id="clearSelection">Désélectionner</button>
+    </div>
+    <div id="layers"></div>
+
+    <div class="row" style="margin-top:8px">
+      <button id="deleteSelected" class="warn">Delete sélection</button>
+      <button id="duplicateSelected">Dupliquer</button>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <button id="moveUp">↑</button>
+      <button id="moveDown">↓</button>
+      <button id="resetAsset" class="warn">Reset asset</button>
+    </div>
+
+    <label>Importer vector_assets.json</label>
+    <input id="fileInput" type="file" accept=".json,application/json">
+  </section>
+
+  <section class="panel" id="canvasPanel">
+    <div id="status">Prêt.</div>
+    <div id="previewWrap">
+      <div class="previewBox">
+        <svg id="svgPreview" viewBox="0 0 40 40"></svg>
+      </div>
+    </div>
+  </section>
+
+  <section class="panel">
+    <label>Édition layer sélectionné</label>
+    <input id="layerId" placeholder="id layer">
+
+    <div class="grid3">
+      <div><label>x</label><input id="x" type="number" step="1"></div>
+      <div><label>y</label><input id="y" type="number" step="1"></div>
+      <div><label>rx</label><input id="rx" type="number" step="1"></div>
+    </div>
+    <div class="grid3">
+      <div><label>w</label><input id="w" type="number" step="1"></div>
+      <div><label>h</label><input id="h" type="number" step="1"></div>
+      <div><label>r</label><input id="r" type="number" step="1"></div>
+    </div>
+
+    <label>Texte / points forme libre</label>
+    <input id="textValue" placeholder="texte ou points polygon">
+
+    <hr>
+
+    <label>Redimensionner un asset/layers existants</label>
+    <div class="row">
+      <button id="scaleSelectedHalf">×0.5</button>
+      <button id="scaleSelectedUp">×1.2</button>
+      <button id="scaleSelectedDouble">×2</button>
+      <button id="resetTransformFields">Reset champs</button>
+    </div>
+    <small>Le pivot du scale est le centre de la sélection. Pour redimensionner tout l’asset : clique “Tout sélectionner”, puis ×0.5 / ×2.</small>
+
+    <label>Effets à appliquer au groupe sélectionné</label>
+    <div class="grid2">
+      <div><label>Translate X</label><input id="groupDx" type="number" step="1" value="0"></div>
+      <div><label>Translate Y</label><input id="groupDy" type="number" step="1" value="0"></div>
+    </div>
+    <div class="grid2">
+      <div><label>Scale</label><input id="groupScale" type="number" step="0.05" value="1"></div>
+      <div><label>Opacity</label><input id="groupOpacity" type="number" min="0" max="1" step="0.05" value="1"></div>
+    </div>
+    <label>Animation groupe</label>
+    <select id="groupAnim">
+      <option value="">aucune</option>
+      <option value="look">look yeux</option>
+      <option value="pulse">pulse</option>
+      <option value="bob">bob</option>
+      <option value="shake">shake</option>
+      <option value="spin">spin</option>
+      <option value="blink">blink</option>
+    </select>
+    <div class="grid3">
+      <div><label>amp</label><input id="groupAnimAmp" type="number" step="0.1" value="1"></div>
+      <div><label>ampX</label><input id="groupAnimAmpX" type="number" step="0.1" value="2"></div>
+      <div><label>speed</label><input id="groupAnimSpeed" type="number" step="0.0005" value="0.004"></div>
+    </div>
+    <div class="row" style="margin-top:8px">
+      <button id="applyGroupFx" class="pink">Appliquer transform/opacité</button>
+      <button id="applyGroupAnim">Appliquer anim seule</button>
+      <button id="clearGroupFx">Enlever anim</button>
+    </div>
+
+    <hr>
+
+    <label>JSON courant</label>
+    <textarea id="jsonView" spellcheck="false"></textarea>
+    <div class="row" style="margin-top:8px">
+      <button id="applyJson">Appliquer JSON texte</button>
+    </div>
+  </section>
+</main>
+
+<script>
+const defaultPack = {
+  "version": 1,
+  "name": "Gravity Cube SVG Vector Assets",
+  "canvasSize": 40,
+  "description": "Assets vectoriels SVG éditables avec layers et animations simples.",
+  "palette": {
+    "navy": "#070d35",
+    "cyan": "#29e7ff",
+    "cyanLight": "#8df8ff",
+    "pink": "#ff4f93",
+    "pinkDark": "#8a1745",
+    "pinkLight": "#ffd1eb",
+    "yellow": "#ffd640",
+    "yellowDark": "#a56500",
+    "white": "#ffffff",
+    "black": "#111111",
+    "purple": "#c775ff",
+    "purpleDark": "#301447",
+    "red": "#ff304f",
+    "redDark": "#790019",
+    "metal": "#737987",
+    "metalDark": "#1a1d24"
+  },
+  "assets": {
+    "player": {
+      "layers": [
+        {
+          "id": "shadow",
+          "shape": "rect",
+          "x": 4,
+          "y": 8,
+          "w": 32,
+          "h": 29,
+          "rx": 2,
+          "fill": "#a56500",
+          "stroke": "#6b3f00",
+          "strokeWidth": 2,
+          "opacity": 1
+        },
+        {
+          "id": "mouth_copy",
+          "shape": "rect",
+          "x": 15,
+          "y": 24,
+          "w": 4,
+          "h": 4,
+          "rx": 1,
+          "fill": "#e5ae5d",
+          "stroke": "#6b3f00",
+          "strokeWidth": 5,
+          "opacity": 1
+        },
+        {
+          "id": "body",
+          "shape": "rect",
+          "x": 4,
+          "y": 4,
+          "w": 32,
+          "h": 30,
+          "rx": 2,
+          "fill": "#ffd640",
+          "stroke": "#a56500",
+          "strokeWidth": 4,
+          "opacity": 1
+        },
+        {
+          "id": "eyeL",
+          "shape": "rect",
+          "x": 10,
+          "y": 13,
+          "w": 9,
+          "h": 9,
+          "rx": 5,
+          "fill": "#ffffff",
+          "stroke": "#422600",
+          "strokeWidth": 1,
+          "opacity": 1,
+          "anim": {
+            "type": "look",
+            "amp": 0.1,
+            "ampX": 0.1,
+            "speed": 0.005
+          }
+        },
+        {
+          "id": "eyeR",
+          "shape": "rect",
+          "x": 23,
+          "y": 14,
+          "w": 9,
+          "h": 9,
+          "rx": 5,
+          "fill": "#ffffff",
+          "stroke": "#422600",
+          "strokeWidth": 1,
+          "opacity": 1,
+          "anim": {
+            "type": "look",
+            "amp": 0.1,
+            "ampX": 0.1,
+            "speed": 0.005
+          }
+        },
+        {
+          "id": "pupilL",
+          "shape": "rect",
+          "x": 14,
+          "y": 17,
+          "w": 3,
+          "h": 3,
+          "rx": 3,
+          "fill": "#111111",
+          "stroke": "transparent",
+          "strokeWidth": 0,
+          "opacity": 1,
+          "anim": {
+            "type": "look",
+            "amp": 0.1,
+            "ampX": 1,
+            "speed": 0.004
+          }
+        },
+        {
+          "id": "pupilR",
+          "shape": "rect",
+          "x": 27,
+          "y": 17,
+          "w": 3,
+          "h": 3,
+          "rx": 3,
+          "fill": "#111111",
+          "stroke": "transparent",
+          "strokeWidth": 0,
+          "opacity": 1,
+          "anim": {
+            "type": "look",
+            "amp": 0.1,
+            "ampX": 1,
+            "speed": 0.004
+          }
+        },
+        {
+          "id": "cheveux",
+          "shape": "circle",
+          "x": 8.031951904296875,
+          "y": 8,
+          "r": 3,
+          "fill": "#a56500",
+          "stroke": "#a66500",
+          "strokeWidth": 2
+        },
+        {
+          "id": "cheveux_copy",
+          "shape": "circle",
+          "x": 15,
+          "y": 8,
+          "r": 3,
+          "fill": "#a56500",
+          "stroke": "#a66500",
+          "strokeWidth": 2
+        },
+        {
+          "id": "cheveux_copy_copy",
+          "shape": "circle",
+          "x": 25,
+          "y": 8,
+          "r": 3,
+          "fill": "#a56500",
+          "stroke": "#a66500",
+          "strokeWidth": 2
+        },
+        {
+          "id": "cheveux_copy_copy_copy",
+          "shape": "circle",
+          "x": 32,
+          "y": 8,
+          "r": 3,
+          "fill": "#a56500",
+          "stroke": "#a66500",
+          "strokeWidth": 2
+        },
+        {
+          "id": "shine",
+          "shape": "rect",
+          "x": 13,
+          "y": 3,
+          "w": 22,
+          "h": 2,
+          "rx": 1,
+          "fill": "rgba(255,255,255,.25)",
+          "stroke": "transparent",
+          "strokeWidth": 0,
+          "opacity": 1
+        },
+        {
+          "id": "moustache",
+          "shape": "rect",
+          "x": 11.633983612060547,
+          "y": 23.87799644470215,
+          "w": 11.096590042114258,
+          "h": 0.6390705108642578,
+          "rx": 2,
+          "fill": "#a56500",
+          "stroke": "#a66500",
+          "strokeWidth": 2,
+          "anim": {
+            "type": "shake",
+            "amp": 0.1,
+            "ampX": 1,
+            "speed": 0.001
+          }
+        }
+      ]
+    },
+    "destination": {
+      "layers": [
+        {
+          "id": "shadow",
+          "shape": "rect",
+          "x": 3,
+          "y": 8,
+          "w": 34,
+          "h": 29,
+          "rx": 2,
+          "fill": "#8a1745",
+          "stroke": "#5f1230",
+          "strokeWidth": 2
+        },
+        {
+          "id": "body",
+          "shape": "rect",
+          "x": 4,
+          "y": 4,
+          "w": 32,
+          "h": 30,
+          "rx": 2,
+          "fill": "#e724eb",
+          "stroke": "#8a1745",
+          "strokeWidth": 4,
+          "r": 0
+        },
+        {
+          "id": "shine",
+          "shape": "rect",
+          "x": 11,
+          "y": 2,
+          "w": 24,
+          "h": 2,
+          "rx": 2,
+          "fill": "rgba(255,255,255,.22)",
+          "stroke": "transparent",
+          "strokeWidth": 0
+        },
+        {
+          "id": "eyeL",
+          "shape": "rect",
+          "x": 10,
+          "y": 14,
+          "w": 9,
+          "h": 9,
+          "rx": 3,
+          "fill": "#ffffff",
+          "stroke": "#5f1230",
+          "strokeWidth": 1
+        },
+        {
+          "id": "eyeR",
+          "shape": "rect",
+          "x": 22,
+          "y": 14,
+          "w": 9,
+          "h": 9,
+          "rx": 3,
+          "fill": "#ffffff",
+          "stroke": "#5f1230",
+          "strokeWidth": 1
+        },
+        {
+          "id": "pupilL",
+          "shape": "rect",
+          "x": 14,
+          "y": 17,
+          "w": 3,
+          "h": 3,
+          "rx": 3,
+          "fill": "#111111",
+          "stroke": "transparent",
+          "strokeWidth": 0,
+          "anim": {
+            "type": "bob",
+            "amp": 1,
+            "ampX": 4,
+            "speed": 0.004
+          }
+        },
+        {
+          "id": "pupilR",
+          "shape": "rect",
+          "x": 26,
+          "y": 17,
+          "w": 3,
+          "h": 3,
+          "rx": 3,
+          "fill": "#111111",
+          "stroke": "transparent",
+          "strokeWidth": 0,
+          "anim": {
+            "type": "bob",
+            "amp": 1,
+            "ampX": 4,
+            "speed": 0.004
+          }
+        },
+        {
+          "id": "mouth",
+          "shape": "rect",
+          "x": 14,
+          "y": 28,
+          "w": 6,
+          "h": 2,
+          "rx": 1,
+          "fill": "#ffd1eb",
+          "stroke": "transparent",
+          "strokeWidth": 0
+        },
+        {
+          "id": "heart",
+          "shape": "text",
+          "x": 26,
+          "y": 13,
+          "text": "w",
+          "fontSize": 15.973999968531137,
+          "fill": "#8a1745",
+          "stroke": "#5f1230",
+          "strokeWidth": 0,
+          "opacity": 1
+        }
+      ]
+    },
+    "button_off": {
+      "layers": [
+        {
+          "id": "outer",
+          "shape": "rect",
+          "x": 10,
+          "y": 10,
+          "w": 20,
+          "h": 20,
+          "rx": 4,
+          "fill": "#171a2d",
+          "stroke": "#ccb8c7",
+          "strokeWidth": 3
+        },
+        {
+          "id": "core",
+          "shape": "rect",
+          "x": 14,
+          "y": 14,
+          "w": 12,
+          "h": 12,
+          "rx": 3,
+          "fill": "rgba(41,41,41,0)",
+          "stroke": "#ccb8c7",
+          "strokeWidth": 2
+        },
+        {
+          "id": "shine",
+          "shape": "rect",
+          "x": 12,
+          "y": 9,
+          "w": 15,
+          "h": 2,
+          "fill": "#e1d6d6",
+          "stroke": "#e3cfde",
+          "strokeWidth": 0
+        }
+      ]
+    },
+    "button_on": {
+      "layers": [
+        {
+          "id": "outer",
+          "shape": "rect",
+          "x": 10,
+          "y": 10,
+          "w": 20,
+          "h": 20,
+          "rx": 4,
+          "fill": "#171a2d",
+          "stroke": "#ffd1eb",
+          "strokeWidth": 3
+        },
+        {
+          "id": "core",
+          "shape": "rect",
+          "x": 14,
+          "y": 14,
+          "w": 12,
+          "h": 12,
+          "rx": 3,
+          "fill": "#ff4f93",
+          "stroke": "#ffd1eb",
+          "strokeWidth": 2
+        },
+        {
+          "id": "shine",
+          "shape": "rect",
+          "x": 17,
+          "y": 9,
+          "w": 10,
+          "h": 2,
+          "fill": "rgba(241,233,239,0.8)",
+          "stroke": "#e9d8e5",
+          "strokeWidth": 0,
+          "rx": 1
+        },
+        {
+          "id": "glow",
+          "shape": "circle",
+          "x": 20,
+          "y": 20,
+          "r": 16,
+          "fill": "rgba(255,255,255,0.05)",
+          "stroke": "rgba(255,209,235,0.25)",
+          "strokeWidth": 0,
+          "anim": {
+            "type": "pulse",
+            "amp": 0.08,
+            "speed": 0.005
+          }
+        }
+      ]
+    },
+    "block_up": {
+      "layers": [
+        {
+          "id": "side_paste",
+          "shape": "rect",
+          "x": 2,
+          "y": 7,
+          "w": 36,
+          "h": 31,
+          "rx": 2,
+          "fill": "#ffd1eb",
+          "stroke": "#ffd1eb",
+          "strokeWidth": 3
+        },
+        {
+          "id": "top_paste",
+          "shape": "rect",
+          "x": 2,
+          "y": 2,
+          "w": 36,
+          "h": 30,
+          "rx": 2,
+          "fill": "#ffd1eb",
+          "stroke": "#c190ac",
+          "strokeWidth": 3
+        },
+        {
+          "id": "shine_paste",
+          "shape": "rect",
+          "x": 8,
+          "y": 7,
+          "w": 24,
+          "h": 5,
+          "fill": "rgba(255,255,255,.22)",
+          "stroke": "transparent",
+          "strokeWidth": 0
+        }
+      ]
+    },
+    "block_down": {
+      "layers": [
+        {
+          "id": "side_paste_paste",
+          "shape": "rect",
+          "x": 2,
+          "y": 7,
+          "w": 36,
+          "h": 31,
+          "rx": 2,
+          "fill": "#7a7a7a",
+          "stroke": "#7a7a7a",
+          "strokeWidth": 3
+        },
+        {
+          "id": "top_paste_paste",
+          "shape": "rect",
+          "x": 2,
+          "y": 6,
+          "w": 36,
+          "h": 30,
+          "rx": 2,
+          "fill": "#c9c9c9",
+          "stroke": "#949494",
+          "strokeWidth": 3
+        },
+        {
+          "id": "shine_paste_paste",
+          "shape": "rect",
+          "x": 8,
+          "y": 10,
+          "w": 24,
+          "h": 5,
+          "fill": "#ebebeb",
+          "stroke": "rgba(221,218,218,0)",
+          "strokeWidth": 3
+        }
+      ]
+    },
+    "wall": {
+      "layers": [
+        {
+          "id": "side",
+          "shape": "rect",
+          "x": 2,
+          "y": 7,
+          "w": 36,
+          "h": 31,
+          "rx": 2,
+          "fill": "#6d2aa8",
+          "stroke": "#6d2aa8",
+          "strokeWidth": 3
+        },
+        {
+          "id": "top",
+          "shape": "rect",
+          "x": 2,
+          "y": 2,
+          "w": 36,
+          "h": 30,
+          "rx": 2,
+          "fill": "#c775ff",
+          "stroke": "#7d36bf",
+          "strokeWidth": 3
+        },
+        {
+          "id": "shine",
+          "shape": "rect",
+          "x": 8,
+          "y": 7,
+          "w": 24,
+          "h": 5,
+          "fill": "rgba(255,255,255,.22)",
+          "stroke": "transparent",
+          "strokeWidth": 0
+        }
+      ]
+    },
+    "danger": {
+      "layers": [
+        {
+          "id": "spikes",
+          "shape": "polygon",
+          "points": [
+            [
+              20,
+              1
+            ],
+            [
+              25,
+              8
+            ],
+            [
+              34,
+              5
+            ],
+            [
+              32,
+              15
+            ],
+            [
+              39,
+              20
+            ],
+            [
+              32,
+              25
+            ],
+            [
+              34,
+              35
+            ],
+            [
+              25,
+              32
+            ],
+            [
+              20,
+              39
+            ],
+            [
+              15,
+              32
+            ],
+            [
+              6,
+              35
+            ],
+            [
+              8,
+              25
+            ],
+            [
+              1,
+              20
+            ],
+            [
+              8,
+              15
+            ],
+            [
+              6,
+              5
+            ],
+            [
+              15,
+              8
+            ]
+          ],
+          "fill": "#ff304f",
+          "stroke": "#5a0010",
+          "strokeWidth": 3,
+          "anim": {
+            "type": "shake",
+            "amp": 0.8,
+            "speed": 0.02
+          }
+        },
+        {
+          "id": "eye",
+          "shape": "rect",
+          "x": 14,
+          "y": 15,
+          "w": 12,
+          "h": 10,
+          "fill": "#fff2f5",
+          "stroke": "rgba(57,0,10,0)",
+          "strokeWidth": 2,
+          "rx": 2
+        },
+        {
+          "id": "pupil",
+          "shape": "rect",
+          "x": 19,
+          "y": 18,
+          "w": 4,
+          "h": 4,
+          "fill": "#120006",
+          "stroke": "transparent",
+          "strokeWidth": 0
+        }
+      ]
+    },
+    "rotator_left": {
+      "layers": [
+        {
+          "id": "outer",
+          "shape": "rect",
+          "x": 5,
+          "y": 5,
+          "w": 30,
+          "h": 30,
+          "rx": 3,
+          "fill": "#073168",
+          "stroke": "#29e7ff",
+          "strokeWidth": 4
+        },
+        {
+          "id": "inner",
+          "shape": "rect",
+          "x": 9,
+          "y": 9,
+          "w": 22,
+          "h": 22,
+          "rx": 2,
+          "fill": "#13295f",
+          "stroke": "#8df8ff",
+          "strokeWidth": 1
+        },
+        {
+          "id": "arrow",
+          "shape": "text",
+          "x": 20,
+          "y": 29,
+          "text": "↺",
+          "fontSize": 28,
+          "fill": "#eefcff",
+          "stroke": "rgba(9,17,50,0)",
+          "strokeWidth": 1
+        }
+      ]
+    },
+    "rotator_right": {
+      "layers": [
+        {
+          "id": "outer",
+          "shape": "rect",
+          "x": 5,
+          "y": 5,
+          "w": 30,
+          "h": 30,
+          "rx": 3,
+          "fill": "#13295f",
+          "stroke": "#9c8fff",
+          "strokeWidth": 3,
+          "opacity": 1
+        },
+        {
+          "id": "inner",
+          "shape": "rect",
+          "x": 9,
+          "y": 9,
+          "w": 22,
+          "h": 22,
+          "rx": 2,
+          "fill": "#13295f",
+          "stroke": "#9c8fff",
+          "strokeWidth": 1
+        },
+        {
+          "id": "arrow",
+          "shape": "text",
+          "x": 20,
+          "y": 29,
+          "text": "↻",
+          "fontSize": 28,
+          "fill": "#eefcff",
+          "stroke": "rgba(9,17,50,0)",
+          "strokeWidth": 1,
+          "opacity": 1
+        }
+      ]
+    }
+  }
+};
+
+let pack=JSON.parse(JSON.stringify(defaultPack));
+let currentAsset="player";
+let selected=new Set();
+let activeLayerIndex=0;
+let tool="select";
+let clipboard=[];
+let drag=null;
+let undoStack=[];
+let redoStack=[];
+let isRestoringHistory=false;
+let raf=0;
+
+const $=id=>document.getElementById(id);
+const svg=$("svgPreview");
+const assetSelect=$("assetSelect");
+const layersEl=$("layers");
+const jsonView=$("jsonView");
+const statusEl=$("status");
+
+function clone(o){return JSON.parse(JSON.stringify(o))}
+function asset(){return pack.assets[currentAsset]}
+function layers(){return asset().layers || (asset().layers=[])}
+function setStatus(s){statusEl.textContent=s}
+function now(){return performance.now()}
+
+function hexToRgba(hex,a){
+  if(!/^#[0-9a-fA-F]{6}$/.test(hex)) return hex;
+  const r=parseInt(hex.slice(1,3),16), g=parseInt(hex.slice(3,5),16), b=parseInt(hex.slice(5,7),16);
+  a=Number(a);
+  if(a>=1)return hex;
+  return `rgba(${r},${g},${b},${a})`;
+}
+function currentFill(){return hexToRgba($("fillColor").value,$("fillAlpha").value)}
+function currentStroke(){return hexToRgba($("strokeColor").value,$("strokeAlpha").value)}
+function selectedIndices(){return [...selected].filter(i=>layers()[i]).sort((a,b)=>a-b)}
+function activeLayer(){return layers()[activeLayerIndex]}
+
+function animTransform(l,t){
+  const a=l.anim;if(!a||!a.type)return "";
+  const speed=Number(a.speed??0.004), amp=Number(a.amp??1), ampX=Number(a.ampX??amp), s=Math.sin(t*speed);
+  if(a.type==="look")return `translate(${s*ampX} 0)`;
+  if(a.type==="bob")return `translate(0 ${s*amp})`;
+  if(a.type==="shake")return `translate(${Math.sin(t*speed*5)*amp} ${Math.cos(t*speed*7)*amp})`;
+  if(a.type==="spin"){const cx=(Number(l.x)||20)+((Number(l.w)||0)/2),cy=(Number(l.y)||20)+((Number(l.h)||0)/2);return `rotate(${s*amp} ${cx} ${cy})`;}
+  if(a.type==="pulse"){const cx=Number(l.x??20),cy=Number(l.y??20),sc=1+s*amp;return `translate(${cx} ${cy}) scale(${sc}) translate(${-cx} ${-cy})`;}
+  return "";
+}
+function animOpacity(l,t){
+  if(l.anim?.type==="blink")return Math.sin(t*Number(l.anim.speed??0.006))>0?1:0.2;
+  return l.opacity??1;
+}
+function E(tag,attrs={}){
+  const el=document.createElementNS("http://www.w3.org/2000/svg",tag);
+  Object.entries(attrs).forEach(([k,v])=>{if(v!==undefined&&v!==null&&v!=="")el.setAttribute(k,v)});
+  return el;
+}
+function makeLayerEl(l,t){
+  let el;
+  if(l.shape==="circle"){
+    el=E("circle",{cx:l.x??20,cy:l.y??20,r:l.r??8});
+  }else if(l.shape==="polygon"){
+    const pts=(l.points||[]).map(p=>Array.isArray(p)?p.join(","):p).join(" ");
+    el=E("polygon",{points:pts});
+  }else if(l.shape==="text"){
+    el=E("text",{x:l.x??20,y:l.y??20,"font-size":l.fontSize??12,"font-weight":900,"font-family":"monospace","text-anchor":"middle"});
+    el.textContent=l.text??"?";
+  }else{
+    el=E("rect",{x:l.x??0,y:l.y??0,width:l.w??10,height:l.h??10,rx:l.rx??0,ry:l.rx??0});
+  }
+  el.setAttribute("fill",l.fill??"transparent");
+  el.setAttribute("stroke",l.stroke??"transparent");
+  el.setAttribute("stroke-width",l.strokeWidth??0);
+  el.setAttribute("opacity",animOpacity(l,t));
+  const tr=animTransform(l,t);if(tr)el.setAttribute("transform",tr);
+  return el;
+}
+
+function pushHistory(label=""){
+  if(isRestoringHistory)return;
+  undoStack.push(JSON.stringify(pack));
+  if(undoStack.length>80)undoStack.shift();
+  redoStack.length=0;
+  updateHistoryButtons();
+}
+function restoreHistory(serialized){
+  isRestoringHistory=true;
+  pack=JSON.parse(serialized);
+  if(!pack.assets[currentAsset])currentAsset=Object.keys(pack.assets)[0];
+  selected.clear();
+  activeLayerIndex=0;
+  isRestoringHistory=false;
+  renderAll();
+}
+function undo(){
+  if(!undoStack.length){setStatus("Rien à annuler.");return}
+  redoStack.push(JSON.stringify(pack));
+  restoreHistory(undoStack.pop());
+  setStatus("Undo.");
+}
+function redo(){
+  if(!redoStack.length){setStatus("Rien à refaire.");return}
+  undoStack.push(JSON.stringify(pack));
+  restoreHistory(redoStack.pop());
+  setStatus("Redo.");
+}
+function updateHistoryButtons(){
+  const u=$("undoBtn"), r=$("redoBtn");
+  if(u)u.disabled=!undoStack.length;
+  if(r)r.disabled=!redoStack.length;
+}
+function layerBBox(l){
+  if(l.shape==="circle"){
+    const x=Number(l.x||20),y=Number(l.y||20),r=Number(l.r||0);
+    return {minX:x-r,minY:y-r,maxX:x+r,maxY:y+r};
+  }
+  if(l.shape==="polygon" && Array.isArray(l.points) && l.points.length){
+    const xs=l.points.map(p=>Number(p[0]||0)), ys=l.points.map(p=>Number(p[1]||0));
+    return {minX:Math.min(...xs),minY:Math.min(...ys),maxX:Math.max(...xs),maxY:Math.max(...ys)};
+  }
+  const x=Number(l.x||0),y=Number(l.y||0),w=Number(l.w||0),h=Number(l.h||0);
+  return {minX:x,minY:y,maxX:x+w,maxY:y+h};
+}
+function selectionBBox(){
+  const ids=selectedIndices();
+  if(!ids.length)return {cx:20,cy:20,minX:0,minY:0,maxX:40,maxY:40};
+  const boxes=ids.map(i=>layerBBox(layers()[i]));
+  const minX=Math.min(...boxes.map(b=>b.minX)), minY=Math.min(...boxes.map(b=>b.minY));
+  const maxX=Math.max(...boxes.map(b=>b.maxX)), maxY=Math.max(...boxes.map(b=>b.maxY));
+  return {minX,minY,maxX,maxY,cx:(minX+maxX)/2,cy:(minY+maxY)/2};
+}
+function scaleLayerAround(l,sc,cx,cy){
+  if(!Number.isFinite(sc)||sc<=0)return;
+  if("x" in l)l.x=cx+(Number(l.x)-cx)*sc;
+  if("y" in l)l.y=cy+(Number(l.y)-cy)*sc;
+  if("w" in l)l.w=Math.max(.1,Number(l.w||1)*sc);
+  if("h" in l)l.h=Math.max(.1,Number(l.h||1)*sc);
+  if("r" in l)l.r=Math.max(.1,Number(l.r||1)*sc);
+  if("fontSize" in l)l.fontSize=Math.max(1,Number(l.fontSize||12)*sc);
+  if(Array.isArray(l.points)){
+    l.points=l.points.map(p=>[Number((cx+(Number(p[0])-cx)*sc).toFixed(2)),Number((cy+(Number(p[1])-cy)*sc).toFixed(2))]);
+  }
+}
+function scaleSelected(sc){
+  const ids=selectedIndices();
+  if(!ids.length){setStatus("Aucun layer sélectionné.");return}
+  pushHistory("scale");
+  const b=selectionBBox();
+  ids.forEach(i=>scaleLayerAround(layers()[i],sc,b.cx,b.cy));
+  setStatus("Scale ×"+sc+" autour du centre sélection : "+b.cx.toFixed(1)+","+b.cy.toFixed(1));
+  renderAll();
+}
+function simplifyPoints(points,minDist=0.9){
+  const out=[];
+  for(const p of points){
+    const last=out[out.length-1];
+    if(!last || Math.hypot(p.x-last.x,p.y-last.y)>=minDist)out.push(p);
+  }
+  return out;
+}
+function recolorSelected({fill=false,stroke=false}={}){
+  const ids=selectedIndices();
+  if(!ids.length){setStatus("Aucun layer sélectionné pour recolorer.");return}
+  pushHistory("recolor");
+  const f=currentFill(),s=currentStroke(),sw=Number($("strokeWidth").value||0);
+  ids.forEach(i=>{const l=layers()[i];if(fill)l.fill=f;if(stroke){l.stroke=s;l.strokeWidth=sw;}});
+  setStatus("Recoloré : "+ids.length+" layer(s).");
+  renderAll();
+}
+
+function renderSvg(){
+  const t=now();
+  svg.innerHTML='<rect width="40" height="40" fill="#071235"/>';
+  layers().forEach((l,i)=>{
+    const el=makeLayerEl(l,t);
+    if(selected.has(i)){
+      el.setAttribute("filter","drop-shadow(0 0 1.5px #ffd640)");
+    }
+    svg.appendChild(el);
+  });
+}
+function loop(){renderSvg();raf=requestAnimationFrame(loop)}
+
+function rebuildAssetSelect(){
+  assetSelect.innerHTML="";
+  Object.keys(pack.assets).forEach(name=>{
+    const o=document.createElement("option");o.value=name;o.textContent=name;assetSelect.appendChild(o);
+  });
+  if(!pack.assets[currentAsset])currentAsset=Object.keys(pack.assets)[0];
+  assetSelect.value=currentAsset;
+}
+function rebuildLayers(){
+  layersEl.innerHTML="";
+  layers().forEach((l,i)=>{
+    const d=document.createElement("div");
+    d.className="layerItem"+(i===activeLayerIndex?" active":"");
+    d.innerHTML=`<input type="checkbox" ${selected.has(i)?"checked":""}><div class="layerName">${i+1}. ${l.id||l.shape}</div><div class="layerMini"><button data-a="up">↑</button><button data-a="down">↓</button></div>`;
+    d.onclick=e=>{
+      const btn=e.target.closest("button");
+      if(btn){moveLayer(i,btn.dataset.a==="up"?-1:1);e.stopPropagation();return}
+      const cb=e.target.closest("input");
+      if(cb){cb.checked?selected.add(i):selected.delete(i);activeLayerIndex=i;renderAll();return}
+      activeLayerIndex=i;
+      selected.add(i);
+      renderAll();
+    };
+    layersEl.appendChild(d);
+  });
+}
+function renderJson(){jsonView.value=JSON.stringify(pack,null,2)}
+function renderForm(){
+  const l=activeLayer();
+  if(!l)return;
+  $("layerId").value=l.id||"";
+  $("x").value=l.x??"";
+  $("y").value=l.y??"";
+  $("rx").value=l.rx??"";
+  $("w").value=l.w??"";
+  $("h").value=l.h??"";
+  $("r").value=l.r??"";
+  $("textValue").value=l.shape==="polygon"?(l.points||[]).map(p=>Array.isArray(p)?p.join(","):p).join(" "):(l.text??"");
+  const fillHex=String(l.fill||""), strokeHex=String(l.stroke||"");
+  if(/^#[0-9a-fA-F]{6}$/.test(fillHex)){$("fillColor").value=fillHex;$("fillAlpha").value=1}
+  if(/^#[0-9a-fA-F]{6}$/.test(strokeHex)){$("strokeColor").value=strokeHex;$("strokeAlpha").value=1}
+  if(l.strokeWidth!==undefined)$("strokeWidth").value=l.strokeWidth;
+}
+function renderAll(){
+  rebuildAssetSelect();
+  rebuildLayers();
+  renderForm();
+  renderJson();
+}
+function setTool(t){
+  tool=t;
+  ["Select","Rect","Circle","Free"].forEach(n=>$("tool"+n).classList.toggle("active",t.toLowerCase()===n.toLowerCase()));
+  setStatus("Outil : "+t);
+}
+
+function svgPoint(evt){
+  const pt=svg.createSVGPoint();
+  pt.x=evt.clientX;pt.y=evt.clientY;
+  const p=pt.matrixTransform(svg.getScreenCTM().inverse());
+  return {x:Math.max(0,Math.min(40,p.x)),y:Math.max(0,Math.min(40,p.y))};
+}
+function addLayer(l){
+  pushHistory("add layer");
+  layers().push(l);
+  activeLayerIndex=layers().length-1;
+  selected.clear();selected.add(activeLayerIndex);
+  renderAll();
+}
+function startDraw(e){
+  if(tool==="select")return;
+  const p=svgPoint(e);
+  drag={start:p,last:p,points:[p]};
+  e.preventDefault();
+}
+function moveDraw(e){
+  if(!drag)return;
+  const p=svgPoint(e);
+  drag.last=p;
+  if(tool==="free"){
+    const last=drag.points[drag.points.length-1];
+    if(Math.hypot(p.x-last.x,p.y-last.y)>0.65)drag.points.push(p);
+  }
+  renderSvg();
+  drawTempPreview();
+  e.preventDefault();
+}
+function endDraw(e){
+  if(!drag)return;
+  const p=svgPoint(e);
+  drag.last=p;
+  const id=tool+"_"+(layers().length+1);
+  const sw=Number($("strokeWidth").value||2);
+  if(tool==="rect"){
+    const x=Math.min(drag.start.x,p.x), y=Math.min(drag.start.y,p.y);
+    const w=Math.abs(p.x-drag.start.x), h=Math.abs(p.y-drag.start.y);
+    if(w>0.5&&h>0.5)addLayer({id,shape:"rect",x,y,w,h,rx:2,fill:currentFill(),stroke:currentStroke(),strokeWidth:sw});
+  }else if(tool==="circle"){
+    const r=Math.hypot(p.x-drag.start.x,p.y-drag.start.y);
+    if(r>0.5)addLayer({id,shape:"circle",x:drag.start.x,y:drag.start.y,r,fill:currentFill(),stroke:currentStroke(),strokeWidth:sw});
+  }else if(tool==="free"){
+    const smooth=simplifyPoints(drag.points,0.9);
+    const pts=smooth.map(q=>[Number(q.x.toFixed(1)),Number(q.y.toFixed(1))]);
+    if(pts.length>2)addLayer({id,shape:"polygon",points:pts,fill:currentFill(),stroke:currentStroke(),strokeWidth:sw});
+  }
+  drag=null;
+  renderAll();
+  e.preventDefault();
+}
+function drawTempPreview(){
+  if(!drag)return;
+  const sw=Number($("strokeWidth").value||2);
+  let el;
+  if(tool==="rect"){
+    const x=Math.min(drag.start.x,drag.last.x), y=Math.min(drag.start.y,drag.last.y);
+    el=E("rect",{x,y,width:Math.abs(drag.last.x-drag.start.x),height:Math.abs(drag.last.y-drag.start.y),rx:2});
+  }else if(tool==="circle"){
+    el=E("circle",{cx:drag.start.x,cy:drag.start.y,r:Math.hypot(drag.last.x-drag.start.x,drag.last.y-drag.start.y)});
+  }else if(tool==="free"){
+    el=E("polyline",{points:drag.points.map(p=>`${p.x},${p.y}`).join(" ")});
+    el.setAttribute("fill","none");
+  }
+  if(el){
+    el.setAttribute("fill",tool==="free"?"none":currentFill());
+    el.setAttribute("stroke",currentStroke());
+    el.setAttribute("stroke-width",sw);
+    el.setAttribute("stroke-dasharray","1 1");
+    svg.appendChild(el);
+  }
+}
+
+function writeFormToActive(){
+  const l=activeLayer();if(!l)return;
+  l.id=$("layerId").value||l.id;
+  ["x","y","rx","w","h","r"].forEach(k=>{
+    const v=$(k).value;
+    if(v==="")delete l[k];else l[k]=Number(v);
+  });
+  if(l.shape==="text")l.text=$("textValue").value||"?";
+  if(l.shape==="polygon"){
+    l.points=($("textValue").value||"").trim().split(/\s+/).filter(Boolean).map(s=>s.split(",").map(Number));
+  }
+  renderAll();
+}
+
+function moveLayer(i,dir){
+  const arr=layers();const ni=i+dir;if(ni<0||ni>=arr.length)return;
+  [arr[i],arr[ni]]=[arr[ni],arr[i]];
+  selected=new Set([...selected].map(x=>x===i?ni:x===ni?i:x));
+  activeLayerIndex=ni;
+  renderAll();
+}
+function deleteSelected(){
+  pushHistory("delete selected");
+  const keep=layers().filter((_,i)=>!selected.has(i));
+  asset().layers=keep;
+  selected.clear();activeLayerIndex=0;
+  renderAll();
+}
+function duplicateSelected(){
+  pushHistory("duplicate selected");
+  const copies=selectedIndices().map(i=>{const l=clone(layers()[i]);l.id=(l.id||"layer")+"_copy";return l});
+  asset().layers.push(...copies);
+  selected=new Set(copies.map((_,i)=>layers().length-copies.length+i));
+  activeLayerIndex=[...selected][0]||0;
+  renderAll();
+}
+function copySelected(){clipboard=selectedIndices().map(i=>clone(layers()[i]));setStatus("Copié : "+clipboard.length+" layer(s)")}
+function copyAll(){clipboard=layers().map(clone);setStatus("Asset entier copié : "+clipboard.length+" layer(s)")}
+function pasteLayers(){
+  if(!clipboard.length){setStatus("Clipboard vide.");return}
+  pushHistory("paste layers");
+  const offset=layers().length;
+  const copies=clipboard.map(l=>{const c=clone(l);c.id=(c.id||"layer")+"_paste";return c});
+  asset().layers.push(...copies);
+  selected=new Set(copies.map((_,i)=>offset+i));
+  activeLayerIndex=offset;
+  renderAll();
+}
+function applyGroupAnimationOnly(){
+  const ids=selectedIndices();
+  if(!ids.length){setStatus("Aucun layer sélectionné.");return}
+  const anim=$("groupAnim").value;
+  if(!anim){setStatus("Aucune animation choisie.");return}
+  pushHistory("group animation");
+  ids.forEach(i=>layers()[i].anim={type:anim,amp:Number($("groupAnimAmp").value||1),ampX:Number($("groupAnimAmpX").value||2),speed:Number($("groupAnimSpeed").value||0.004)});
+  setStatus("Animation appliquée : "+anim);
+  renderAll();
+}
+function applyGroupFx(){
+  const ids=selectedIndices();
+  if(!ids.length){setStatus("Aucun layer sélectionné.");return}
+  pushHistory("group transform");
+  const dx=Number($("groupDx").value||0),dy=Number($("groupDy").value||0);
+  const sc=Number($("groupScale").value||1);
+  const op=Math.max(0,Math.min(1,Number($("groupOpacity").value||1)));
+  const b=selectionBBox();
+  ids.forEach(i=>{
+    const l=layers()[i];
+    if("x" in l)l.x=Number(l.x)+dx;
+    if("y" in l)l.y=Number(l.y)+dy;
+    if(Array.isArray(l.points))l.points=l.points.map(p=>[Number((Number(p[0])+dx).toFixed(2)),Number((Number(p[1])+dy).toFixed(2))]);
+    scaleLayerAround(l,sc,b.cx+dx,b.cy+dy);
+    l.opacity=op;
+  });
+  setStatus("Transform appliquée. Pivot scale : centre de sélection.");
+  renderAll();
+}
+function clearGroupFx(){
+  selectedIndices().forEach(i=>delete layers()[i].anim);
+  renderAll();
+}
+function download(){
+  const blob=new Blob([JSON.stringify(pack,null,2)],{type:"application/json"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="vector_assets.json";
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
+
+svg.addEventListener("pointerdown",startDraw);
+svg.addEventListener("pointermove",moveDraw);
+svg.addEventListener("pointerup",endDraw);
+svg.addEventListener("pointercancel",()=>drag=null);
+
+$("toolSelect").onclick=()=>setTool("select");
+$("toolRect").onclick=()=>setTool("rect");
+$("toolCircle").onclick=()=>setTool("circle");
+$("toolFree").onclick=()=>setTool("free");
+
+["layerId","x","y","rx","w","h","r","textValue"].forEach(id=>$(id).addEventListener("change",writeFormToActive));
+$("assetSelect").onchange=()=>{currentAsset=assetSelect.value;selected.clear();activeLayerIndex=0;renderAll()};
+$("selectAll").onclick=()=>{selected=new Set(layers().map((_,i)=>i));activeLayerIndex=0;renderAll()};
+$("clearSelection").onclick=()=>{selected.clear();renderAll()};
+$("deleteSelected").onclick=deleteSelected;
+$("duplicateSelected").onclick=duplicateSelected;
+$("copySelected").onclick=copySelected;
+$("copyAll").onclick=copyAll;
+$("pasteLayers").onclick=pasteLayers;
+$("moveUp").onclick=()=>moveLayer(activeLayerIndex,-1);
+$("moveDown").onclick=()=>moveLayer(activeLayerIndex,1);
+$("applyGroupFx").onclick=applyGroupFx;
+if($("applyGroupAnim"))$("applyGroupAnim").onclick=applyGroupAnimationOnly;
+$("clearGroupFx").onclick=clearGroupFx;
+$("resetAsset").onclick=()=>{pack.assets[currentAsset]=clone(defaultPack.assets[currentAsset]);selected.clear();activeLayerIndex=0;renderAll()};
+$("downloadJson").onclick=download;
+$("copyJson").onclick=async()=>{await navigator.clipboard.writeText(JSON.stringify(pack,null,2));alert("JSON copié.")};
+$("applyJson").onclick=()=>{try{pack=JSON.parse(jsonView.value);currentAsset=Object.keys(pack.assets)[0];selected.clear();activeLayerIndex=0;renderAll()}catch(e){alert("JSON invalide : "+e.message)}};
+$("fileInput").onchange=async e=>{const f=e.target.files[0];if(!f)return;try{pack=JSON.parse(await f.text());currentAsset=Object.keys(pack.assets)[0];selected.clear();activeLayerIndex=0;renderAll()}catch(err){alert("Import impossible : "+err.message)}};
+
+
+$("undoBtn").onclick=undo;
+$("redoBtn").onclick=redo;
+document.addEventListener("keydown",e=>{
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="z"){e.preventDefault();undo();}
+  if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="y"){e.preventDefault();redo();}
+});
+$("scaleSelectedHalf").onclick=()=>scaleSelected(.5);
+$("scaleSelectedUp").onclick=()=>scaleSelected(1.2);
+$("scaleSelectedDouble").onclick=()=>scaleSelected(2);
+$("resetTransformFields").onclick=()=>{
+  $("groupDx").value=0;$("groupDy").value=0;$("groupScale").value=1;$("groupOpacity").value=1;
+  setStatus("Champs transform remis à zéro.");
+};
+$("applyFillToSelection").onclick=()=>recolorSelected({fill:true});
+$("applyStrokeToSelection").onclick=()=>recolorSelected({stroke:true});
+$("applyColorsToSelection").onclick=()=>recolorSelected({fill:true,stroke:true});
+
+renderAll();
+updateHistoryButtons();
+loop();
+</script>
+</body>
+</html>
