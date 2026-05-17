@@ -1195,48 +1195,6 @@ svg{
 }
 
 
-/* ===== V68 vector asset diagnostic ===== */
-#vectorAssetStatus{
-  position:fixed;
-  right:10px;
-  top:10px;
-  z-index:9999;
-  padding:6px 9px;
-  border-radius:10px;
-  font-family:monospace;
-  font-size:11px;
-  font-weight:900;
-  background:rgba(10,12,32,.88);
-  color:#ffd640;
-  border:1px solid rgba(255,255,255,.18);
-  pointer-events:none;
-  box-shadow:0 8px 20px rgba(0,0,0,.28);
-}
-#vectorAssetStatus.ok{color:#52f28a;border-color:#52f28a}
-#vectorAssetStatus.bad{color:#ff7777;border-color:#ff7777}
-body.editing #vectorAssetStatus{top:56px}
-
-
-/* ===== V73 strict vector assets ===== */
-#vectorAssetStatus{
-  position:fixed;
-  right:10px;
-  top:10px;
-  z-index:99999;
-  padding:8px 10px;
-  border-radius:10px;
-  font-family:monospace;
-  font-size:11px;
-  font-weight:900;
-  background:rgba(4,6,24,.94);
-  color:#ffd640;
-  border:2px solid #ffd640;
-  pointer-events:none;
-  white-space:pre-line;
-  box-shadow:0 8px 24px rgba(0,0,0,.4);
-}
-#vectorAssetStatus.ok{color:#52f28a;border-color:#52f28a}
-#vectorAssetStatus.bad{color:#ff6b7a;border-color:#ff6b7a}
 </style>
 </head>
 <body>
@@ -1267,8 +1225,6 @@ body.editing #vectorAssetStatus{top:56px}
     </span>
   </div>
 </div>
-
-<div id="vectorAssetStatus">SVG ?</div>
 <div id="stage">
   <div id="levelBadge"></div>
   <div id="pixelBg"></div>
@@ -1549,12 +1505,8 @@ function starScore(){
 /* ===== V67 VECTOR ASSET RUNTIME ===== */
 let vectorAssetPack=null;
 
-function setVectorStatus(text,kind=""){
-  const el=document.getElementById("vectorAssetStatus");
-  if(!el)return;
-  el.textContent=text;
-  el.className=kind;
-}
+function setVectorStatus(text,kind=""){ /* debug disabled */ }
+
 
 function validateVectorAssetsData(data){
   if(!data || !data.assets)throw new Error("vector_assets.json invalide : assets manquant");
@@ -1650,8 +1602,7 @@ function drawVectorAsset(name,X,Y,parent=grid,opts={}){
     const layerCount=(a.layers||[]).length;
     const first=(a.layers||[]).slice(0,3).map(l=>l.id).join(",");
     setVectorStatus("SVG ON\\n"+(window.__vectorAssetsLoadedFrom||"?")+"\\ndraw:"+window.__vectorDrawCount+" · "+name+"\\nlayers:"+layerCount+" · "+first,"ok");
-    console.log("[VECTOR DRAW]", name, "layers=", layerCount, "first=", first);
-  }
+}
   return true;
 }
 
@@ -2819,19 +2770,6 @@ function updateGlobalScale(){
 window.addEventListener("resize",updateGlobalScale);
 window.addEventListener("orientationchange",()=>setTimeout(updateGlobalScale,80));
 updateGlobalScale();
-
-
-window.debugVectorAssets=function(){
-  return {
-    loadedFrom:window.__vectorAssetsLoadedFrom||null,
-    drawCount:window.__vectorDrawCount||0,
-    lastDrawn:window.__lastVectorAssetDrawn||null,
-    playerLayers:vectorAssetPack?.assets?.player?.layers?.map(l=>l.id)||null,
-    destinationLayers:vectorAssetPack?.assets?.destination?.layers?.map(l=>l.id)||null,
-    rawPack:vectorAssetPack
-  };
-};
-
 loadAssets()
   .then(()=>loadVectorAssets())
   .then(()=>loadStaticLevels())
