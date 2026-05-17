@@ -1195,9 +1195,189 @@ svg{
 }
 
 
+
+/* ===== V77 mobile fullscreen button ===== */
+#fullscreenBtn{
+  position:fixed;
+  right:10px;
+  top:10px;
+  z-index:9998;
+  width:44px;
+  height:44px;
+  border-radius:14px;
+  border:2px solid rgba(41,231,255,.55);
+  background:rgba(8,14,48,.82);
+  color:#dffbff;
+  font-size:22px;
+  line-height:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow:0 10px 26px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.08);
+  backdrop-filter:blur(4px);
+}
+#fullscreenBtn:active{
+  transform:scale(.96);
+}
+body.editing #fullscreenBtn{
+  top:56px;
+}
+@media (display-mode: fullscreen), (display-mode: standalone){
+  #fullscreenBtn{display:none!important}
+}
+@media (max-width:700px){
+  #fullscreenBtn{
+    width:40px;
+    height:40px;
+    border-radius:12px;
+    font-size:20px;
+    right:8px;
+    top:8px;
+  }
+}
+
+
+/* ===== V78 mobile controls + fullscreen visibility fix ===== */
+#fullscreenBtn{
+  position:fixed!important;
+  top:calc(env(safe-area-inset-top, 0px) + 78px)!important;
+  right:12px!important;
+  z-index:2147483000!important;
+  width:42px!important;
+  height:42px!important;
+  border-radius:13px!important;
+  border:2px solid rgba(41,231,255,.85)!important;
+  background:rgba(7,12,42,.94)!important;
+  color:#dffbff!important;
+  font-size:21px!important;
+  line-height:1!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  box-shadow:0 0 18px rgba(41,231,255,.35), 0 10px 26px rgba(0,0,0,.35)!important;
+  backdrop-filter:blur(5px);
+  -webkit-backdrop-filter:blur(5px);
+  touch-action:manipulation;
+}
+#fullscreenBtn::after{
+  content:"";
+  position:absolute;
+  inset:-10px;
+}
+body.editing #fullscreenBtn{
+  top:calc(env(safe-area-inset-top, 0px) + 92px)!important;
+}
+
+/* Mobile bottom buttons: never let the right pink button overflow. */
+@media (max-width: 760px){
+  html,body{
+    width:100%;
+    max-width:100%;
+    overflow-x:hidden!important;
+  }
+
+  .controls,
+  #controls,
+  .bottomControls,
+  .gameControls,
+  .playControls,
+  .actions,
+  .buttons{
+    max-width:100vw!important;
+    box-sizing:border-box!important;
+    padding-left:10px!important;
+    padding-right:10px!important;
+    gap:8px!important;
+  }
+
+  /* Robust fallback for the three big gameplay buttons when they are direct buttons in a flex row. */
+  .controls button,
+  #controls button,
+  .bottomControls button,
+  .gameControls button,
+  .playControls button,
+  .actions button{
+    min-width:0!important;
+    box-sizing:border-box!important;
+  }
+
+  /* Common large turn/reset buttons. */
+  button[id*="right" i],
+  button[class*="right" i],
+  button[id*="turnRight" i],
+  button[class*="turnRight" i]{
+    max-width:calc((100vw - 40px) / 2)!important;
+  }
+
+  /* If the actual controls are the last large row, force contained sizing. */
+  main button,
+  #stage button{
+    max-width:100%!important;
+  }
+}
+
+/* Specific fixed mobile control row if present in this codebase */
+@media (max-width: 760px){
+  #bottomBar,
+  #controlBar,
+  #gameButtons,
+  #turnButtons{
+    width:100vw!important;
+    max-width:100vw!important;
+    margin-left:0!important;
+    margin-right:0!important;
+    padding-left:10px!important;
+    padding-right:10px!important;
+    box-sizing:border-box!important;
+    display:grid!important;
+    grid-template-columns:minmax(0, 1fr) minmax(78px, .46fr) minmax(0, 1fr)!important;
+    column-gap:8px!important;
+  }
+}
+
+
+/* ===== V79 visible romantic biomes ===== */
+body.biome-love{--bg1:#ff4f93;--bg2:#180014;--accent:#ffd1eb}
+body.biome-garden{--bg1:#52f28a;--bg2:#06180d;--accent:#ffd640}
+body.biome-kiss{--bg1:#ff6b9b;--bg2:#210014;--accent:#ffb6d5}
+body.biome-starry{--bg1:#405cff;--bg2:#050720;--accent:#ffe35a}
+.biomeGlyph{
+  position:absolute;
+  z-index:0;
+  pointer-events:none;
+  font-size:28px;
+  line-height:1;
+  opacity:.78!important;
+  filter:drop-shadow(0 0 8px rgba(255,255,255,.35));
+  animation:drift 9s ease-in-out infinite;
+}
+@media(max-width:760px){
+  #pixelBg{opacity:1!important}
+  .pxshape{opacity:.30!important}
+  .biomeGlyph{
+    opacity:.92!important;
+    font-size:21px;
+  }
+}
+#banner.finalLove{
+  border-color:#ff8fc2!important;
+  box-shadow:0 0 28px rgba(255,79,147,.42),0 20px 60px rgba(0,0,0,.72)!important;
+  background:linear-gradient(180deg,rgba(22,8,32,.96),rgba(5,5,18,.96))!important;
+}
+#banner.finalLove #bannerTitle{
+  color:#ffd1eb;
+  text-shadow:0 0 12px rgba(255,79,147,.7);
+}
+
 </style>
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Gravity Cube">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.webmanifest">
 </head>
 <body>
+<button id="fullscreenBtn" aria-label="Plein écran" title="Plein écran">⛶</button>
 <div id="top">
   <div id="title"><span class="t-mark">▣</span> <span class="t-gravity">GRAVITY</span> <span class="t-cube">CUBE</span> <span class="t-mark">▣</span> <span id="modeLabel"></span></div>
   <div id="status">Play : les bords font WRAP. ☠ tue. ↻/↺ tournent une fois puis relâchent le cube.</div>
@@ -1220,7 +1400,7 @@ svg{
         <button id="saveLocal">Save draft</button><button id="loadLocal">Load draft</button><button id="exportJson">Export levels.json</button><button id="importBtn">Import JSON</button><button id="openAssetEditor">Assets pixel</button><button id="openSvgAssetEditor">Assets SVG</button><input id="importFile" class="hidden" type="file" accept=".json,application/json">
       </span>
       <span class="group collapsed"><span class="groupTitle">Biome</span><button class="foldBtn" data-fold>▸</button>
-        <select id="biomeSelect"><option value="cosmic">Cosmic</option><option value="forest">Forêt</option><option value="desert">Désert</option><option value="ice">Glace</option><option value="rainbow">Arc-en-ciel</option></select>
+        <select id="biomeSelect"><option value="cosmic">Cosmic</option><option value="forest">Forêt</option><option value="desert">Désert</option><option value="ice">Glace</option><option value="rainbow">Arc-en-ciel</option><option value="love">Love</option><option value="garden">Jardin</option><option value="kiss">Bisous</option><option value="starry">Étoiles</option></select>
       </span>
     </span>
   </div>
@@ -1995,41 +2175,75 @@ function fall(){
         floatingHearts();
         startConfetti();
         saveWinProgress();
-        showBanner("DESTINÉE RETROUVÉE","« "+levels[currentLevel].name+" » · "+moves+" coups · objectif 3♥ : "+levels[currentLevel].maxMoves,stars,"win");
+        if(currentLevel>=49 || currentLevel===levels.length-1){
+          showBanner(
+            "DESTINÉE VALIDÉE 💖",
+            "Vous avez terminé les 50 niveaux. Votre date a enfin fonctionné. Il n’y a plus qu’à tenir les 3 prochaines années pour passer le cap. Tout au long du jeu, vous avez réussi à rencontrer différentes personnes, mais rien n’avait vraiment abouti. Cette fois, la dernière était la bonne — ou le bon.",
+            "💖 🌸 💋 ⭐ 💐",
+            "final"
+          );
+        }else{
+          showBanner("DESTINÉE RETROUVÉE","« "+levels[currentLevel].name+" » · "+moves+" coups · objectif 3♥ : "+levels[currentLevel].maxMoves,stars,"win");
+        }
       }
     }
   };
   step();
 }
 
-function spawnBgDots(clear=false){
+function spawnBgDots(clear=false, biomeOverride=null){
   const bg=document.getElementById("pixelBg");
+  if(!bg)return;
   if(clear)bg.innerHTML="";
-  const biome=(localStorage.getItem("gravity_cube_biome")||"cosmic");
+  const biome=biomeOverride || document.body.className.match(/biome-([a-z]+)/)?.[1] || localStorage.getItem("gravity_cube_biome") || "cosmic";
   const palettes={
     cosmic:["#00e5ff","#ff2bd6","#7c4dff","#fff000","#00e676"],
     forest:["#00ff66","#b6ff00","#00c853","#ffea00","#31ffb7"],
     desert:["#ff8a00","#ffd000","#ff3d00","#fff176","#ff6b00"],
     ice:["#00d5ff","#d8fbff","#59f0ff","#ffffff","#7c9cff"],
-    rainbow:["#ff2bd6","#ff8a00","#fff000","#00e676","#00b8ff"]
+    rainbow:["#ff2bd6","#ff8a00","#fff000","#00e676","#00b8ff"],
+    love:["#ff4f93","#ffd1eb","#ff8fc2","#ffd640","#ffffff"],
+    garden:["#52f28a","#b6ff00","#ffd640","#ff8fc2","#ffffff"],
+    kiss:["#ff6b9b","#ffd1df","#ff304f","#ffd640","#ffffff"],
+    starry:["#405cff","#29e7ff","#ffe35a","#ffffff","#9b6cff"]
   };
   const types={
-    cosmic:["cloud","star","rock","plant","spark"],
+    cosmic:["star","spark","cloud","plant","spark"],
     forest:["plant","plant","rock","spark","cloud"],
     desert:["rock","spark","cloud","rock","star"],
     ice:["spark","cloud","rock","star","spark"],
-    rainbow:["star","spark","cloud","plant","spark"]
+    rainbow:["star","spark","cloud","plant","spark"],
+    love:["heart","kiss","flower","star","heart"],
+    garden:["flower","heart","plant","star","kiss"],
+    kiss:["kiss","heart","star","flower","kiss"],
+    starry:["star","star","heart","spark","flower"]
   };
-  const p=palettes[biome],t=types[biome];
+  const p=palettes[biome]||palettes.cosmic;
+  const t=types[biome]||types.cosmic;
   const shapes=[
-    {x:"8%",y:"12%",s:88,c:p[0],t:t[0]},
-    {x:"78%",y:"14%",s:74,c:p[1],t:t[1]},
-    {x:"10%",y:"68%",s:104,c:p[2],t:t[2]},
-    {x:"76%",y:"66%",s:96,c:p[3],t:t[3]},
-    {x:"44%",y:"8%",s:70,c:p[4],t:t[4]}
+    {x:"7%",y:"14%",s:78,c:p[0],t:t[0]},
+    {x:"82%",y:"13%",s:66,c:p[1],t:t[1]},
+    {x:"9%",y:"70%",s:90,c:p[2],t:t[2]},
+    {x:"82%",y:"68%",s:84,c:p[3],t:t[3]},
+    {x:"46%",y:"8%",s:62,c:p[4],t:t[4]},
+    {x:"17%",y:"42%",g:"♡",c:p[1]},
+    {x:"88%",y:"42%",g:"✦",c:p[4]},
+    {x:"27%",y:"84%",g:"🌸",c:p[2]},
+    {x:"72%",y:"84%",g:"💋",c:p[0]},
+    {x:"50%",y:"90%",g:"♥",c:p[1]}
   ];
   for(const sh of shapes){
     const d=document.createElement("div");
+    if(sh.g){
+      d.className="biomeGlyph";
+      d.textContent=sh.g;
+      d.style.left=sh.x;
+      d.style.top=sh.y;
+      d.style.color=sh.c;
+      d.style.animationDelay=(-Math.random()*7)+"s";
+      bg.appendChild(d);
+      continue;
+    }
     d.className="pxshape";
     d.style.left=sh.x; d.style.top=sh.y; d.style.width=sh.s+"px"; d.style.height=sh.s+"px";
     d.innerHTML=pixelShape(sh.c,sh.t);
@@ -2037,6 +2251,9 @@ function spawnBgDots(clear=false){
   }
 }
 function pixelShape(c,t){
+  if(t==="heart")return `<svg viewBox="0 0 16 16"><rect x="4" y="3" width="3" height="3" fill="${c}"/><rect x="9" y="3" width="3" height="3" fill="${c}"/><rect x="3" y="5" width="10" height="4" fill="${c}"/><rect x="5" y="9" width="6" height="2" fill="${c}"/><rect x="7" y="11" width="2" height="2" fill="${c}"/></svg>`;
+  if(t==="flower")return `<svg viewBox="0 0 16 16"><rect x="7" y="7" width="2" height="2" fill="#ffd640"/><rect x="7" y="2" width="2" height="4" fill="${c}"/><rect x="7" y="10" width="2" height="4" fill="${c}"/><rect x="2" y="7" width="4" height="2" fill="${c}"/><rect x="10" y="7" width="4" height="2" fill="${c}"/><rect x="5" y="5" width="6" height="6" fill="rgba(255,255,255,.22)"/></svg>`;
+  if(t==="kiss")return `<svg viewBox="0 0 16 16"><rect x="3" y="6" width="10" height="2" fill="${c}"/><rect x="4" y="4" width="8" height="2" fill="${c}"/><rect x="4" y="8" width="8" height="2" fill="${c}"/><rect x="6" y="10" width="4" height="2" fill="${c}"/><rect x="5" y="5" width="2" height="1" fill="rgba(255,255,255,.55)"/></svg>`;
   if(t==="star")return `<svg viewBox="0 0 16 16"><rect x="7" y="1" width="2" height="4" fill="${c}"/><rect x="7" y="11" width="2" height="4" fill="${c}"/><rect x="1" y="7" width="4" height="2" fill="${c}"/><rect x="11" y="7" width="4" height="2" fill="${c}"/><rect x="6" y="6" width="4" height="4" fill="${c}"/></svg>`;
   if(t==="plant")return `<svg viewBox="0 0 16 16"><rect x="7" y="6" width="2" height="8" fill="${c}"/><rect x="4" y="8" width="3" height="2" fill="${c}"/><rect x="9" y="5" width="4" height="2" fill="${c}"/><rect x="5" y="3" width="2" height="3" fill="${c}"/><rect x="6" y="14" width="4" height="1" fill="${c}"/></svg>`;
   if(t==="rock")return `<svg viewBox="0 0 16 16"><rect x="3" y="6" width="10" height="6" fill="${c}"/><rect x="5" y="4" width="6" height="2" fill="${c}"/><rect x="2" y="8" width="2" height="3" fill="${c}"/><rect x="12" y="7" width="2" height="4" fill="${c}"/><rect x="5" y="7" width="2" height="1" fill="rgba(255,255,255,.45)"/></svg>`;
@@ -2045,7 +2262,7 @@ function pixelShape(c,t){
 }
 function confettiBurst(count=24){
   const colors=["#ffd640","#52f28a","#3fc1ff","#ff6b9b","#9b6cff","#ff8fc2"];
-  const glyphs=["","","","♥","✦"];
+  const glyphs=["","♥","♡","🌸","💋","⭐","✦"];
   for(let i=0;i<count;i++){
     let c=document.createElement("div");
     c.className="confetti";
@@ -2078,9 +2295,10 @@ function stopConfetti(){
 }
 
 function applyBiomeVisual(name){
-  document.body.classList.remove("biome-cosmic","biome-forest","biome-desert","biome-ice","biome-rainbow");
+  document.body.classList.remove("biome-cosmic","biome-forest","biome-desert","biome-ice","biome-rainbow","biome-love","biome-garden","biome-kiss","biome-starry");
   document.body.classList.add("biome-"+name);
-  spawnBgDots(true);
+  try{localStorage.setItem("gravity_cube_biome",name)}catch(e){}
+  spawnBgDots(true,name);
 }
 function setBiome(name){
   levels[currentLevel].biome=name;
@@ -2785,5 +3003,172 @@ loadAssets()
       banner.classList.remove("hidden");
     }
   });
+</script>
+<script>
+
+/* ===== V77 mobile fullscreen behavior ===== */
+(function(){
+  const btn = document.getElementById("fullscreenBtn");
+  if(!btn) return;
+
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
+
+  const isStandalone = () =>
+    window.navigator.standalone === true ||
+    window.matchMedia("(display-mode: standalone)").matches ||
+    window.matchMedia("(display-mode: fullscreen)").matches;
+
+  function showFullscreenHelp(){
+    const msg = isIOS
+      ? "Sur iPhone, Safari ne permet pas toujours le vrai plein écran par bouton. Pour avoir le rendu plein écran : bouton Partager → Ajouter à l’écran d’accueil → lance le jeu depuis l’icône."
+      : "Ton navigateur bloque le plein écran. Lance le jeu depuis Chrome/Edge et appuie sur le bouton plein écran.";
+
+    if(typeof banner !== "undefined" && banner && typeof bannerTitle !== "undefined"){
+      bannerTitle.textContent = "Plein écran";
+      bannerText.textContent = msg;
+      if(typeof starsEl !== "undefined") starsEl.textContent = "";
+      bannerAction.textContent = "OK";
+      bannerAction.onclick = () => banner.classList.add("hidden");
+      banner.classList.remove("hidden");
+    }else{
+      alert(msg);
+    }
+  }
+
+  async function requestFullscreenSafe(){
+    if(isStandalone()){
+      btn.style.display = "none";
+      return;
+    }
+
+    const target = document.documentElement;
+
+    try{
+      if(target.requestFullscreen){
+        await target.requestFullscreen({navigationUI:"hide"});
+        btn.style.display = "none";
+        return;
+      }
+      if(target.webkitRequestFullscreen){
+        target.webkitRequestFullscreen();
+        btn.style.display = "none";
+        return;
+      }
+
+      showFullscreenHelp();
+    }catch(err){
+      console.warn("[FULLSCREEN] impossible", err);
+      showFullscreenHelp();
+    }
+  }
+
+  btn.addEventListener("click", requestFullscreenSafe);
+
+  document.addEventListener("fullscreenchange", () => {
+    btn.style.display = document.fullscreenElement ? "none" : "";
+  });
+  document.addEventListener("webkitfullscreenchange", () => {
+    btn.style.display = document.webkitFullscreenElement ? "none" : "";
+  });
+
+  if(isStandalone()){
+    btn.style.display = "none";
+  }
+})();
+
+</script>
+<script>
+
+/* ===== V78 force fullscreen button visible on mobile browser ===== */
+(function(){
+  const btn=document.getElementById("fullscreenBtn");
+  if(!btn)return;
+
+  const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
+
+  const isStandalone=()=>window.navigator.standalone===true ||
+    window.matchMedia("(display-mode: standalone)").matches ||
+    window.matchMedia("(display-mode: fullscreen)").matches;
+
+  function forceButtonVisibility(){
+    if(isStandalone()){
+      btn.style.display="none";
+      return;
+    }
+    btn.style.display="flex";
+    btn.style.visibility="visible";
+    btn.style.opacity="1";
+  }
+
+  forceButtonVisibility();
+  window.addEventListener("resize", forceButtonVisibility);
+  window.addEventListener("orientationchange", forceButtonVisibility);
+
+  btn.addEventListener("click", async ()=>{
+    if(isIOS){
+      const msg="Sur iPhone : bouton Partager → Ajouter à l’écran d’accueil → relance le jeu depuis l’icône pour avoir le vrai plein écran.";
+      if(typeof banner!=="undefined" && banner && typeof bannerTitle!=="undefined"){
+        bannerTitle.textContent="Plein écran iPhone";
+        bannerText.textContent=msg;
+        if(typeof starsEl!=="undefined")starsEl.textContent="";
+        bannerAction.textContent="OK";
+        bannerAction.onclick=()=>banner.classList.add("hidden");
+        banner.classList.remove("hidden");
+      }else alert(msg);
+      return;
+    }
+
+    try{
+      const target=document.documentElement;
+      if(target.requestFullscreen) await target.requestFullscreen({navigationUI:"hide"});
+      else if(target.webkitRequestFullscreen) target.webkitRequestFullscreen();
+    }catch(e){
+      console.warn("[FULLSCREEN]",e);
+    }
+  }, {capture:true});
+})();
+
+</script>
+<script>
+
+/* ===== V78 clamp bottom gameplay controls ===== */
+(function(){
+  function clampControls(){
+    const candidates=[...document.querySelectorAll("button")].filter(b=>{
+      const t=(b.textContent||"").toLowerCase();
+      const id=(b.id||"").toLowerCase();
+      const cl=(b.className||"").toString().toLowerCase();
+      return t.includes("reset") || id.includes("reset") || cl.includes("reset");
+    });
+    const reset=candidates[0];
+    if(!reset || !reset.parentElement)return;
+    const row=reset.parentElement;
+    const buttons=[...row.querySelectorAll("button")];
+    if(buttons.length<3)return;
+
+    row.style.boxSizing="border-box";
+    row.style.maxWidth="100vw";
+    row.style.width="100%";
+    row.style.paddingLeft="10px";
+    row.style.paddingRight="10px";
+    row.style.display="grid";
+    row.style.gridTemplateColumns="minmax(0,1fr) minmax(74px,.46fr) minmax(0,1fr)";
+    row.style.gap="8px";
+    row.style.overflow="visible";
+
+    buttons.forEach(b=>{
+      b.style.minWidth="0";
+      b.style.maxWidth="100%";
+      b.style.boxSizing="border-box";
+    });
+  }
+  window.addEventListener("load", clampControls);
+  window.addEventListener("resize", clampControls);
+  window.addEventListener("orientationchange", clampControls);
+  setTimeout(clampControls, 250);
+})();
+
 </script>
 </body></html>
