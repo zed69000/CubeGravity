@@ -1369,6 +1369,22 @@ body.biome-starry{--bg1:#405cff;--bg2:#050720;--accent:#ffe35a}
   text-shadow:0 0 12px rgba(255,79,147,.7);
 }
 
+
+/* ===== V78 start screen + solver report popup ===== */
+body.playing #title,body.playing #status{display:none!important}
+body.playing #top{min-height:76px!important;max-height:76px!important;padding:8px 10px 4px!important}
+#startScreen{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 24%,#243080,#05071d 72%);padding:22px;text-align:center}
+#startScreen.hidden{display:none}
+.startCard{width:min(430px,92vw);background:rgba(6,10,36,.94);border:3px solid #29e7ff;border-radius:24px;box-shadow:0 24px 70px rgba(0,0,0,.7),0 0 32px rgba(41,231,255,.22);padding:24px 20px}
+.startTitle{font-family:monospace;font-weight:1000;font-size:clamp(34px,12vw,58px);line-height:.88;letter-spacing:2px;margin:0 0 12px;color:#f4fbff;text-shadow:0 4px 0 #111,0 0 18px rgba(41,231,255,.38)}
+.startTitle span{color:#ff7fb3}.startSub{font-size:13px;color:#c9d4ff;line-height:1.35;margin:10px auto 18px;max-width:310px}
+.startPixelArt{height:132px;margin:14px auto 20px;position:relative;width:260px;image-rendering:pixelated;background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(0,0,0,.08));border-radius:16px;overflow:hidden;border:2px solid rgba(255,255,255,.14)}
+.startPixelArt i{position:absolute;display:block;image-rendering:pixelated}.pa-ground{left:28px;right:28px;bottom:24px;height:10px;background:#4b4e73;box-shadow:0 10px 0 #272a4a}.pa-cube{width:34px;height:34px;left:54px;bottom:44px;background:#ffd640;border:5px solid #8a5a00;box-shadow:6px 6px 0 rgba(0,0,0,.25)}.pa-cube:before,.pa-cube:after{content:"";position:absolute;background:#171827;width:6px;height:6px;top:8px}.pa-cube:before{left:7px}.pa-cube:after{right:7px}.pa-date{width:30px;height:42px;right:54px;bottom:44px;background:#ff7fb3;border:5px solid #8a2a55;box-shadow:6px 6px 0 rgba(0,0,0,.25)}.pa-date:before{content:"♥";position:absolute;left:4px;top:-26px;color:#ffd1eb;font-size:22px;text-shadow:0 2px 0 #000}.pa-path{left:102px;bottom:60px;color:#aeb8ff;font-size:28px;font-weight:900;letter-spacing:4px}.pa-arrow{left:114px;bottom:34px;color:#29e7ff;font-size:26px;font-weight:900;transform:rotate(18deg)}
+#startPlay{background:linear-gradient(180deg,#52f28a,#0ca94c);color:#031407;border:0;border-radius:16px;padding:14px 26px;font-size:20px;font-weight:1000;box-shadow:0 10px 0 #06451f,0 16px 28px rgba(0,0,0,.36)}
+#levelIntro{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:800;width:min(430px,88vw);background:rgba(5,8,30,.94);border:3px solid rgba(255,255,255,.9);border-radius:22px;text-align:center;padding:20px 18px;box-shadow:0 24px 70px rgba(0,0,0,.62);cursor:pointer}
+#levelIntro.hidden{display:none}.introKicker{font:900 12px monospace;color:#29e7ff;letter-spacing:2px;text-transform:uppercase}.introTitle{font-size:24px;font-weight:1000;margin:6px 0 12px;color:#fff}.introGoal{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.introGoal span{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:9px 5px;font-size:11px;color:#cdd6ff}.introGoal b{display:block;color:#fff;font-size:20px;margin-top:3px}.introHint{font-size:11px;color:#b9c3ff;margin-top:12px}
+.testReport{font-size:13px;line-height:1.35;text-align:left;max-width:420px}.testReport b{color:#52f28a}.testReport .warn{color:#ffd640}.testReport .bad{color:#ff7777}.testReport code{font-family:monospace;background:rgba(255,255,255,.09);border-radius:6px;padding:2px 5px;color:#fff}
+
 </style>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1377,6 +1393,18 @@ body.biome-starry{--bg1:#405cff;--bg2:#050720;--accent:#ffe35a}
 <link rel="manifest" href="manifest.webmanifest">
 </head>
 <body>
+
+<div id="startScreen">
+  <div class="startCard">
+    <h1 class="startTitle">GRAVITY<br><span>CUBE</span></h1>
+    <div class="startPixelArt" aria-hidden="true">
+      <i class="pa-ground"></i><i class="pa-cube"></i><i class="pa-path">? ?</i><i class="pa-arrow">↻</i><i class="pa-date"></i>
+    </div>
+    <p class="startSub">Un cube perdu, une demoiselle qui attend, et une gravité qui fait semblant d’aider.</p>
+    <button id="startPlay">PLAY</button>
+  </div>
+</div>
+<div id="levelIntro" class="hidden"></div>
 <button id="fullscreenBtn" aria-label="Plein écran" title="Plein écran">⛶</button>
 <div id="top">
   <div id="title"><span class="t-mark">▣</span> <span class="t-gravity">GRAVITY</span> <span class="t-cube">CUBE</span> <span class="t-mark">▣</span> <span id="modeLabel"></span></div>
@@ -1451,6 +1479,7 @@ let gameSettings={fallDelayMs:135,rotationDurationMs:320};
 let fallbackLevels=[]; // V57: aucun niveau de gameplay en dur. levels.json est obligatoire.
 
 let currentLevel=0,baseMap=[],b=[],p={x:0,y:0},start={x:0,y:0},exit={x:0,y:0};
+let welcomeActive=true,levelIntroTimer=null,levelIntroOnClose=null;
 let door=false,busy=false,edit=false,moves=0,gameOver=false,confettiTimer=null,deadPlayer=false,idleTick=0,painting=false,lastPaintKey='',visualOri=0,squash=0,soundOn=true,audioCtx=null,rotatorCooldown=false;
 
 function E(n,a){let e=document.createElementNS("http://www.w3.org/2000/svg",n);for(let k in a)e.setAttribute(k,a[k]);return e}
@@ -1613,7 +1642,8 @@ function resetPlay(){
     if(b[y][x]=="B")exit={x,y}
   }
   draw(); updateStats();
-  if(!edit){busy=true;setTimeout(fall,getFallDelayMs());scheduleCompanion(false)}
+  document.body.classList.toggle("playing",!edit&&!welcomeActive);
+  if(!edit&&!welcomeActive){busy=true;showLevelIntro(()=>setTimeout(fall,getFallDelayMs()));scheduleCompanion(false)}
 }
 function updateStats(){
   const max=levels[currentLevel].maxMoves||"?";
@@ -1679,6 +1709,43 @@ function starScore(){
   if(moves<=max+2)return 2;
   if(moves<=max+4)return 1;
   return 0;
+}
+function closeLevelIntro(){
+  const intro=document.getElementById("levelIntro");
+  if(levelIntroTimer){clearTimeout(levelIntroTimer);levelIntroTimer=null;}
+  if(intro)intro.classList.add("hidden");
+  const cb=levelIntroOnClose;
+  levelIntroOnClose=null;
+  if(cb)cb();
+}
+function showLevelIntro(onClose){
+  if(edit||welcomeActive){ if(onClose)onClose(); return; }
+  levelIntroOnClose=onClose||null;
+  const intro=document.getElementById("levelIntro");
+  if(!intro)return;
+  const lvl=levels[currentLevel]||{};
+  intro.innerHTML=
+    '<div class="introKicker">Niveau '+(currentLevel+1)+'</div>'+
+    '<div class="introTitle">'+escapeHtml(lvl.name||("Niveau "+(currentLevel+1)))+'</div>'+
+    '<div class="introGoal">'+
+      '<span>Objectif 3♥<b>'+(lvl.maxMoves||"?")+'</b></span>'+
+      '<span>Difficulté<b>'+(lvl.difficulty||1)+'</b></span>'+
+      '<span>But<b>♥</b></span>'+
+    '</div>'+
+    '<div class="introHint">Touchez pour fermer. Sinon je disparais dans 3 secondes, grande prouesse technologique.</div>';
+  intro.classList.remove("hidden");
+  intro.onclick=closeLevelIntro;
+  if(levelIntroTimer)clearTimeout(levelIntroTimer);
+  levelIntroTimer=setTimeout(closeLevelIntro,3000);
+}
+function startGameFromHome(){
+  welcomeActive=false;
+  document.getElementById("startScreen")?.classList.add("hidden");
+  edit=false;
+  resetPlay();
+}
+function escapeHtml(v){
+  return String(v??"").replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));
 }
 
 
@@ -1862,6 +1929,7 @@ function draw(){
     grid.appendChild(c);
   }
   document.body.classList.toggle("editing",edit);
+  document.body.classList.toggle("playing",!edit&&!welcomeActive);
   modeLabel.textContent=(edit?"EDIT":"PLAY");
   document.getElementById("toggleEdit").textContent=edit?"ÉDITION":"⚙";
   document.getElementById("toggleEdit").title=edit?"Quitter l’édition":"Ouvrir les outils";
@@ -2397,7 +2465,7 @@ function generatedMap(){
 function addLevel(){writeCurrentLevel();levels.push({name:"Nouveau niveau "+(levels.length+1),maxMoves:999,locked:false,difficulty:1,biome:document.getElementById("biomeSelect").value||"cosmic",map:generatedMap()});loadFromLevel(levels.length-1);edit=true;draw();calcMoves();status.textContent="Nouveau niveau ajouté avec une base."}
 function genLevel(){if(isLocked()){status.innerHTML='<span class="lockedWarn">Niveau verrouillé.</span>';return}pushLevelUndo("gen");baseMap=arr(generatedMap());normalize();levels[currentLevel].map=map();resetPlay();edit=true;draw();calcMoves();status.textContent="Base générée pour ce niveau."}
 function clearMap(){if(isLocked()){status.innerHTML='<span class="lockedWarn">Niveau verrouillé.</span>';return}pushLevelUndo("clear");baseMap=Array.from({length:H},()=>Array(W).fill("."));baseMap[1][1]="A";baseMap[H-2][W-2]="B";normalize();levels[currentLevel].map=map();resetPlay();edit=true;draw();status.textContent="Carte vidée."}
-function goLevel(i){writeCurrentLevel();loadFromLevel(i);saveCurrentProgress();status.textContent="Niveau "+(currentLevel+1)+" chargé : "+(levels[currentLevel].name||"sans nom")+"."}
+function goLevel(i){writeCurrentLevel();closeLevelIntro();loadFromLevel(i);saveCurrentProgress();status.textContent="Niveau "+(currentLevel+1)+" chargé : "+(levels[currentLevel].name||"sans nom")+"."}
 function goInput(){let n=parseInt(document.getElementById("levelInput").value,10);if(!isNaN(n))goLevel(n-1)}
 
 function simFall(state){
@@ -2431,49 +2499,100 @@ function simRotate(state,d){
   return simFall({map,p,exit:ex});
 }
 function stateKey(s){return s.p.x+","+s.p.y+"|"+s.exit.x+","+s.exit.y+"|"+s.map.map(r=>r.join("")).join("")}
+function solverPathLabel(path,ascii=false){
+  return path.map(d=>d>0?(ascii?'R':'↻'):(ascii?'L':'↺')).join(ascii?'':' ');
+}
+function analyzeCurrentLevel(maxDepth=32,collectExtraDepth=2,maxSolutions=80){
+  writeCurrentLevel();
+  let raw=arr(levels[currentLevel].map);
+  let pts=solverFindPoints(raw);
+  let start=solverFall({m:raw,p:pts.p,ex:pts.ex});
+  if(start.dead)return {ok:false,reason:"impossible dès le départ ("+(start.reason||"sans raison")+")",minMoves:999,solutions:[],optimal:[],near:[],visited:0};
+  let q=[{...start,path:[]}];
+  let seenDepth=new Map([[solverKey(start),0]]);
+  let solutions=[];
+  let minMoves=null;
+  let stopDepth=maxDepth;
+  while(q.length){
+    let s=q.shift();
+    let depth=s.path.length;
+    if(minMoves!==null && depth>stopDepth)break;
+    if(s.p.x==s.ex.x && s.p.y==s.ex.y){
+      if(minMoves===null){minMoves=depth;stopDepth=Math.min(maxDepth,minMoves+collectExtraDepth);}
+      solutions.push(s.path);
+      if(solutions.length>=maxSolutions)break;
+      continue;
+    }
+    if(depth>=maxDepth)continue;
+    for(let d of [-1,1]){
+      let n=solverRotate(s,d);
+      if(n.dead)continue;
+      let k=solverKey(n);
+      let nd=depth+1;
+      // On garde aussi les états déjà vus au même coût pour compter les vraies alternatives courtes.
+      // Oui, un BFS qui ne jette pas tout au premier doublon, quelle décadence moderne.
+      if(!seenDepth.has(k) || seenDepth.get(k)>=nd){
+        seenDepth.set(k,nd);
+        q.push({...n,path:s.path.concat(d)});
+      }
+    }
+  }
+  if(minMoves===null)return {ok:false,reason:"aucune solution trouvée jusqu’à "+maxDepth+" coups",minMoves:999,solutions:[],optimal:[],near:[],visited:seenDepth.size};
+  const optimal=solutions.filter(p=>p.length===minMoves);
+  const near=solutions.filter(p=>p.length>minMoves && p.length<=minMoves+collectExtraDepth);
+  return {ok:true,minMoves,solutions,optimal,near,visited:seenDepth.size};
+}
+function applySolverReport(report){
+  if(report.ok){
+    levels[currentLevel].maxMoves=report.minMoves;
+    levels[currentLevel].solution=solverPathLabel(report.optimal[0]||[],true);
+    levels[currentLevel].solutionAlternatives=report.solutions.slice(0,20).map(p=>solverPathLabel(p,true));
+  }else{
+    levels[currentLevel].maxMoves=999;
+    levels[currentLevel].solution="";
+    levels[currentLevel].solutionAlternatives=[];
+  }
+  updateStats();
+}
+function solverReportHtml(report){
+  if(!report.ok){
+    return '<div class="testReport"><p class="bad"><b>Test niveau : KO.</b></p><p>'+escapeHtml(report.reason)+'.</p><p>Le cube est donc officiellement perdu. Original, mais injouable.</p></div>';
+  }
+  const altCount=Math.max(0,report.solutions.length-1);
+  const sample=report.solutions.slice(0,6).map((p,i)=>'<li><code>'+(solverPathLabel(p)||'déjà sur la sortie')+'</code> <small>'+(p.length===report.minMoves?'optimal':('+'+(p.length-report.minMoves)))+'</small></li>').join('');
+  const quality=report.optimal.length>1
+    ? '<p class="warn">Attention : '+report.optimal.length+' solutions optimales. C’est acceptable si c’est voulu, sinon ton puzzle fuit par les joints.</p>'
+    : '<p>Une solution optimale nette, avec '+altCount+' alternative(s) courte(s) détectée(s).</p>';
+  return '<div class="testReport">'+
+    '<p><b>Test niveau : OK.</b></p>'+
+    '<p>Minimum 3♥ : <b>'+report.minMoves+'</b> coup(s).</p>'+
+    '<p>Solutions optimales : <b>'+report.optimal.length+'</b><br>Alternatives testées jusqu’à +2 coups : <b>'+report.near.length+'</b><br>États explorés : <b>'+report.visited+'</b></p>'+
+    quality+
+    '<ol>'+sample+'</ol>'+
+  '</div>';
+}
+function showTestPopup(report){
+  hideCompanion(false);
+  bannerTitle.textContent=report.ok?'Niveau testable':'Niveau bloqué';
+  bannerText.innerHTML=solverReportHtml(report);
+  starsEl.textContent=report.ok?'♥♥♥':'☆☆☆';
+  bannerAction.textContent='OK';
+  bannerAction.onclick=()=>banner.classList.add('hidden');
+  banner.classList.remove('lose','hidden');
+}
 function calcMoves(){
   try{
-    writeCurrentLevel();
-    let raw=arr(levels[currentLevel].map);
-    let pts=solverFindPoints(raw);
-    let start=solverFall({m:raw,p:pts.p,ex:pts.ex});
-    const maxDepth=32;
-    if(start.dead){
-      levels[currentLevel].maxMoves=999;
-      status.innerHTML='<span class="testBad">Calc coups : impossible dès le départ ('+start.reason+').</span>';
-      updateStats();
-      return;
-    }
-    let q=[{...start,path:[]}];
-    let seen=new Set([solverKey(start)]);
-    while(q.length){
-      let s=q.shift();
-      if(s.p.x==s.ex.x && s.p.y==s.ex.y){
-        levels[currentLevel].maxMoves=s.path.length;
-        levels[currentLevel].solution=s.path.map(d=>d>0?'R':'L').join('');
-        updateStats();
-        status.innerHTML='<span class="testOk">Calc coups : objectif 3♥ = '+s.path.length+' coup(s). Solution : '+(levels[currentLevel].solution||'déjà sur la sortie')+'</span>';
-        return;
-      }
-      if(s.path.length>=maxDepth)continue;
-      for(let d of [-1,1]){
-        let n=solverRotate(s,d);
-        if(n.dead)continue;
-        let k=solverKey(n);
-        if(!seen.has(k)){
-          seen.add(k);
-          q.push({...n,path:s.path.concat(d)});
-        }
-      }
-    }
-    levels[currentLevel].maxMoves=999;
-    updateStats();
-    status.innerHTML='<span class="testBad">Calc coups : aucune solution trouvée jusqu’à '+maxDepth+' coups.</span>';
+    const report=analyzeCurrentLevel(32,2,80);
+    applySolverReport(report);
+    status.innerHTML=report.ok
+      ? '<span class="testOk">Calc coups : '+report.minMoves+' coup(s), '+report.optimal.length+' optimale(s), '+report.near.length+' alternative(s) à +2.</span>'
+      : '<span class="testBad">Calc coups : '+escapeHtml(report.reason)+'.</span>';
   }catch(e){
     console.error('[CALC] erreur',e);
     status.innerHTML='<span class="testBad">Calc coups : erreur JS - '+(e.message||e)+'</span>';
   }
 }
+
 
 
 function setGroupState(g,collapsed){
@@ -2500,6 +2619,7 @@ document.querySelectorAll("[data-fold]").forEach(btn=>{
   };
 });
 document.getElementById("compactEdit").onclick=toggleCompactEditor;
+document.getElementById("startPlay")?.addEventListener("click",startGameFromHome);
 
 
 function sortByDifficulty(){
@@ -2620,48 +2740,18 @@ function solverKey(s){
 }
 function testCurrentLevel(){
   try{
-    writeCurrentLevel();
-    let raw=arr(levels[currentLevel].map);
-    let pts=solverFindPoints(raw);
-    let start=solverFall({m:raw,p:pts.p,ex:pts.ex});
-    const maxDepth=32;
-
-    if(start.dead){
-      status.innerHTML='<span class="testBad">Test du jeu : impossible dès le départ ('+start.reason+').</span>';
-      return;
-    }
-
-    let q=[{...start,path:[]}];
-    let seen=new Set([solverKey(start)]);
-
-    while(q.length){
-      let s=q.shift();
-      if(s.p.x==s.ex.x && s.p.y==s.ex.y){
-        const path=s.path.map(d=>d>0?"↻":"↺").join(" ");
-        levels[currentLevel].maxMoves=s.path.length;
-        levels[currentLevel].solution=s.path.map(d=>d>0?'R':'L').join('');
-        updateStats();
-        status.innerHTML='<span class="testOk">Test du jeu : OK, finissable en '+s.path.length+' coup(s). Solution : '+(path||"déjà sur la sortie")+'</span>';
-        return;
-      }
-      if(s.path.length>=maxDepth)continue;
-      for(let d of [-1,1]){
-        let n=solverRotate(s,d);
-        if(n.dead)continue;
-        let k=solverKey(n);
-        if(!seen.has(k)){
-          seen.add(k);
-          q.push({...n,path:s.path.concat(d)});
-        }
-      }
-    }
-
-    status.innerHTML='<span class="testBad">Test du jeu : aucune solution trouvée jusqu’à '+maxDepth+' coups. Niveau probablement bloquant.</span>';
+    const report=analyzeCurrentLevel(32,2,100);
+    applySolverReport(report);
+    showTestPopup(report);
+    status.innerHTML=report.ok
+      ? '<span class="testOk">Test du jeu : OK, '+report.minMoves+' coup(s) min, '+report.optimal.length+' optimale(s), '+report.near.length+' alternative(s) courtes.</span>'
+      : '<span class="testBad">Test du jeu : '+escapeHtml(report.reason)+'.</span>';
   }catch(e){
     console.error('[TEST] erreur',e);
     status.innerHTML='<span class="testBad">Test du jeu : erreur JS - '+(e.message||e)+'</span>';
   }
 }
+
 
 
 
@@ -2787,6 +2877,7 @@ function hideCompanion(showHelp=true){
   }
 }
 function scheduleCompanion(forceIntro=false){
+  if(welcomeActive)return;
   clearTimeout(companionTimer);
   clearTimeout(companionIdleTimer);
   if(edit||gameOver)return;
@@ -2821,7 +2912,7 @@ document.getElementById("companionSkip").onclick=()=>{
 };
 document.getElementById("companionHelp").onclick=()=>showCompanion(companionMessage("hint"),false);
 
-document.getElementById("toggleEdit").onclick=()=>{edit=!edit;if(!edit){resetPlay();scheduleCompanion(true)}else{busy=false;gameOver=false;hideBanner();hideCompanion(false);draw()}};
+document.getElementById("toggleEdit").onclick=()=>{edit=!edit;closeLevelIntro();if(!edit){welcomeActive=false;document.getElementById("startScreen")?.classList.add("hidden");resetPlay();scheduleCompanion(true)}else{busy=false;gameOver=false;hideBanner();hideCompanion(false);draw()}};
 document.getElementById("companionSkip").onclick=()=>{
   const stage=companionStage();
   if(stage){
