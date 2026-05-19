@@ -2036,7 +2036,26 @@ function outside(x,y){return x<0||y<0||x>=W||y>=H}
 function cw(m){let o=Array.from({length:H},()=>Array(W).fill("."));for(let y=0;y<H;y++)for(let x=0;x<W;x++)o[x][H-1-y]=m[y][x];return o}
 function ccw(m){let o=Array.from({length:H},()=>Array(W).fill("."));for(let y=0;y<H;y++)for(let x=0;x<W;x++)o[W-1-x][y]=m[y][x];return o}
 function pcw(q){return{x:H-1-q.y,y:q.x}}function pccw(q){return{x:q.y,y:W-1-q.x}}
-function apply(d){visualOri=(visualOri+d+4)%4;if(d>0){b=cw(b);p=pcw(p);exit=pcw(exit)}else{b=ccw(b);p=pccw(p);exit=pccw(exit)}}
+function keyToPos(key){
+  if(!key)return null;
+  const a=String(key).split(",").map(Number);
+  if(a.length!==2 || Number.isNaN(a[0]) || Number.isNaN(a[1]))return null;
+  return {x:a[0],y:a[1]};
+}
+function posToKey(q){return q ? q.x+","+q.y : null;}
+function rotateContactKey(key,d){
+  const q=keyToPos(key);
+  if(!q)return null;
+  return posToKey(d>0 ? pcw(q) : pccw(q));
+}
+function apply(d){
+  visualOri=(visualOri+d+4)%4;
+  if(d>0){
+    b=cw(b);p=pcw(p);exit=pcw(exit);switchContactKey=rotateContactKey(switchContactKey,d);
+  }else{
+    b=ccw(b);p=pccw(p);exit=pccw(exit);switchContactKey=rotateContactKey(switchContactKey,d);
+  }
+}
 function toggleDoors(){
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){if(b[y][x]=="D")b[y][x]="O";else if(b[y][x]=="O")b[y][x]="D";}
 }
@@ -2513,11 +2532,15 @@ function simFall(state){
 }
 function simRotate(state,d){
   let map=state.map,p=state.p,ex=state.exit;
+  let switchContactKey=state.switchContactKey||null;
   const rcw=(m)=>{let o=Array.from({length:H},()=>Array(W).fill("."));for(let y=0;y<H;y++)for(let x=0;x<W;x++)o[x][H-1-y]=m[y][x];return o};
   const rccw=(m)=>{let o=Array.from({length:H},()=>Array(W).fill("."));for(let y=0;y<H;y++)for(let x=0;x<W;x++)o[W-1-x][y]=m[y][x];return o};
   const qcw=(q)=>({x:H-1-q.y,y:q.x}), qccw=(q)=>({x:q.y,y:W-1-q.x});
-  if(d>0){map=rcw(map);p=qcw(p);ex=qcw(ex)} else {map=rccw(map);p=qccw(p);ex=qccw(ex)}
-  return simFall({map,p,exit:ex});
+  const kpos=(key)=>{if(!key)return null; const a=String(key).split(",").map(Number); return (a.length===2&&!Number.isNaN(a[0])&&!Number.isNaN(a[1]))?{x:a[0],y:a[1]}:null};
+  const pkey=(q)=>q?q.x+","+q.y:null;
+  if(d>0){map=rcw(map);p=qcw(p);ex=qcw(ex);switchContactKey=pkey(kpos(switchContactKey)?qcw(kpos(switchContactKey)):null)}
+  else {map=rccw(map);p=qccw(p);ex=qccw(ex);switchContactKey=pkey(kpos(switchContactKey)?qccw(kpos(switchContactKey)):null)}
+  return simFall({map,p,exit:ex,switchContactKey});
 }
 function stateKey(s){return s.p.x+","+s.p.y+"|"+s.exit.x+","+s.exit.y+"|"+(s.switchContactKey||"")+"|"+s.map.map(r=>r.join("")).join("")}
 function solverPathLabel(path,ascii=false){
