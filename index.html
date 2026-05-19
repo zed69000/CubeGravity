@@ -1480,7 +1480,7 @@ let fallbackLevels=[]; // V57: aucun niveau de gameplay en dur. levels.json est 
 
 let currentLevel=0,baseMap=[],b=[],p={x:0,y:0},start={x:0,y:0},exit={x:0,y:0};
 let welcomeActive=true,levelIntroTimer=null,levelIntroOnClose=null;
-let door=false,busy=false,edit=false,moves=0,gameOver=false,confettiTimer=null,deadPlayer=false,idleTick=0,painting=false,lastPaintKey='',visualOri=0,squash=0,soundOn=true,audioCtx=null,rotatorCooldown=false;
+let door=false,busy=false,edit=false,moves=0,gameOver=false,confettiTimer=null,deadPlayer=false,idleTick=0,painting=false,lastPaintKey='',visualOri=0,squash=0,soundOn=true,audioCtx=null,rotatorCooldown=false,switchContactKey=null;
 
 function E(n,a){let e=document.createElementNS("http://www.w3.org/2000/svg",n);for(let k in a)e.setAttribute(k,a[k]);return e}
 function rect(x,y,w,h,f,s,sw=4){grid.appendChild(E("rect",{x,y,width:w,height:h,fill:f,stroke:s,"stroke-width":sw,"pointer-events":"none"}))}
@@ -1635,7 +1635,7 @@ function resetPlay(){
   levels[currentLevel].map=map();
   b=arr(levels[currentLevel].map);
   door=baseDoorOpen();
-  moves=0;busy=false;gameOver=false;deadPlayer=false;rotatorCooldown=false;hideBanner();
+  moves=0;busy=false;gameOver=false;deadPlayer=false;rotatorCooldown=false;switchContactKey=null;hideBanner();
   rot.setAttribute("transform","rotate(0 260 260)");visualOri=0;
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){
     if(b[y][x]=="A"){p={x,y};start={x,y};b[y][x]="."}
@@ -2065,7 +2065,19 @@ function buttonIsPressed(x,y){
   return !edit && p && p.x===x && p.y===y && b[y] && b[y][x]==="S";
 }
 
-function touchSwitch(){if(b[p.y]&&b[p.y][p.x]=="S"){toggleDoors();status.textContent="Bouton : portes inversées.";draw();return true}return false}
+function touchSwitch(){
+  if(!(b[p.y]&&b[p.y][p.x]=="S")){
+    switchContactKey=null;
+    return false;
+  }
+  const key=p.x+","+p.y;
+  if(switchContactKey===key)return false;
+  switchContactKey=key;
+  toggleDoors();
+  status.textContent="Bouton : portes inversées.";
+  draw();
+  return true;
+}
 
 function dissolvePlayer(){
   const boardRect=document.querySelector(".boardWrap").getBoundingClientRect();
@@ -2219,12 +2231,11 @@ function fall(){
       p.y=ny;
       p.x=nx;
       const newKey=p.x+","+p.y;
-      if(newKey!==oldKey)rotatorCooldown=false;
+      if(newKey!==oldKey){rotatorCooldown=false;switchContactKey=null;}
       dist++;
       draw();
       setTimeout(step,getFallDelayMs());
     }else{
-      touchSwitch();
       shake(dist);
       soundLand(dist);
       squash=Math.min(1,0.25+dist*.11);
@@ -2470,24 +2481,34 @@ function goInput(){let n=parseInt(document.getElementById("levelInput").value,10
 
 function simFall(state){
   let {map,p}=state; let steps=0; let switchesHit=0;
+  let switchContactKey=state.switchContactKey||null;
   const isBlock=(c)=>c=="#"||c=="D";
   const out=(x,y)=>x<0||y<0||x>=W||y>=H;
   const sol=(x,y)=>out(x,y)||isBlock(map[y][x]);
+  const applySwitchOnce=()=>{
+    if(!(map[p.y]&&map[p.y][p.x]=="S")){switchContactKey=null;return true;}
+    const key=p.x+","+p.y;
+    if(switchContactKey===key)return true;
+    switchContactKey=key;
+    switchesHit++;
+    if(switchesHit>8)return false;
+    map=map.map(r=>r.map(c=>c=="D"?"O":c=="O"?"D":c));
+    return true;
+  };
   while(true){
-    if(map[p.y]&&map[p.y][p.x]=="S"){
-      switchesHit++;
-      if(switchesHit>8)return {dead:true};
-      map=map.map(r=>r.map(c=>c=="D"?"O":c=="O"?"D":c));
-    }
+    if(!applySwitchOnce())return {dead:true};
     let nx=p.x,ny=p.y+1;
     if(out(nx,ny))return {dead:true};
-    if(!sol(nx,ny)){p={x:nx,y:ny};steps++; if(steps>80)return {dead:true}; continue;}
-    if(map[p.y]&&map[p.y][p.x]=="S"){
-      switchesHit++;
-      if(switchesHit>8)return {dead:true};
-      map=map.map(r=>r.map(c=>c=="D"?"O":c=="O"?"D":c));
+    if(!sol(nx,ny)){
+      const oldKey=p.x+","+p.y;
+      p={x:nx,y:ny};
+      const newKey=p.x+","+p.y;
+      if(newKey!==oldKey)switchContactKey=null;
+      steps++;
+      if(steps>80)return {dead:true};
+      continue;
     }
-    return {map,p,dead:false};
+    return {map,p,dead:false,switchContactKey};
   }
 }
 function simRotate(state,d){
@@ -2498,7 +2519,7 @@ function simRotate(state,d){
   if(d>0){map=rcw(map);p=qcw(p);ex=qcw(ex)} else {map=rccw(map);p=qccw(p);ex=qccw(ex)}
   return simFall({map,p,exit:ex});
 }
-function stateKey(s){return s.p.x+","+s.p.y+"|"+s.exit.x+","+s.exit.y+"|"+s.map.map(r=>r.join("")).join("")}
+function stateKey(s){return s.p.x+","+s.p.y+"|"+s.exit.x+","+s.exit.y+"|"+(s.switchContactKey||"")+"|"+s.map.map(r=>r.join("")).join("")}
 function solverPathLabel(path,ascii=false){
   return path.map(d=>d>0?(ascii?'R':'↻'):(ascii?'L':'↺')).join(ascii?'':' ');
 }
