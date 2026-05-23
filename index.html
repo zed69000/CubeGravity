@@ -1369,22 +1369,6 @@ body.biome-starry{--bg1:#405cff;--bg2:#050720;--accent:#ffe35a}
   text-shadow:0 0 12px rgba(255,79,147,.7);
 }
 
-
-/* ===== V78 start screen + solver report popup ===== */
-body.playing #title,body.playing #status{display:none!important}
-body.playing #top{min-height:76px!important;max-height:76px!important;padding:8px 10px 4px!important}
-#startScreen{position:fixed;inset:0;z-index:1000;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 24%,#243080,#05071d 72%);padding:22px;text-align:center}
-#startScreen.hidden{display:none}
-.startCard{width:min(430px,92vw);background:rgba(6,10,36,.94);border:3px solid #29e7ff;border-radius:24px;box-shadow:0 24px 70px rgba(0,0,0,.7),0 0 32px rgba(41,231,255,.22);padding:24px 20px}
-.startTitle{font-family:monospace;font-weight:1000;font-size:clamp(34px,12vw,58px);line-height:.88;letter-spacing:2px;margin:0 0 12px;color:#f4fbff;text-shadow:0 4px 0 #111,0 0 18px rgba(41,231,255,.38)}
-.startTitle span{color:#ff7fb3}.startSub{font-size:13px;color:#c9d4ff;line-height:1.35;margin:10px auto 18px;max-width:310px}
-.startPixelArt{height:132px;margin:14px auto 20px;position:relative;width:260px;image-rendering:pixelated;background:linear-gradient(180deg,rgba(255,255,255,.04),rgba(0,0,0,.08));border-radius:16px;overflow:hidden;border:2px solid rgba(255,255,255,.14)}
-.startPixelArt i{position:absolute;display:block;image-rendering:pixelated}.pa-ground{left:28px;right:28px;bottom:24px;height:10px;background:#4b4e73;box-shadow:0 10px 0 #272a4a}.pa-cube{width:34px;height:34px;left:54px;bottom:44px;background:#ffd640;border:5px solid #8a5a00;box-shadow:6px 6px 0 rgba(0,0,0,.25)}.pa-cube:before,.pa-cube:after{content:"";position:absolute;background:#171827;width:6px;height:6px;top:8px}.pa-cube:before{left:7px}.pa-cube:after{right:7px}.pa-date{width:30px;height:42px;right:54px;bottom:44px;background:#ff7fb3;border:5px solid #8a2a55;box-shadow:6px 6px 0 rgba(0,0,0,.25)}.pa-date:before{content:"♥";position:absolute;left:4px;top:-26px;color:#ffd1eb;font-size:22px;text-shadow:0 2px 0 #000}.pa-path{left:102px;bottom:60px;color:#aeb8ff;font-size:28px;font-weight:900;letter-spacing:4px}.pa-arrow{left:114px;bottom:34px;color:#29e7ff;font-size:26px;font-weight:900;transform:rotate(18deg)}
-#startPlay{background:linear-gradient(180deg,#52f28a,#0ca94c);color:#031407;border:0;border-radius:16px;padding:14px 26px;font-size:20px;font-weight:1000;box-shadow:0 10px 0 #06451f,0 16px 28px rgba(0,0,0,.36)}
-#levelIntro{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);z-index:800;width:min(430px,88vw);background:rgba(5,8,30,.94);border:3px solid rgba(255,255,255,.9);border-radius:22px;text-align:center;padding:20px 18px;box-shadow:0 24px 70px rgba(0,0,0,.62);cursor:pointer}
-#levelIntro.hidden{display:none}.introKicker{font:900 12px monospace;color:#29e7ff;letter-spacing:2px;text-transform:uppercase}.introTitle{font-size:24px;font-weight:1000;margin:6px 0 12px;color:#fff}.introGoal{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}.introGoal span{background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:9px 5px;font-size:11px;color:#cdd6ff}.introGoal b{display:block;color:#fff;font-size:20px;margin-top:3px}.introHint{font-size:11px;color:#b9c3ff;margin-top:12px}
-.testReport{font-size:13px;line-height:1.35;text-align:left;max-width:420px}.testReport b{color:#52f28a}.testReport .warn{color:#ffd640}.testReport .bad{color:#ff7777}.testReport code{font-family:monospace;background:rgba(255,255,255,.09);border-radius:6px;padding:2px 5px;color:#fff}
-
 </style>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1393,18 +1377,6 @@ body.playing #top{min-height:76px!important;max-height:76px!important;padding:8p
 <link rel="manifest" href="manifest.webmanifest">
 </head>
 <body>
-
-<div id="startScreen">
-  <div class="startCard">
-    <h1 class="startTitle">GRAVITY<br><span>CUBE</span></h1>
-    <div class="startPixelArt" aria-hidden="true">
-      <i class="pa-ground"></i><i class="pa-cube"></i><i class="pa-path">? ?</i><i class="pa-arrow">↻</i><i class="pa-date"></i>
-    </div>
-    <p class="startSub">Un cube perdu, une demoiselle qui attend, et une gravité qui fait semblant d’aider.</p>
-    <button id="startPlay">PLAY</button>
-  </div>
-</div>
-<div id="levelIntro" class="hidden"></div>
 <button id="fullscreenBtn" aria-label="Plein écran" title="Plein écran">⛶</button>
 <div id="top">
   <div id="title"><span class="t-mark">▣</span> <span class="t-gravity">GRAVITY</span> <span class="t-cube">CUBE</span> <span class="t-mark">▣</span> <span id="modeLabel"></span></div>
@@ -1425,7 +1397,7 @@ body.playing #top{min-height:76px!important;max-height:76px!important;padding:8p
         <button id="lvl1">Lvl 1</button><button id="prevLvl">-</button><input id="levelInput" type="number" min="1" value="1" style="width:56px"><button id="goLvl">Go</button><button id="nextLvl">+</button><button id="sortDifficulty">Trier diff</button><button id="resetProgress">Reset progression</button><button id="resetTutorial">Reset tutoriel</button><button id="deleteLevel">Delete level</button><button id="deleteUnlocked">Delete non-lock</button>
       </span>
       <span class="group collapsed"><span class="groupTitle">Sauvegarde</span><button class="foldBtn" data-fold>▸</button>
-        <button id="saveLocal">Save draft</button><button id="loadLocal">Load draft</button><button id="exportJson">Export levels.json</button><button id="importBtn">Import JSON</button><button id="openAssetEditor">Assets pixel</button><button id="openSvgAssetEditor">Assets SVG</button><input id="importFile" class="hidden" type="file" accept=".json,application/json">
+        <button id="saveLocal">Save draft</button><button id="loadLocal">Load draft</button><button id="exportJson">Export levels.json</button><button id="importBtn">Import JSON</button><button id="openSvgAssetEditor">Assets SVG</button><input id="importFile" class="hidden" type="file" accept=".json,application/json">
       </span>
       <span class="group collapsed"><span class="groupTitle">Biome</span><button class="foldBtn" data-fold>▸</button>
         <select id="biomeSelect"><option value="cosmic">Cosmic</option><option value="forest">Forêt</option><option value="desert">Désert</option><option value="ice">Glace</option><option value="rainbow">Arc-en-ciel</option><option value="love">Love</option><option value="garden">Jardin</option><option value="kiss">Bisous</option><option value="starry">Étoiles</option></select>
@@ -1479,8 +1451,8 @@ let gameSettings={fallDelayMs:135,rotationDurationMs:320};
 let fallbackLevels=[]; // V57: aucun niveau de gameplay en dur. levels.json est obligatoire.
 
 let currentLevel=0,baseMap=[],b=[],p={x:0,y:0},start={x:0,y:0},exit={x:0,y:0};
-let welcomeActive=true,levelIntroTimer=null,levelIntroOnClose=null;
-let door=false,busy=false,edit=false,moves=0,gameOver=false,confettiTimer=null,deadPlayer=false,idleTick=0,painting=false,lastPaintKey='',visualOri=0,squash=0,soundOn=true,audioCtx=null,rotatorCooldown=false,switchContactKey=null;
+let door=false,busy=false,edit=false,moves=0,gameOver=false,confettiTimer=null,deadPlayer=false,idleTick=0,painting=false,lastPaintKey='',visualOri=0,squash=0,soundOn=true,audioCtx=null,rotatorCooldown=false;
+let activeSwitchKey=null;
 
 function E(n,a){let e=document.createElementNS("http://www.w3.org/2000/svg",n);for(let k in a)e.setAttribute(k,a[k]);return e}
 function rect(x,y,w,h,f,s,sw=4){grid.appendChild(E("rect",{x,y,width:w,height:h,fill:f,stroke:s,"stroke-width":sw,"pointer-events":"none"}))}
@@ -1635,15 +1607,14 @@ function resetPlay(){
   levels[currentLevel].map=map();
   b=arr(levels[currentLevel].map);
   door=baseDoorOpen();
-  moves=0;busy=false;gameOver=false;deadPlayer=false;rotatorCooldown=false;switchContactKey=null;hideBanner();
+  moves=0;busy=false;gameOver=false;deadPlayer=false;rotatorCooldown=false;activeSwitchKey=null;hideBanner();
   rot.setAttribute("transform","rotate(0 260 260)");visualOri=0;
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){
     if(b[y][x]=="A"){p={x,y};start={x,y};b[y][x]="."}
     if(b[y][x]=="B")exit={x,y}
   }
   draw(); updateStats();
-  document.body.classList.toggle("playing",!edit&&!welcomeActive);
-  if(!edit&&!welcomeActive){busy=true;showLevelIntro(()=>setTimeout(fall,getFallDelayMs()));scheduleCompanion(false)}
+  if(!edit){busy=true;setTimeout(fall,getFallDelayMs());scheduleCompanion(false)}
 }
 function updateStats(){
   const max=levels[currentLevel].maxMoves||"?";
@@ -1710,43 +1681,6 @@ function starScore(){
   if(moves<=max+4)return 1;
   return 0;
 }
-function closeLevelIntro(){
-  const intro=document.getElementById("levelIntro");
-  if(levelIntroTimer){clearTimeout(levelIntroTimer);levelIntroTimer=null;}
-  if(intro)intro.classList.add("hidden");
-  const cb=levelIntroOnClose;
-  levelIntroOnClose=null;
-  if(cb)cb();
-}
-function showLevelIntro(onClose){
-  if(edit||welcomeActive){ if(onClose)onClose(); return; }
-  levelIntroOnClose=onClose||null;
-  const intro=document.getElementById("levelIntro");
-  if(!intro)return;
-  const lvl=levels[currentLevel]||{};
-  intro.innerHTML=
-    '<div class="introKicker">Niveau '+(currentLevel+1)+'</div>'+
-    '<div class="introTitle">'+escapeHtml(lvl.name||("Niveau "+(currentLevel+1)))+'</div>'+
-    '<div class="introGoal">'+
-      '<span>Objectif 3♥<b>'+(lvl.maxMoves||"?")+'</b></span>'+
-      '<span>Difficulté<b>'+(lvl.difficulty||1)+'</b></span>'+
-      '<span>But<b>♥</b></span>'+
-    '</div>'+
-    '<div class="introHint">Touchez pour fermer. Sinon je disparais dans 3 secondes, grande prouesse technologique.</div>';
-  intro.classList.remove("hidden");
-  intro.onclick=closeLevelIntro;
-  if(levelIntroTimer)clearTimeout(levelIntroTimer);
-  levelIntroTimer=setTimeout(closeLevelIntro,3000);
-}
-function startGameFromHome(){
-  welcomeActive=false;
-  document.getElementById("startScreen")?.classList.add("hidden");
-  edit=false;
-  resetPlay();
-}
-function escapeHtml(v){
-  return String(v??"").replace(/[&<>'"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","'":"&#39;",'"':"&quot;"}[c]));
-}
 
 
 /* ===== V67 VECTOR ASSET RUNTIME ===== */
@@ -1764,7 +1698,7 @@ function validateVectorAssetsData(data){
 }
 
 async function loadVectorAssets(){
-  const candidates=["./vector_assets.json","vector_assets.json","/vector_assets.json"];
+  const candidates=["./vector_assets_runtime.json","vector_assets_runtime.json","/vector_assets_runtime.json","./vector_assets.json","vector_assets.json","/vector_assets.json"];
   let lastErr=null;
   setVectorStatus("SVG loading...\\nexpected 3563ce4af1","");
   for(const path of candidates){
@@ -1776,6 +1710,7 @@ async function loadVectorAssets(){
       const data=await res.json();
       validateVectorAssetsData(data);
       vectorAssetPack=data;
+      applyVectorThemeToGame();
       window.__vectorAssetsLoadedFrom=path;
       window.__vectorDrawCount=0;
       const counts=Object.entries(data.assets).map(([k,v])=>k+":"+(v.layers?v.layers.length:0)).join(" | ");
@@ -1791,18 +1726,37 @@ async function loadVectorAssets(){
   window.__vectorAssetsLoadedFrom=null;
   setVectorStatus("SVG OFF\\nvector_assets.json introuvable","bad");
   showVectorAssetsError(lastErr);
-  throw lastErr || new Error("vector_assets.json introuvable");
+  throw lastErr || new Error("vector_assets_runtime.json / vector_assets.json introuvables");
 }
 function vectorAsset(name){return vectorAssetPack&&vectorAssetPack.assets?vectorAssetPack.assets[name]:null}
+function applyVectorThemeToGame(){
+  const th=vectorAssetPack?.themePreview||{};
+  const root=document.documentElement;
+  if(th.background)root.style.setProperty('--gc-bg',th.background);
+  if(th.board)root.style.setProperty('--gc-board',th.board);
+  if(th.border)root.style.setProperty('--gc-border',th.border);
+  if(th.grid)root.style.setProperty('--gc-grid',th.grid);
+  const stage=document.getElementById('stage');
+  const boardSvg=document.querySelector('.boardWrap svg');
+  const wrap=document.querySelector('.boardWrap');
+  if(stage && th.background)stage.style.background=th.background;
+  if(boardSvg && th.board)boardSvg.style.background=th.board;
+  if(wrap && th.border)wrap.style.boxShadow=`0 22px 44px rgba(0,0,0,.45), 0 0 0 3px ${th.border}`;
+}
+function vectorGridStroke(){return vectorAssetPack?.themePreview?.grid || 'rgba(255,255,255,.10)';}
 function vectorAnimTransform(l,t){
   const a=l.anim;if(!a||!a.type)return "";
   const speed=Number(a.speed??0.004), amp=Number(a.amp??1), ampX=Number(a.ampX??amp);
   const s=Math.sin(t*speed);
+  const cx=Number(a.pivotX ?? ((Number(l.x??0)+Number(l.w??40)/2)||20));
+  const cy=Number(a.pivotY ?? ((Number(l.y??0)+Number(l.h??40)/2)||20));
   if(a.type==="look")return `translate(${s*ampX} 0)`;
   if(a.type==="bob")return `translate(0 ${s*amp})`;
   if(a.type==="shake")return `translate(${Math.sin(t*speed*5)*amp} ${Math.cos(t*speed*7)*amp})`;
-  if(a.type==="spin"){const cx=(Number(l.x)||20)+((Number(l.w)||0)/2), cy=(Number(l.y)||20)+((Number(l.h)||0)/2);return `rotate(${s*amp} ${cx} ${cy})`;}
-  if(a.type==="pulse"){const cx=Number(l.x??20), cy=Number(l.y??20), sc=1+s*amp;return `translate(${cx} ${cy}) scale(${sc}) translate(${-cx} ${-cy})`;}
+  if(a.type==="spin")return `rotate(${s*amp} ${cx} ${cy})`;
+  if(a.type==="rot90")return `rotate(${90*s} ${cx} ${cy})`;
+  if(a.type==="rot-90")return `rotate(${-90*s} ${cx} ${cy})`;
+  if(a.type==="pulse"){const sc=1+s*amp;return `translate(${cx} ${cy}) scale(${sc}) translate(${-cx} ${-cy})`;}
   return "";
 }
 function vectorAnimOpacity(l,t){
@@ -1816,6 +1770,8 @@ function appendVectorLayer(parent,l,t){
   }else if(shape==="polygon"){
     const pts=(l.points||[]).map(p=>Array.isArray(p)?p.join(","):p).join(" ");
     el=E("polygon",{points:pts});
+  }else if(shape==="path"){
+    el=E("path",{d:l.d||""});
   }else if(shape==="text"){
     el=E("text",{x:l.x??20,y:l.y??20,"font-size":l.fontSize??12,"font-weight":900,"font-family":"monospace","text-anchor":"middle"});
     el.textContent=l.text??"?";
@@ -1826,9 +1782,86 @@ function appendVectorLayer(parent,l,t){
   el.setAttribute("stroke",l.stroke??"transparent");
   el.setAttribute("stroke-width",l.strokeWidth??0);
   el.setAttribute("opacity",vectorAnimOpacity(l,t));
-  const tr=vectorAnimTransform(l,t); if(tr)el.setAttribute("transform",tr);
+  const trParts=[];
+  const hasScale=Number.isFinite(Number(l.scaleX))||Number.isFinite(Number(l.scaleY));
+  const hasRot=Number.isFinite(Number(l.rotation));
+  if(hasScale||hasRot){
+    const cx=Number(l.pivotX ?? ((Number(l.x??0)+Number(l.w??0)/2)||20));
+    const cy=Number(l.pivotY ?? ((Number(l.y??0)+Number(l.h??0)/2)||20));
+    const sx=Number.isFinite(Number(l.scaleX))?Number(l.scaleX):1;
+    const sy=Number.isFinite(Number(l.scaleY))?Number(l.scaleY):1;
+    const r=Number.isFinite(Number(l.rotation))?Number(l.rotation):0;
+    trParts.push(`translate(${cx} ${cy})`);
+    if(r)trParts.push(`rotate(${r})`);
+    if(sx!==1||sy!==1)trParts.push(`scale(${sx} ${sy})`);
+    trParts.push(`translate(${-cx} ${-cy})`);
+  }
+  const tr=vectorAnimTransform(l,t); if(tr)trParts.push(tr);
+  if(trParts.length)el.setAttribute("transform",trParts.join(" "));
   el.setAttribute("pointer-events","none");
   parent.appendChild(el);
+}
+function layerBBox(l){
+  if(!l)return {x:0,y:0,w:0,h:0};
+  if(l.shape==="circle"){const r=Number(l.r??0);return {x:Number(l.x??0)-r,y:Number(l.y??0)-r,w:r*2,h:r*2};}
+  if(l.shape==="polygon"){
+    const pts=(l.points||[]).map(p=>Array.isArray(p)?p:String(p).split(",")).map(p=>({x:Number(p[0]??0),y:Number(p[1]??0)}));
+    if(!pts.length)return {x:0,y:0,w:0,h:0};
+    const xs=pts.map(p=>p.x), ys=pts.map(p=>p.y);
+    const minX=Math.min(...xs), maxX=Math.max(...xs), minY=Math.min(...ys), maxY=Math.max(...ys);
+    return {x:minX,y:minY,w:maxX-minX,h:maxY-minY};
+  }
+  if(l.shape==="text"){return {x:Number(l.x??0),y:Number(l.y??0)-Number(l.fontSize??12),w:String(l.text??"").length*Number(l.fontSize??12)*0.6,h:Number(l.fontSize??12)};}
+  return {x:Number(l.x??0),y:Number(l.y??0),w:Number(l.w??10),h:Number(l.h??10)};
+}
+function groupBBox(g,layersList){
+  const boxes=(g.children||[]).map(id=>layersList.find(l=>l.id===id)).filter(Boolean).map(layerBBox);
+  if(!boxes.length)return {x:20,y:20,w:0,h:0};
+  const minX=Math.min(...boxes.map(b=>b.x)), minY=Math.min(...boxes.map(b=>b.y));
+  const maxX=Math.max(...boxes.map(b=>b.x+b.w)), maxY=Math.max(...boxes.map(b=>b.y+b.h));
+  return {x:minX,y:minY,w:maxX-minX,h:maxY-minY};
+}
+function vectorGroupStaticTransform(g,bb){
+  if(!g)return '';
+  const tx=Number(g.tx||0),ty=Number(g.ty||0);
+  const sx=Number.isFinite(Number(g.scaleX))?Number(g.scaleX):1;
+  const sy=Number.isFinite(Number(g.scaleY))?Number(g.scaleY):1;
+  const r=Number.isFinite(Number(g.rotation))?Number(g.rotation):0;
+  if(!tx&&!ty&&!r&&sx===1&&sy===1)return '';
+  const px=Number(g.pivotX??(bb.x+bb.w/2)),py=Number(g.pivotY??(bb.y+bb.h/2));
+  const parts=[];
+  if(tx||ty)parts.push(`translate(${tx} ${ty})`);
+  parts.push(`translate(${px} ${py})`);
+  if(r)parts.push(`rotate(${r})`);
+  if(sx!==1||sy!==1)parts.push(`scale(${sx} ${sy})`);
+  parts.push(`translate(${-px} ${-py})`);
+  return parts.join(' ');
+}
+function appendVectorAssetLayers(parent,a,t){
+  const layersList=Array.isArray(a.layers)?a.layers:[];
+  const groupsList=Array.isArray(a.groups)?a.groups:[];
+  const childToGroup=new Map();
+  groupsList.forEach(g=>(g.children||[]).forEach(id=>childToGroup.set(id,g)));
+  const renderedGroups=new Set();
+  layersList.forEach(l=>{
+    if(!l || l.visible===false)return;
+    const gr=childToGroup.get(l.id);
+    if(gr){
+      if(renderedGroups.has(gr.id))return;
+      renderedGroups.add(gr.id);
+      const bb=groupBBox(gr,layersList);
+      const ge=E("g",{"data-vector-group":gr.id,"pointer-events":"none"});
+      const trParts=[];const st=vectorGroupStaticTransform(gr,bb);if(st)trParts.push(st);
+      const tr=vectorAnimTransform({...bb,anim:gr.anim},t);if(tr)trParts.push(tr);
+      if(trParts.length)ge.setAttribute("transform",trParts.join(" "));
+      layersList.forEach(child=>{
+        if(child && child.visible!==false && (gr.children||[]).includes(child.id))appendVectorLayer(ge,child,t);
+      });
+      parent.appendChild(ge);
+    }else{
+      appendVectorLayer(parent,l,t);
+    }
+  });
 }
 function drawVectorAsset(name,X,Y,parent=grid,opts={}){
   const a=vectorAsset(name);
@@ -1840,23 +1873,24 @@ function drawVectorAsset(name,X,Y,parent=grid,opts={}){
   const scale=T/canvas;
   const g=E("g",{transform:`translate(${X} ${Y}) scale(${scale})`,"pointer-events":"none","data-vector-asset":name});
   const t=Date.now();
-  a.layers.forEach(l=>appendVectorLayer(g,l,t));
+  appendVectorAssetLayers(g,a,t);
   parent.appendChild(g);
 
   window.__vectorDrawCount=(window.__vectorDrawCount||0)+1;
   window.__lastVectorAssetDrawn=name;
   if(window.__vectorDrawCount<=8 || window.__vectorDrawCount%25===0){
     const layerCount=(a.layers||[]).length;
+    const groupCount=(a.groups||[]).length;
     const first=(a.layers||[]).slice(0,3).map(l=>l.id).join(",");
-    setVectorStatus("SVG ON\\n"+(window.__vectorAssetsLoadedFrom||"?")+"\\ndraw:"+window.__vectorDrawCount+" · "+name+"\\nlayers:"+layerCount+" · "+first,"ok");
-}
+    setVectorStatus("SVG ON\n"+(window.__vectorAssetsLoadedFrom||"?")+"\ndraw:"+window.__vectorDrawCount+" · "+name+"\nlayers:"+layerCount+" groups:"+groupCount+" · "+first,"ok");
+  }
   return true;
 }
 
 function draw(){
   grid.innerHTML="";
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){
-    grid.appendChild(E("rect",{x:x*T,y:y*T,width:T,height:T,fill:"none",stroke:"rgba(255,255,255,.10)","stroke-width":1,"pointer-events":"none"}));
+    grid.appendChild(E("rect",{x:x*T,y:y*T,width:T,height:T,fill:"none",stroke:vectorGridStroke(),"stroke-width":1,"pointer-events":"none"}));
     let c=edit?baseMap[y][x]:b[y][x],X=x*T,Y=y*T;
     if(c=="#"){
       if(drawVectorAsset("wall",X,Y)){}else if(!drawPixelAsset("wall",X,Y)){
@@ -1929,7 +1963,6 @@ function draw(){
     grid.appendChild(c);
   }
   document.body.classList.toggle("editing",edit);
-  document.body.classList.toggle("playing",!edit&&!welcomeActive);
   modeLabel.textContent=(edit?"EDIT":"PLAY");
   document.getElementById("toggleEdit").textContent=edit?"ÉDITION":"⚙";
   document.getElementById("toggleEdit").title=edit?"Quitter l’édition":"Ouvrir les outils";
@@ -2036,26 +2069,7 @@ function outside(x,y){return x<0||y<0||x>=W||y>=H}
 function cw(m){let o=Array.from({length:H},()=>Array(W).fill("."));for(let y=0;y<H;y++)for(let x=0;x<W;x++)o[x][H-1-y]=m[y][x];return o}
 function ccw(m){let o=Array.from({length:H},()=>Array(W).fill("."));for(let y=0;y<H;y++)for(let x=0;x<W;x++)o[W-1-x][y]=m[y][x];return o}
 function pcw(q){return{x:H-1-q.y,y:q.x}}function pccw(q){return{x:q.y,y:W-1-q.x}}
-function keyToPos(key){
-  if(!key)return null;
-  const a=String(key).split(",").map(Number);
-  if(a.length!==2 || Number.isNaN(a[0]) || Number.isNaN(a[1]))return null;
-  return {x:a[0],y:a[1]};
-}
-function posToKey(q){return q ? q.x+","+q.y : null;}
-function rotateContactKey(key,d){
-  const q=keyToPos(key);
-  if(!q)return null;
-  return posToKey(d>0 ? pcw(q) : pccw(q));
-}
-function apply(d){
-  visualOri=(visualOri+d+4)%4;
-  if(d>0){
-    b=cw(b);p=pcw(p);exit=pcw(exit);switchContactKey=rotateContactKey(switchContactKey,d);
-  }else{
-    b=ccw(b);p=pccw(p);exit=pccw(exit);switchContactKey=rotateContactKey(switchContactKey,d);
-  }
-}
+function apply(d){visualOri=(visualOri+d+4)%4;if(d>0){b=cw(b);p=pcw(p);exit=pcw(exit)}else{b=ccw(b);p=pccw(p);exit=pccw(exit)}}
 function toggleDoors(){
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){if(b[y][x]=="D")b[y][x]="O";else if(b[y][x]=="O")b[y][x]="D";}
 }
@@ -2085,17 +2099,28 @@ function buttonIsPressed(x,y){
 }
 
 function touchSwitch(){
-  if(!(b[p.y]&&b[p.y][p.x]=="S")){
-    switchContactKey=null;
+  if(!p || !b[p.y])return false;
+  const onSwitch=b[p.y][p.x]==="S";
+  if(!onSwitch){
+    activeSwitchKey=null;
     return false;
   }
   const key=p.x+","+p.y;
-  if(switchContactKey===key)return false;
-  switchContactKey=key;
+  // Réagit dès que le cube ENTRE sur le bouton, pas quand il sort.
+  // Ne retoggle pas en boucle tant que le cube reste sur la même case.
+  if(activeSwitchKey===key)return false;
+  activeSwitchKey=key;
   toggleDoors();
-  status.textContent="Bouton : portes inversées.";
+  status.textContent="Bouton activé : portes inversées.";
   draw();
   return true;
+}
+
+function canFallOneCell(){
+  if(!p)return false;
+  const nx=wrapX(p.x);
+  const ny=wrapY(p.y+1);
+  return !solid(nx,ny);
 }
 
 function dissolvePlayer(){
@@ -2250,11 +2275,21 @@ function fall(){
       p.y=ny;
       p.x=nx;
       const newKey=p.x+","+p.y;
-      if(newKey!==oldKey){rotatorCooldown=false;switchContactKey=null;}
+      if(newKey!==oldKey)rotatorCooldown=false;
       dist++;
+      touchSwitch();
       draw();
       setTimeout(step,getFallDelayMs());
     }else{
+      const switched=touchSwitch();
+
+      // Si le bouton vient d’ouvrir une porte sous le cube, on ne force pas un arrêt artificiel.
+      // Le niveau réagit immédiatement et la chute reprend sur la même frame logique.
+      if(switched && canFallOneCell()){
+        setTimeout(step,getFallDelayMs());
+        return;
+      }
+
       shake(dist);
       soundLand(dist);
       squash=Math.min(1,0.25+dist*.11);
@@ -2495,148 +2530,83 @@ function generatedMap(){
 function addLevel(){writeCurrentLevel();levels.push({name:"Nouveau niveau "+(levels.length+1),maxMoves:999,locked:false,difficulty:1,biome:document.getElementById("biomeSelect").value||"cosmic",map:generatedMap()});loadFromLevel(levels.length-1);edit=true;draw();calcMoves();status.textContent="Nouveau niveau ajouté avec une base."}
 function genLevel(){if(isLocked()){status.innerHTML='<span class="lockedWarn">Niveau verrouillé.</span>';return}pushLevelUndo("gen");baseMap=arr(generatedMap());normalize();levels[currentLevel].map=map();resetPlay();edit=true;draw();calcMoves();status.textContent="Base générée pour ce niveau."}
 function clearMap(){if(isLocked()){status.innerHTML='<span class="lockedWarn">Niveau verrouillé.</span>';return}pushLevelUndo("clear");baseMap=Array.from({length:H},()=>Array(W).fill("."));baseMap[1][1]="A";baseMap[H-2][W-2]="B";normalize();levels[currentLevel].map=map();resetPlay();edit=true;draw();status.textContent="Carte vidée."}
-function goLevel(i){writeCurrentLevel();closeLevelIntro();loadFromLevel(i);saveCurrentProgress();status.textContent="Niveau "+(currentLevel+1)+" chargé : "+(levels[currentLevel].name||"sans nom")+"."}
+function goLevel(i){writeCurrentLevel();loadFromLevel(i);saveCurrentProgress();status.textContent="Niveau "+(currentLevel+1)+" chargé : "+(levels[currentLevel].name||"sans nom")+"."}
 function goInput(){let n=parseInt(document.getElementById("levelInput").value,10);if(!isNaN(n))goLevel(n-1)}
 
 function simFall(state){
   let {map,p}=state; let steps=0; let switchesHit=0;
-  let switchContactKey=state.switchContactKey||null;
   const isBlock=(c)=>c=="#"||c=="D";
   const out=(x,y)=>x<0||y<0||x>=W||y>=H;
   const sol=(x,y)=>out(x,y)||isBlock(map[y][x]);
-  const applySwitchOnce=()=>{
-    if(!(map[p.y]&&map[p.y][p.x]=="S")){switchContactKey=null;return true;}
-    const key=p.x+","+p.y;
-    if(switchContactKey===key)return true;
-    switchContactKey=key;
-    switchesHit++;
-    if(switchesHit>8)return false;
-    map=map.map(r=>r.map(c=>c=="D"?"O":c=="O"?"D":c));
-    return true;
-  };
   while(true){
-    if(!applySwitchOnce())return {dead:true};
+    if(map[p.y]&&map[p.y][p.x]=="S"){
+      switchesHit++;
+      if(switchesHit>8)return {dead:true};
+      map=map.map(r=>r.map(c=>c=="D"?"O":c=="O"?"D":c));
+    }
     let nx=p.x,ny=p.y+1;
     if(out(nx,ny))return {dead:true};
-    if(!sol(nx,ny)){
-      const oldKey=p.x+","+p.y;
-      p={x:nx,y:ny};
-      const newKey=p.x+","+p.y;
-      if(newKey!==oldKey)switchContactKey=null;
-      steps++;
-      if(steps>80)return {dead:true};
-      continue;
+    if(!sol(nx,ny)){p={x:nx,y:ny};steps++; if(steps>80)return {dead:true}; continue;}
+    if(map[p.y]&&map[p.y][p.x]=="S"){
+      switchesHit++;
+      if(switchesHit>8)return {dead:true};
+      map=map.map(r=>r.map(c=>c=="D"?"O":c=="O"?"D":c));
     }
-    return {map,p,dead:false,switchContactKey};
+    return {map,p,dead:false};
   }
 }
 function simRotate(state,d){
   let map=state.map,p=state.p,ex=state.exit;
-  let switchContactKey=state.switchContactKey||null;
   const rcw=(m)=>{let o=Array.from({length:H},()=>Array(W).fill("."));for(let y=0;y<H;y++)for(let x=0;x<W;x++)o[x][H-1-y]=m[y][x];return o};
   const rccw=(m)=>{let o=Array.from({length:H},()=>Array(W).fill("."));for(let y=0;y<H;y++)for(let x=0;x<W;x++)o[W-1-x][y]=m[y][x];return o};
   const qcw=(q)=>({x:H-1-q.y,y:q.x}), qccw=(q)=>({x:q.y,y:W-1-q.x});
-  const kpos=(key)=>{if(!key)return null; const a=String(key).split(",").map(Number); return (a.length===2&&!Number.isNaN(a[0])&&!Number.isNaN(a[1]))?{x:a[0],y:a[1]}:null};
-  const pkey=(q)=>q?q.x+","+q.y:null;
-  if(d>0){map=rcw(map);p=qcw(p);ex=qcw(ex);switchContactKey=pkey(kpos(switchContactKey)?qcw(kpos(switchContactKey)):null)}
-  else {map=rccw(map);p=qccw(p);ex=qccw(ex);switchContactKey=pkey(kpos(switchContactKey)?qccw(kpos(switchContactKey)):null)}
-  return simFall({map,p,exit:ex,switchContactKey});
+  if(d>0){map=rcw(map);p=qcw(p);ex=qcw(ex)} else {map=rccw(map);p=qccw(p);ex=qccw(ex)}
+  return simFall({map,p,exit:ex});
 }
-function stateKey(s){return s.p.x+","+s.p.y+"|"+s.exit.x+","+s.exit.y+"|"+(s.switchContactKey||"")+"|"+s.map.map(r=>r.join("")).join("")}
-function solverPathLabel(path,ascii=false){
-  return path.map(d=>d>0?(ascii?'R':'↻'):(ascii?'L':'↺')).join(ascii?'':' ');
-}
-function analyzeCurrentLevel(maxDepth=32,collectExtraDepth=2,maxSolutions=80){
-  writeCurrentLevel();
-  let raw=arr(levels[currentLevel].map);
-  let pts=solverFindPoints(raw);
-  let start=solverFall({m:raw,p:pts.p,ex:pts.ex});
-  if(start.dead)return {ok:false,reason:"impossible dès le départ ("+(start.reason||"sans raison")+")",minMoves:999,solutions:[],optimal:[],near:[],visited:0};
-  let q=[{...start,path:[]}];
-  let seenDepth=new Map([[solverKey(start),0]]);
-  let solutions=[];
-  let minMoves=null;
-  let stopDepth=maxDepth;
-  while(q.length){
-    let s=q.shift();
-    let depth=s.path.length;
-    if(minMoves!==null && depth>stopDepth)break;
-    if(s.p.x==s.ex.x && s.p.y==s.ex.y){
-      if(minMoves===null){minMoves=depth;stopDepth=Math.min(maxDepth,minMoves+collectExtraDepth);}
-      solutions.push(s.path);
-      if(solutions.length>=maxSolutions)break;
-      continue;
-    }
-    if(depth>=maxDepth)continue;
-    for(let d of [-1,1]){
-      let n=solverRotate(s,d);
-      if(n.dead)continue;
-      let k=solverKey(n);
-      let nd=depth+1;
-      // On garde aussi les états déjà vus au même coût pour compter les vraies alternatives courtes.
-      // Oui, un BFS qui ne jette pas tout au premier doublon, quelle décadence moderne.
-      if(!seenDepth.has(k) || seenDepth.get(k)>=nd){
-        seenDepth.set(k,nd);
-        q.push({...n,path:s.path.concat(d)});
-      }
-    }
-  }
-  if(minMoves===null)return {ok:false,reason:"aucune solution trouvée jusqu’à "+maxDepth+" coups",minMoves:999,solutions:[],optimal:[],near:[],visited:seenDepth.size};
-  const optimal=solutions.filter(p=>p.length===minMoves);
-  const near=solutions.filter(p=>p.length>minMoves && p.length<=minMoves+collectExtraDepth);
-  return {ok:true,minMoves,solutions,optimal,near,visited:seenDepth.size};
-}
-function applySolverReport(report){
-  if(report.ok){
-    levels[currentLevel].maxMoves=report.minMoves;
-    levels[currentLevel].solution=solverPathLabel(report.optimal[0]||[],true);
-    levels[currentLevel].solutionAlternatives=report.solutions.slice(0,20).map(p=>solverPathLabel(p,true));
-  }else{
-    levels[currentLevel].maxMoves=999;
-    levels[currentLevel].solution="";
-    levels[currentLevel].solutionAlternatives=[];
-  }
-  updateStats();
-}
-function solverReportHtml(report){
-  if(!report.ok){
-    return '<div class="testReport"><p class="bad"><b>Test niveau : KO.</b></p><p>'+escapeHtml(report.reason)+'.</p><p>Le cube est donc officiellement perdu. Original, mais injouable.</p></div>';
-  }
-  const altCount=Math.max(0,report.solutions.length-1);
-  const sample=report.solutions.slice(0,6).map((p,i)=>'<li><code>'+(solverPathLabel(p)||'déjà sur la sortie')+'</code> <small>'+(p.length===report.minMoves?'optimal':('+'+(p.length-report.minMoves)))+'</small></li>').join('');
-  const quality=report.optimal.length>1
-    ? '<p class="warn">Attention : '+report.optimal.length+' solutions optimales. C’est acceptable si c’est voulu, sinon ton puzzle fuit par les joints.</p>'
-    : '<p>Une solution optimale nette, avec '+altCount+' alternative(s) courte(s) détectée(s).</p>';
-  return '<div class="testReport">'+
-    '<p><b>Test niveau : OK.</b></p>'+
-    '<p>Minimum 3♥ : <b>'+report.minMoves+'</b> coup(s).</p>'+
-    '<p>Solutions optimales : <b>'+report.optimal.length+'</b><br>Alternatives testées jusqu’à +2 coups : <b>'+report.near.length+'</b><br>États explorés : <b>'+report.visited+'</b></p>'+
-    quality+
-    '<ol>'+sample+'</ol>'+
-  '</div>';
-}
-function showTestPopup(report){
-  hideCompanion(false);
-  bannerTitle.textContent=report.ok?'Niveau testable':'Niveau bloqué';
-  bannerText.innerHTML=solverReportHtml(report);
-  starsEl.textContent=report.ok?'♥♥♥':'☆☆☆';
-  bannerAction.textContent='OK';
-  bannerAction.onclick=()=>banner.classList.add('hidden');
-  banner.classList.remove('lose','hidden');
-}
+function stateKey(s){return s.p.x+","+s.p.y+"|"+s.exit.x+","+s.exit.y+"|"+s.map.map(r=>r.join("")).join("")}
 function calcMoves(){
   try{
-    const report=analyzeCurrentLevel(32,2,80);
-    applySolverReport(report);
-    status.innerHTML=report.ok
-      ? '<span class="testOk">Calc coups : '+report.minMoves+' coup(s), '+report.optimal.length+' optimale(s), '+report.near.length+' alternative(s) à +2.</span>'
-      : '<span class="testBad">Calc coups : '+escapeHtml(report.reason)+'.</span>';
+    writeCurrentLevel();
+    let raw=arr(levels[currentLevel].map);
+    let pts=solverFindPoints(raw);
+    let start=solverFall({m:raw,p:pts.p,ex:pts.ex});
+    const maxDepth=32;
+    if(start.dead){
+      levels[currentLevel].maxMoves=999;
+      status.innerHTML='<span class="testBad">Calc coups : impossible dès le départ ('+start.reason+').</span>';
+      updateStats();
+      return;
+    }
+    let q=[{...start,path:[]}];
+    let seen=new Set([solverKey(start)]);
+    while(q.length){
+      let s=q.shift();
+      if(s.p.x==s.ex.x && s.p.y==s.ex.y){
+        levels[currentLevel].maxMoves=s.path.length;
+        levels[currentLevel].solution=s.path.map(d=>d>0?'R':'L').join('');
+        updateStats();
+        status.innerHTML='<span class="testOk">Calc coups : objectif 3♥ = '+s.path.length+' coup(s). Solution : '+(levels[currentLevel].solution||'déjà sur la sortie')+'</span>';
+        return;
+      }
+      if(s.path.length>=maxDepth)continue;
+      for(let d of [-1,1]){
+        let n=solverRotate(s,d);
+        if(n.dead)continue;
+        let k=solverKey(n);
+        if(!seen.has(k)){
+          seen.add(k);
+          q.push({...n,path:s.path.concat(d)});
+        }
+      }
+    }
+    levels[currentLevel].maxMoves=999;
+    updateStats();
+    status.innerHTML='<span class="testBad">Calc coups : aucune solution trouvée jusqu’à '+maxDepth+' coups.</span>';
   }catch(e){
     console.error('[CALC] erreur',e);
     status.innerHTML='<span class="testBad">Calc coups : erreur JS - '+(e.message||e)+'</span>';
   }
 }
-
 
 
 function setGroupState(g,collapsed){
@@ -2663,7 +2633,6 @@ document.querySelectorAll("[data-fold]").forEach(btn=>{
   };
 });
 document.getElementById("compactEdit").onclick=toggleCompactEditor;
-document.getElementById("startPlay")?.addEventListener("click",startGameFromHome);
 
 
 function sortByDifficulty(){
@@ -2784,18 +2753,48 @@ function solverKey(s){
 }
 function testCurrentLevel(){
   try{
-    const report=analyzeCurrentLevel(32,2,100);
-    applySolverReport(report);
-    showTestPopup(report);
-    status.innerHTML=report.ok
-      ? '<span class="testOk">Test du jeu : OK, '+report.minMoves+' coup(s) min, '+report.optimal.length+' optimale(s), '+report.near.length+' alternative(s) courtes.</span>'
-      : '<span class="testBad">Test du jeu : '+escapeHtml(report.reason)+'.</span>';
+    writeCurrentLevel();
+    let raw=arr(levels[currentLevel].map);
+    let pts=solverFindPoints(raw);
+    let start=solverFall({m:raw,p:pts.p,ex:pts.ex});
+    const maxDepth=32;
+
+    if(start.dead){
+      status.innerHTML='<span class="testBad">Test du jeu : impossible dès le départ ('+start.reason+').</span>';
+      return;
+    }
+
+    let q=[{...start,path:[]}];
+    let seen=new Set([solverKey(start)]);
+
+    while(q.length){
+      let s=q.shift();
+      if(s.p.x==s.ex.x && s.p.y==s.ex.y){
+        const path=s.path.map(d=>d>0?"↻":"↺").join(" ");
+        levels[currentLevel].maxMoves=s.path.length;
+        levels[currentLevel].solution=s.path.map(d=>d>0?'R':'L').join('');
+        updateStats();
+        status.innerHTML='<span class="testOk">Test du jeu : OK, finissable en '+s.path.length+' coup(s). Solution : '+(path||"déjà sur la sortie")+'</span>';
+        return;
+      }
+      if(s.path.length>=maxDepth)continue;
+      for(let d of [-1,1]){
+        let n=solverRotate(s,d);
+        if(n.dead)continue;
+        let k=solverKey(n);
+        if(!seen.has(k)){
+          seen.add(k);
+          q.push({...n,path:s.path.concat(d)});
+        }
+      }
+    }
+
+    status.innerHTML='<span class="testBad">Test du jeu : aucune solution trouvée jusqu’à '+maxDepth+' coups. Niveau probablement bloquant.</span>';
   }catch(e){
     console.error('[TEST] erreur',e);
     status.innerHTML='<span class="testBad">Test du jeu : erreur JS - '+(e.message||e)+'</span>';
   }
 }
-
 
 
 
@@ -2921,7 +2920,6 @@ function hideCompanion(showHelp=true){
   }
 }
 function scheduleCompanion(forceIntro=false){
-  if(welcomeActive)return;
   clearTimeout(companionTimer);
   clearTimeout(companionIdleTimer);
   if(edit||gameOver)return;
@@ -2956,7 +2954,7 @@ document.getElementById("companionSkip").onclick=()=>{
 };
 document.getElementById("companionHelp").onclick=()=>showCompanion(companionMessage("hint"),false);
 
-document.getElementById("toggleEdit").onclick=()=>{edit=!edit;closeLevelIntro();if(!edit){welcomeActive=false;document.getElementById("startScreen")?.classList.add("hidden");resetPlay();scheduleCompanion(true)}else{busy=false;gameOver=false;hideBanner();hideCompanion(false);draw()}};
+document.getElementById("toggleEdit").onclick=()=>{edit=!edit;if(!edit){resetPlay();scheduleCompanion(true)}else{busy=false;gameOver=false;hideBanner();hideCompanion(false);draw()}};
 document.getElementById("companionSkip").onclick=()=>{
   const stage=companionStage();
   if(stage){
@@ -2968,7 +2966,6 @@ document.getElementById("companionHelp").onclick=()=>showCompanion(companionMess
 document.getElementById("sideLeft").onclick=()=>turn(-1);document.getElementById("sideRight").onclick=()=>turn(1);document.getElementById("reset").onclick=resetPlay;
 document.getElementById("saveLocal").onclick=saveLocal;document.getElementById("loadLocal").onclick=loadLocal;
 document.getElementById("exportJson").onclick=exportJson;document.getElementById("importBtn").onclick=()=>document.getElementById("importFile").click();
-document.getElementById("openAssetEditor")?.addEventListener("click",()=>window.open("asset_editor.html","_blank"));
 document.getElementById("openSvgAssetEditor")?.addEventListener("click",()=>window.open("asset_svg_editor.html","_blank"));
 document.getElementById("importFile").onchange=e=>{if(e.target.files[0])importJson(e.target.files[0])};
 document.getElementById("addLevel").onclick=addLevel;document.getElementById("genLevel").onclick=genLevel;document.getElementById("clear").onclick=clearMap;
