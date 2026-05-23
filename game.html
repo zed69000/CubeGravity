@@ -1598,7 +1598,7 @@ body.force-game-start #homeMenu {
         </select>
       </span>
       <span class="group collapsed"><span class="groupTitle">Niveau</span><button class="foldBtn" data-fold>▸</button>
-        <input id="levelName" placeholder="Nom niveau"><label style="background:#22263a;padding:5px;border-radius:8px">Diff <input id="difficultyInput" type="number" min="1" max="10" value="1" style="width:44px"></label><label class="speedLabel">Chute <input id="fallDelayInput" type="number" min="60" max="500" step="10" value="135"></label><label class="speedLabel">Rotation <input id="rotationDurationInput" type="number" min="120" max="1000" step="20" value="320"></label><button id="lockLevel">🔓 Lock</button><button id="soundToggle">🔊 Son</button><button id="undoLevel">Undo</button><button id="calcMoves">Calc coups</button><button id="testGame">Test du jeu</button><button id="addLevel">+ Level</button><button id="genLevel">Générer base</button><button id="clear">Clear</button>
+        <input id="levelName" placeholder="Nom niveau"><label style="background:#22263a;padding:5px;border-radius:8px">Grille <input id="gridSizeInput" type="number" min="7" max="15" step="1" value="11" style="width:48px"></label><button id="applyGridSize" class="smallBtn">Appliquer grille</button><label style="background:#22263a;padding:5px;border-radius:8px">Diff <input id="difficultyInput" type="number" min="1" max="10" value="1" style="width:44px"></label><label class="speedLabel">Chute <input id="fallDelayInput" type="number" min="60" max="500" step="10" value="135"></label><label class="speedLabel">Rotation <input id="rotationDurationInput" type="number" min="120" max="1000" step="20" value="320"></label><button id="lockLevel">🔓 Lock</button><button id="soundToggle">🔊 Son</button><button id="undoLevel">Undo</button><button id="calcMoves">Calc coups</button><button id="testGame">Test du jeu</button><button id="addLevel">+ Level</button><button id="genLevel">Générer base</button><button id="clear">Clear</button>
       </span>
       <span class="group collapsed"><span class="groupTitle">Navigation</span><button class="foldBtn" data-fold>▸</button>
         <button id="lvl1">Lvl 1</button><button id="prevLvl">-</button><input id="levelInput" type="number" min="1" value="1" style="width:56px"><button id="goLvl">Go</button><button id="nextLvl">+</button><button id="sortDifficulty">Trier diff</button><button id="resetProgress">Reset progression</button><button id="resetTutorial">Reset tutoriel</button><button id="deleteLevel">Delete level</button><button id="deleteUnlocked">Delete non-lock</button>
@@ -1647,7 +1647,70 @@ body.force-game-start #homeMenu {
 </div>
 
 <script>
-const W=13,H=13,T=40;
+const BOARD=520; let W=11,H=11,T=BOARD/W,HALF=T/2;
+
+function clampGridSize(v){
+  v=parseInt(v,10);
+  if(!Number.isFinite(v)) return 11;
+  return Math.max(7, Math.min(15, v));
+}
+function setBoardSize(size){
+  W=clampGridSize(size);
+  H=W;
+  T=BOARD/W;
+  HALF=T/2;
+}
+function levelGridSize(level){
+  return clampGridSize(level?.gridSize || gameSettings?.gridSize || 11);
+}
+function setBoardSizeFromLevel(level){
+  setBoardSize(levelGridSize(level));
+}
+function resizeCurrentLevelTo(size){
+  const lvl=levels[currentLevel];
+  if(!lvl) return;
+  const oldMap=map();
+  lvl.gridSize=clampGridSize(size);
+  setBoardSizeFromLevel(lvl);
+  lvl.map=normalizeLevelMapSize(oldMap);
+  baseMap=arr(lvl.map);
+  normalize();
+  lvl.map=map();
+  const input=document.getElementById("gridSizeInput");
+  if(input) input.value=W;
+  resetPlay();
+  setStatus("Grille niveau : "+W+"×"+H+". Les blocs ont été réadaptés. Oui, ça bouge sans tout détruire, miracle.");
+}
+
+
+function normalizeLevelMapSize(map){
+  const targetW=W,targetH=H;
+  const rows=(map||[]).map(r=>String(r));
+  if(rows.length===targetH && rows.every(r=>r.length===targetW)) return rows;
+  const out=Array.from({length:targetH},()=>Array(targetW).fill("."));
+  const oldH=rows.length, oldW=Math.max(0,...rows.map(r=>r.length));
+  for(let y=0;y<oldH;y++){
+    for(let x=0;x<(rows[y]||"").length;x++){
+      const ch=rows[y][x];
+      if(!ch || ch===".") continue;
+      const nx=Math.max(0,Math.min(targetW-1, x-Math.floor((oldW-targetW)/2)));
+      const ny=Math.max(0,Math.min(targetH-1, y-Math.floor((oldH-targetH)/2)));
+      if(out[ny][nx]===".") out[ny][nx]=ch;
+      else {
+        let placed=false;
+        for(let r=1;r<Math.max(targetW,targetH)&&!placed;r++){
+          for(let yy=Math.max(0,ny-r);yy<=Math.min(targetH-1,ny+r)&&!placed;yy++){
+            for(let xx=Math.max(0,nx-r);xx<=Math.min(targetW-1,nx+r);xx++){
+              if(out[yy][xx]==="."){out[yy][xx]=ch;placed=true;break;}
+            }
+          }
+        }
+      }
+    }
+  }
+  return out.map(r=>r.join(""));
+}
+
 const grid=document.getElementById("grid"),rot=document.getElementById("rot"),stage=document.getElementById("stage"),svg=document.querySelector("svg");
 const modeLabel=document.getElementById("modeLabel"),status=document.getElementById("status"),tool=document.getElementById("tool");
 const editPanel=document.getElementById("editPanel"),levelNameInput=document.getElementById("levelName"),playStats=document.getElementById("playStats");
@@ -1748,7 +1811,7 @@ function drawPixelAsset(name,x,y,parent=grid,opts={}){
   return true;
 }
 
-function arr(map){return map.map(r=>r.split(""))}
+function arr(map){return normalizeLevelMapSize(map).map(r=>r.split(""))}
 function map(){return baseMap.map(r=>r.join(""))}
 
 function normalize(){
@@ -1792,12 +1855,17 @@ function writeCurrentLevel(){
   levels[currentLevel].biome=document.getElementById("biomeSelect").value||"cosmic";
   levels[currentLevel].difficulty=parseInt(document.getElementById("difficultyInput").value||levels[currentLevel].difficulty||1,10);
   levels[currentLevel].maxMoves=parseInt(levels[currentLevel].maxMoves||999,10);
+  const gsi=document.getElementById("gridSizeInput");
+  levels[currentLevel].gridSize=clampGridSize(gsi?.value || W || 11);
   writeGlobalSettingsFromInputs();
 }
 function loadFromLevel(idx){
   currentLevel=Math.max(0,Math.min(levels.length-1,idx));
+  if(!levels[currentLevel].gridSize)levels[currentLevel].gridSize=11;
+  setBoardSizeFromLevel(levels[currentLevel]);
+  levels[currentLevel].map=normalizeLevelMapSize(levels[currentLevel].map);
   baseMap=arr(levels[currentLevel].map);
-  levelNameInput.value=levels[currentLevel].name||("Level "+(currentLevel+1)); if(!levels[currentLevel].difficulty)levels[currentLevel].difficulty=1; document.getElementById("difficultyInput").value=levels[currentLevel].difficulty; updateLockUI();
+  levelNameInput.value=levels[currentLevel].name||("Level "+(currentLevel+1)); if(!levels[currentLevel].difficulty)levels[currentLevel].difficulty=1; document.getElementById("difficultyInput").value=levels[currentLevel].difficulty; const gsi=document.getElementById("gridSizeInput"); if(gsi)gsi.value=levels[currentLevel].gridSize||11; updateLockUI();
   if(!levels[currentLevel].biome)levels[currentLevel].biome=localStorage.getItem("gravity_cube_biome")||"cosmic";
   document.getElementById("biomeSelect").value=levels[currentLevel].biome;
   syncSpeedInputs();
@@ -1810,12 +1878,13 @@ function baseDoorOpen(){
   return false;
 }
 function resetPlay(){
+  setBoardSizeFromLevel(levels[currentLevel]);
   normalize();
   levels[currentLevel].map=map();
   b=arr(levels[currentLevel].map);
   door=baseDoorOpen();
   moves=0;busy=false;gameOver=false;deadPlayer=false;rotatorCooldown=false;activeSwitchKey=null;hideBanner();
-  rot.setAttribute("transform","rotate(0 260 260)");visualOri=0;
+  rot.setAttribute("transform",`rotate(0 ${BOARD/2} ${BOARD/2})`);visualOri=0;
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){
     if(b[y][x]=="A"){p={x,y};start={x,y};b[y][x]="."}
     if(b[y][x]=="B")exit={x,y}
@@ -2113,7 +2182,7 @@ function draw(){
     if(c=="A"&&edit){
       if(drawVectorAsset("player",X,Y)){}else if(!drawPixelAsset("player",X,Y)){
         rect(X+4,Y+4,T-8,T-8,"#ffd640","#a56500");
-        text(X+20,Y+34,"A","#111",12);
+        text(X+HALF,Y+34,"A","#111",12);
       }
     }
     if(c=="S"){
@@ -2131,7 +2200,7 @@ function draw(){
       const assetName=right ? "rotator_right" : "rotator_left";
       if(drawVectorAsset(assetName,X,Y)){}else if(!drawPixelAsset(assetName,X,Y)){
         grid.appendChild(E("rect",{x:X+5,y:Y+5,width:T-10,height:T-10,rx:3,ry:3,fill:"#073168",stroke:"#29e7ff","stroke-width":4,"pointer-events":"none"}));
-        text(X+20,Y+29,right?"↻":"↺","#eefcff",28);
+        text(X+HALF,Y+29,right?"↻":"↺","#eefcff",28);
       }
     }
     if(c=="X"){
@@ -2155,7 +2224,7 @@ function draw(){
     let idle=(!busy&&!gameOver)?Math.sin(idleTick*.12)*1.4:0;
     let sx=1+squash*.22, sy=1-squash*.18;
     let inv=-visualOri*90;
-    let grp=E("g",{transform:`translate(${X+20} ${Y+20+idle}) rotate(${inv}) scale(${sx} ${sy}) translate(${-20} ${-20})`,"pointer-events":"none"});
+    let grp=E("g",{transform:`translate(${X+HALF} ${Y+HALF+idle}) rotate(${inv}) scale(${sx} ${sy}) translate(${-HALF} ${-HALF})`,"pointer-events":"none"});
     if(drawVectorAsset("player",0,0,grp)){}else if(!drawPixelAsset("player",0,0,grp)){
       grp.appendChild(E("rect",{x:4,y:4,width:T-8,height:T-8,rx:2,ry:2,fill:"#ffd640",stroke:"#a56500","stroke-width":4}));
     }
@@ -2292,7 +2361,7 @@ function turn(d){
     rot.setAttribute("transform","rotate("+a+" 260 260)");
     if(Math.abs(a)>=Math.abs(target)){
       clearInterval(timer);
-      rot.setAttribute("transform","rotate(0 260 260)");
+      rot.setAttribute("transform",`rotate(0 ${BOARD/2} ${BOARD/2})`);
       apply(d);draw();fall();
     }
   },interval);
@@ -2333,9 +2402,9 @@ function canFallOneCell(){
 function dissolvePlayer(){
   const boardRect=document.querySelector(".boardWrap").getBoundingClientRect();
   const svgRect=svg.getBoundingClientRect();
-  const scale=svgRect.width/520;
-  const cx=svgRect.left + (p.x*T+20)*scale;
-  const cy=svgRect.top + (p.y*T+20)*scale;
+  const scale=svgRect.width/BOARD;
+  const cx=svgRect.left + (p.x*T+HALF)*scale;
+  const cy=svgRect.top + (p.y*T+HALF)*scale;
   const colors=["#f1c453","#ffd978","#5b3600","#ffffff","#111111"];
   for(let i=0;i<38;i++){
     let d=document.createElement("div");
@@ -2353,9 +2422,9 @@ function dissolvePlayer(){
 
 function floatingHearts(){
   const svgRect=svg.getBoundingClientRect();
-  const scale=svgRect.width/520;
-  const cx=svgRect.left + (p.x*T+20)*scale;
-  const cy=svgRect.top + (p.y*T+10)*scale;
+  const scale=svgRect.width/BOARD;
+  const cx=svgRect.left + (p.x*T+HALF)*scale;
+  const cy=svgRect.top + (p.y*T+T*.25)*scale;
   const hearts=["♥","❤","♡"];
   for(let i=0;i<10;i++){
     let h=document.createElement("div");
@@ -2374,9 +2443,9 @@ function floatingHearts(){
 
 function bigHeart(){
   const svgRect=svg.getBoundingClientRect();
-  const scale=svgRect.width/520;
-  const cx=svgRect.left + (p.x*T+20)*scale;
-  const cy=svgRect.top + (p.y*T+12)*scale;
+  const scale=svgRect.width/BOARD;
+  const cx=svgRect.left + (p.x*T+HALF)*scale;
+  const cy=svgRect.top + (p.y*T+T*.3)*scale;
   let h=document.createElement("div");
   h.className="bigHeart";
   h.textContent="♥";
@@ -2389,9 +2458,9 @@ function bigHeart(){
 function gravelFx(distance){
   if(distance<=0)return;
   const svgRect=svg.getBoundingClientRect();
-  const scale=svgRect.width/520;
-  const cx=svgRect.left + (p.x*T+20)*scale;
-  const cy=svgRect.top + (p.y*T+34)*scale;
+  const scale=svgRect.width/BOARD;
+  const cx=svgRect.left + (p.x*T+HALF)*scale;
+  const cy=svgRect.top + (p.y*T+T*.85)*scale;
   const count=Math.min(22,6+distance*3);
   const colors=["#8aa0ff","#b8bddc","#74778b","#f1c453"];
   for(let i=0;i<count;i++){
@@ -2426,7 +2495,7 @@ function autoRotateFromTile(dir){
     rot.setAttribute("transform","rotate("+a+" 260 260)");
     if(Math.abs(a)>=Math.abs(target)){
       clearInterval(timer);
-      rot.setAttribute("transform","rotate(0 260 260)");
+      rot.setAttribute("transform",`rotate(0 ${BOARD/2} ${BOARD/2})`);
       apply(dir);
       draw();
       setTimeout(()=>fall(),getFallDelayMs());
@@ -2732,9 +2801,9 @@ function generatedMap(){
 ".............",
 "............."]
   ];
-  return templates[Math.floor(Math.random()*templates.length)];
+  return normalizeLevelMapSize(templates[Math.floor(Math.random()*templates.length)]);
 }
-function addLevel(){writeCurrentLevel();levels.push({name:"Nouveau niveau "+(levels.length+1),maxMoves:999,locked:false,difficulty:1,biome:document.getElementById("biomeSelect").value||"cosmic",map:generatedMap()});loadFromLevel(levels.length-1);edit=true;draw();calcMoves();status.textContent="Nouveau niveau ajouté avec une base."}
+function addLevel(){writeCurrentLevel();levels.push({name:"Nouveau niveau "+(levels.length+1),maxMoves:999,locked:false,difficulty:1,gridSize:W,biome:document.getElementById("biomeSelect").value||"cosmic",map:generatedMap()});loadFromLevel(levels.length-1);edit=true;draw();calcMoves();status.textContent="Nouveau niveau ajouté avec une base."}
 function genLevel(){if(isLocked()){status.innerHTML='<span class="lockedWarn">Niveau verrouillé.</span>';return}pushLevelUndo("gen");baseMap=arr(generatedMap());normalize();levels[currentLevel].map=map();resetPlay();edit=true;draw();calcMoves();status.textContent="Base générée pour ce niveau."}
 function clearMap(){if(isLocked()){status.innerHTML='<span class="lockedWarn">Niveau verrouillé.</span>';return}pushLevelUndo("clear");baseMap=Array.from({length:H},()=>Array(W).fill("."));baseMap[1][1]="A";baseMap[H-2][W-2]="B";normalize();levels[currentLevel].map=map();resetPlay();edit=true;draw();status.textContent="Carte vidée."}
 function goLevel(i){writeCurrentLevel();loadFromLevel(i);saveCurrentProgress();status.textContent="Niveau "+(currentLevel+1)+" chargé : "+(levels[currentLevel].name||"sans nom")+"."}
@@ -3181,6 +3250,7 @@ document.getElementById("undoLevel").onclick=undoLevelEdit;
 document.getElementById("calcMoves").onclick=calcMoves;
 document.getElementById("testGame").onclick=testCurrentLevel;
 document.getElementById("difficultyInput").onchange=()=>{levels[currentLevel].difficulty=parseInt(document.getElementById("difficultyInput").value||1,10);updateStats();};
+const gridSizeInput=document.getElementById("gridSizeInput"); if(gridSizeInput){gridSizeInput.onchange=()=>resizeCurrentLevelTo(gridSizeInput.value);} const applyGridSizeBtn=document.getElementById("applyGridSize"); if(applyGridSizeBtn){applyGridSizeBtn.onclick=()=>resizeCurrentLevelTo(document.getElementById("gridSizeInput").value);}
 
 document.getElementById("fallDelayInput").oninput=()=>{writeGlobalSettingsFromInputs();status.textContent="Chute globale : "+getFallDelayMs()+" ms.";};
 document.getElementById("rotationDurationInput").oninput=()=>{writeGlobalSettingsFromInputs();status.textContent="Rotation globale : "+getRotationDurationMs()+" ms.";};
