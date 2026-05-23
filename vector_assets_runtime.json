@@ -26,55 +26,29 @@
       "layers": [
         {
           "id": "shadow",
-          "shape": "polygon",
+          "shape": "rect",
+          "x": 4,
+          "y": 8,
+          "w": 32,
+          "h": 29,
+          "rx": 2,
           "fill": "#a56500",
           "stroke": "#6b3f00",
           "strokeWidth": 2,
-          "opacity": 1,
-          "points": [
-            [
-              5.79,
-              8.547
-            ],
-            [
-              34.21,
-              8.547
-            ],
-            [
-              34.21,
-              36.453
-            ],
-            [
-              5.79,
-              36.453
-            ]
-          ]
+          "opacity": 1
         },
         {
           "id": "mouth_copy",
-          "shape": "polygon",
+          "shape": "rect",
+          "x": 15,
+          "y": 24,
+          "w": 4,
+          "h": 4,
+          "rx": 1,
           "fill": "#e5ae5d",
           "stroke": "#6b3f00",
           "strokeWidth": 5,
-          "opacity": 1,
-          "points": [
-            [
-              12.139,
-              20.875
-            ],
-            [
-              21.861,
-              20.875
-            ],
-            [
-              21.861,
-              31.125
-            ],
-            [
-              12.139,
-              31.125
-            ]
-          ]
+          "opacity": 1
         },
         {
           "id": "body",
@@ -90,80 +64,24 @@
           "opacity": 1
         },
         {
-          "id": "eyeL",
+          "id": "eyeR_copy",
           "shape": "rect",
-          "x": 10,
-          "y": 13,
+          "x": 24.17080307006836,
+          "y": 16.33167266845703,
           "w": 9,
           "h": 9,
           "rx": 5,
-          "fill": "#ffffff",
-          "stroke": "#422600",
-          "strokeWidth": 1,
+          "fill": "rgba(101,93,93,0.35)",
+          "stroke": "none",
+          "strokeWidth": 0,
           "opacity": 1,
           "anim": {
             "type": "look",
             "amp": 0.1,
             "ampX": 0.1,
             "speed": 0.005
-          }
-        },
-        {
-          "id": "pupilL",
-          "shape": "rect",
-          "x": 14,
-          "y": 17,
-          "w": 3,
-          "h": 3,
-          "rx": 3,
-          "fill": "#111111",
-          "stroke": "transparent",
-          "strokeWidth": 0,
-          "opacity": 1,
-          "anim": {
-            "type": "look",
-            "amp": 0.1,
-            "ampX": 1,
-            "speed": 0.004
-          }
-        },
-        {
-          "id": "eyeR",
-          "shape": "rect",
-          "x": 23,
-          "y": 14,
-          "w": 9,
-          "h": 9,
-          "rx": 5,
-          "fill": "#ffffff",
-          "stroke": "#422600",
-          "strokeWidth": 1,
-          "opacity": 1,
-          "anim": {
-            "type": "look",
-            "amp": 0.1,
-            "ampX": 0.1,
-            "speed": 0.005
-          }
-        },
-        {
-          "id": "pupilR",
-          "shape": "rect",
-          "x": 27,
-          "y": 17,
-          "w": 3,
-          "h": 3,
-          "rx": 3,
-          "fill": "#111111",
-          "stroke": "transparent",
-          "strokeWidth": 0,
-          "opacity": 1,
-          "anim": {
-            "type": "look",
-            "amp": 0.1,
-            "ampX": 1,
-            "speed": 0.004
-          }
+          },
+          "visible": true
         },
         {
           "id": "cheveux",
@@ -221,16 +139,138 @@
           "pivotY": 4
         },
         {
-          "id": "layer_mpi25pqc",
+          "id": "layer_mpi3jc76_copy",
           "shape": "rect",
-          "x": 18.6,
-          "y": 17.8,
-          "w": 5.8,
-          "h": 13.9,
+          "x": 19.115530014038086,
+          "y": 13.520498657226563,
+          "w": 5.1,
+          "h": 17.8,
+          "rx": 2,
+          "fill": "rgba(61,38,0,0.35)",
+          "stroke": "none",
+          "strokeWidth": 0
+        },
+        {
+          "id": "layer_mpi3jc76",
+          "shape": "rect",
+          "x": 18,
+          "y": 13.4,
+          "w": 5.1,
+          "h": 17.8,
           "rx": 2,
           "fill": "#a56500",
           "stroke": "none",
           "strokeWidth": 0
+        },
+        {
+          "id": "eyeL_copy",
+          "shape": "polygon",
+          "fill": "rgba(71,62,62,0.3)",
+          "stroke": "none",
+          "strokeWidth": 0,
+          "opacity": 1,
+          "anim": {
+            "type": "look",
+            "amp": 0.1,
+            "ampX": 0.1,
+            "speed": 0.005
+          },
+          "points": [
+            [
+              5.821,
+              11.352
+            ],
+            [
+              15.484,
+              11.352
+            ],
+            [
+              15.484,
+              20.352
+            ],
+            [
+              5.821,
+              20.352
+            ]
+          ]
+        },
+        {
+          "id": "eyeL",
+          "shape": "rect",
+          "x": 10,
+          "y": 13,
+          "w": 9,
+          "h": 9,
+          "rx": 5,
+          "fill": "#ffffff",
+          "stroke": "#422600",
+          "strokeWidth": 1,
+          "opacity": 1,
+          "anim": {
+            "type": "look",
+            "amp": 0.1,
+            "ampX": 0.1,
+            "speed": 0.005
+          }
+        },
+        {
+          "id": "pupilL",
+          "shape": "rect",
+          "x": 14,
+          "y": 17,
+          "w": 3,
+          "h": 3,
+          "rx": 3,
+          "fill": "#111111",
+          "stroke": "transparent",
+          "strokeWidth": 0,
+          "opacity": 1,
+          "anim": {
+            "type": "look",
+            "amp": 0.1,
+            "ampX": 1,
+            "speed": 0.004
+          },
+          "visible": true
+        },
+        {
+          "id": "eyeR",
+          "shape": "rect",
+          "x": 23,
+          "y": 14,
+          "w": 9,
+          "h": 9,
+          "rx": 5,
+          "fill": "#ffffff",
+          "stroke": "#422600",
+          "strokeWidth": 1,
+          "opacity": 1,
+          "anim": {
+            "type": "look",
+            "amp": 0.1,
+            "ampX": 0.1,
+            "speed": 0.005
+          },
+          "visible": true
+        },
+        {
+          "id": "pupilR",
+          "shape": "rect",
+          "x": 27,
+          "y": 17,
+          "w": 3,
+          "h": 3,
+          "rx": 3,
+          "fill": "#111111",
+          "stroke": "transparent",
+          "strokeWidth": 0,
+          "opacity": 1,
+          "anim": {
+            "type": "look",
+            "amp": 0.1,
+            "ampX": 1,
+            "speed": 0.004
+          }
         }
       ],
       "groups": [
@@ -238,8 +278,8 @@
           "id": "group_1",
           "type": "group",
           "children": [
-            "eyeR",
-            "pupilR"
+            "eyeL",
+            "pupilL"
           ],
           "collapsed": false,
           "anim": {
@@ -248,13 +288,31 @@
             "ampX": 2,
             "speed": 0.004
           },
+          "pivotX": 14.5,
+          "pivotY": 17.5,
+          "tx": -4.588,
+          "ty": -3.372,
+          "scaleX": 1,
+          "scaleY": 1.098
+        },
+        {
+          "id": "group_2",
+          "type": "group",
+          "children": [
+            "eyeR",
+            "pupilR"
+          ],
+          "collapsed": true,
+          "anim": {
+            "type": "",
+            "amp": 1,
+            "ampX": 2,
+            "speed": 0.004
+          },
           "pivotX": 27.5,
           "pivotY": 18.5,
-          "scaleX": 1.6113,
-          "scaleY": 1.5339,
-          "rotation": -4.662,
-          "tx": 0.795,
-          "ty": -3.182
+          "tx": 1.658,
+          "ty": 1.161
         }
       ]
     },
@@ -263,14 +321,14 @@
         {
           "id": "shadow",
           "shape": "rect",
-          "x": 3,
-          "y": 8,
+          "x": 2.8894405364990234,
+          "y": 8.82919692993164,
           "w": 34,
           "h": 29,
           "rx": 2,
-          "fill": "#8a1745",
-          "stroke": "#5f1230",
-          "strokeWidth": 2
+          "fill": "rgba(138,23,69,0.45)",
+          "stroke": "none",
+          "strokeWidth": 0
         },
         {
           "id": "body",
@@ -287,27 +345,53 @@
         },
         {
           "id": "eyeL",
-          "shape": "rect",
-          "x": 10,
-          "y": 14,
-          "w": 9,
-          "h": 6,
-          "rx": 3,
+          "shape": "polygon",
           "fill": "#ffffff",
           "stroke": "#5f1230",
-          "strokeWidth": 1
+          "strokeWidth": 1,
+          "points": [
+            [
+              9.005,
+              13.392
+            ],
+            [
+              19.995,
+              13.392
+            ],
+            [
+              19.995,
+              20.608
+            ],
+            [
+              9.005,
+              20.608
+            ]
+          ]
         },
         {
           "id": "eyeR",
-          "shape": "rect",
-          "x": 22,
-          "y": 14,
-          "w": 9,
-          "h": 6,
-          "rx": 3,
+          "shape": "polygon",
           "fill": "#ffffff",
           "stroke": "#5f1230",
-          "strokeWidth": 1
+          "strokeWidth": 1,
+          "points": [
+            [
+              20.95,
+              13.116
+            ],
+            [
+              32.05,
+              13.116
+            ],
+            [
+              32.05,
+              20.884
+            ],
+            [
+              20.95,
+              20.884
+            ]
+          ]
         },
         {
           "id": "pupilL",
@@ -347,25 +431,40 @@
         },
         {
           "id": "mouth",
-          "shape": "rect",
-          "x": 14,
-          "y": 26,
-          "w": 12,
-          "h": 2,
-          "rx": 1,
+          "shape": "polygon",
           "fill": "#ffd1eb",
           "stroke": "transparent",
-          "strokeWidth": 0
+          "strokeWidth": 0,
+          "points": [
+            [
+              10.135,
+              24.105
+            ],
+            [
+              18.128,
+              25.962
+            ],
+            [
+              17.183,
+              30.029
+            ],
+            [
+              9.19,
+              28.172
+            ]
+          ]
         },
         {
           "id": "circle_9",
           "shape": "circle",
-          "x": 33,
-          "y": 7,
+          "x": 33.663352966308594,
+          "y": 7.165836334228516,
           "r": 3.433767866528125,
-          "fill": "rgba(138,23,69,0)",
+          "fill": "#8a1745",
           "stroke": "#8a1745",
-          "strokeWidth": 2
+          "strokeWidth": 2,
+          "pivotX": 33.663352966308594,
+          "pivotY": 7.165836334228516
         },
         {
           "id": "circle_9_copy",
@@ -373,7 +472,7 @@
           "x": 28,
           "y": 6,
           "r": 2,
-          "fill": "rgba(138,23,69,0)",
+          "fill": "#922445",
           "stroke": "#8a1745",
           "strokeWidth": 2,
           "h": 2,
@@ -448,22 +547,48 @@
           "points": [
             [
               29.9,
-              14.5
+              13.5
             ],
             [
               30.8,
-              14.1
+              13.1
             ],
             [
               32.1,
-              13.1
+              12.1
             ]
           ],
           "fill": "#8a1745",
           "stroke": "#8a1745",
           "strokeWidth": 2
+        },
+        {
+          "id": "layer_mpi3ooul",
+          "shape": "polygon",
+          "fill": "#8a1745",
+          "stroke": "none",
+          "strokeWidth": 0,
+          "points": [
+            [
+              17.473,
+              17.783
+            ],
+            [
+              22.994,
+              17.783
+            ],
+            [
+              22.994,
+              25.76
+            ],
+            [
+              17.473,
+              25.76
+            ]
+          ]
         }
-      ]
+      ],
+      "groups": []
     },
     "button_off": {
       "layers": [
@@ -693,54 +818,8 @@
           "fill": "rgba(255,255,255,.22)",
           "stroke": "transparent",
           "strokeWidth": 0
-        },
-        {
-          "id": "line_mpi26q6w",
-          "shape": "polygon",
-          "points": [
-            [
-              3.4,
-              28.7
-            ],
-            [
-              10.7,
-              22
-            ],
-            [
-              14.3,
-              30.6
-            ],
-            [
-              21.2,
-              22.2
-            ],
-            [
-              26.7,
-              30
-            ],
-            [
-              32,
-              21.5
-            ],
-            [
-              37.2,
-              27.4
-            ],
-            [
-              36.8,
-              32.2
-            ],
-            [
-              3.4,
-              32.3
-            ]
-          ],
-          "fill": "#7d36bf",
-          "stroke": "none",
-          "strokeWidth": 0
         }
-      ],
-      "groups": []
+      ]
     },
     "danger": {
       "layers": [
@@ -821,9 +900,7 @@
             "amp": 0.5,
             "ampX": 0.1,
             "speed": 0.005
-          },
-          "pivotX": 20,
-          "pivotY": 20
+          }
         },
         {
           "id": "eye",
@@ -858,31 +935,9 @@
             "amp": 0.5,
             "ampX": 0.2,
             "speed": 0.0035
-          },
-          "pivotX": 21,
-          "pivotY": 20
-        },
-        {
-          "id": "text_mpi29t2v",
-          "shape": "text",
-          "x": 20,
-          "y": 14.7,
-          "text": "~",
-          "fontSize": 6,
-          "fill": "#120006",
-          "stroke": "none",
-          "strokeWidth": 0,
-          "anim": {
-            "type": "shake",
-            "amp": 1,
-            "ampX": 2,
-            "speed": 0.004,
-            "pivotX": 20,
-            "pivotY": 14.7
           }
         }
-      ],
-      "groups": []
+      ]
     },
     "rotator_left": {
       "layers": [
