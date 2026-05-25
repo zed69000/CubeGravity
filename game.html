@@ -1,6 +1,7 @@
 <!doctype html>
 <html lang="fr">
 <head>
+<script>window.CG_EDITOR_MODE=new URLSearchParams(location.search).get("editor")==="1";document.documentElement.classList.toggle("editor-enabled",window.CG_EDITOR_MODE);</script>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="color-scheme" content="only light">
@@ -15,6 +16,7 @@ html,body,*{
 
 html,body{margin:0;width:100%;height:100%;background:#101018;color:#fff;font-family:Arial,sans-serif;overflow:hidden;touch-action:none}body.biome-cosmic{--bg1:#382cff;--bg2:#090018;--accent:#00e5ff}body.biome-forest{--bg1:#00c853;--bg2:#031407;--accent:#b6ff00}body.biome-desert{--bg1:#ff8a00;--bg2:#210b00;--accent:#ffd000}body.biome-ice{--bg1:#00b8ff;--bg2:#001524;--accent:#d8fbff}body.biome-rainbow{--bg1:#ff2bd6;--bg2:#120018;--accent:#fff000}
 body{display:flex;flex-direction:column}
+#gameVersionBadge{position:fixed;left:12px;top:12px;z-index:80;padding:5px 9px;border-radius:999px;background:rgba(5,10,35,.72);border:1px solid rgba(255,255,255,.18);color:#d7ddff;font-size:11px;font-weight:900;letter-spacing:.05em;pointer-events:none}
 #top{padding:6px 8px;background:#05050a;border-bottom:1px solid #303246;font-size:12px;line-height:1.2;max-height:42vh;overflow:auto}
 #title{font-weight:900;font-size:16px;margin-bottom:4px;text-align:center;font-family:monospace;letter-spacing:1px;text-shadow:0 2px 0 #000,0 0 10px var(--accent,#3fc1ff)}
 #bar{display:flex;gap:6px;flex-wrap:wrap;margin-top:5px}.group{display:flex;gap:4px;align-items:center;background:#151827;border:1px solid #2d3150;border-radius:10px;padding:5px}.groupTitle{font-size:9px;opacity:.7;font-weight:900;margin-right:1px;text-transform:uppercase;letter-spacing:.4px}.group.collapsed>*:not(.groupTitle):not(.foldBtn){display:none}.foldBtn{background:#2a2e48;color:#dfe3ff;padding:5px 7px;font-size:11px}
@@ -52,6 +54,8 @@ button.active{background:#52f28a;color:#051407}#toggleEdit{background:#242638;co
 #status{opacity:.9;min-height:16px}
 .hidden{display:none!important}
 .hitcell{pointer-events:all}
+html:not(.editor-enabled) #bar{display:none!important}
+html:not(.editor-enabled) #toggleEdit,html:not(.editor-enabled) #compactEdit,html:not(.editor-enabled) #editPanel{display:none!important}
 #editPanel.hidden{display:none}#editPanel{display:flex;gap:6px;flex-wrap:wrap;width:100%}
 #playStats{font-weight:900;color:#f1c453}
 #banner{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);background:rgba(5,5,10,.92);border:3px solid #fff;border-radius:18px;padding:18px 22px;text-align:center;box-shadow:0 16px 40px #000;z-index:10;min-width:240px}.danger{background:#ff5c5c!important;color:#210000!important}#confirmBox{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);z-index:30;background:rgba(5,5,10,.96);border:3px solid #ff7777;border-radius:18px;padding:18px;min-width:270px;max-width:88vw;text-align:center;box-shadow:0 20px 48px #000}#confirmBox.hidden{display:none}#confirmBox h2{margin:0 0 8px;font-size:20px}#confirmBox p{font-size:13px;line-height:1.35}#confirmBox .row{display:flex;gap:8px;justify-content:center;margin-top:12px}#banner.lose{background:rgba(5,5,10,.58);border-color:rgba(255,255,255,.55);backdrop-filter:blur(3px)}#banner.lose{background:rgba(5,5,10,.58);border-color:rgba(255,255,255,.55);backdrop-filter:blur(3px)}
@@ -1585,13 +1589,14 @@ body.force-game-start #homeMenu {
 </div>
 
 <button id="fullscreenBtn" aria-label="Plein écran" title="Plein écran">⛶</button>
+<div id="gameVersionBadge"></div>
 <div id="top">
   <div id="title"><span class="t-mark">▣</span> <span class="t-gravity">GRAVITY</span> <span class="t-cube">CUBE</span> <span class="t-mark">▣</span> <span id="modeLabel"></span></div>
   <div id="status">Play : les bords font WRAP. ☠ tue. ↻/↺ tournent une fois puis relâchent le cube.</div>
   <div id="playStats"></div>
   <div id="bar">
     <button id="toggleEdit" class="smallBtn">EDIT OFF</button><button id="compactEdit" class="smallBtn">Compact</button>
-    <span id="editPanel">
+    <span id="editPanel" class="hidden">
       <span class="group"><span class="groupTitle">Peindre</span><button class="foldBtn" data-fold>▾</button>
         <select id="tool">
           <option value="#">Mur</option><option value=".">Vide</option><option value="A">Départ A</option><option value="B">Sortie B</option><option value="S">Bouton</option><option value="D">Bloc sorti</option><option value="O">Bloc rentré</option><option value="R">Rotateur droite ↻</option><option value="L">Rotateur gauche ↺</option><option value="X">Mort ☠</option>
@@ -1717,12 +1722,15 @@ const editPanel=document.getElementById("editPanel"),levelNameInput=document.get
 const banner=document.getElementById("banner"),bannerTitle=document.getElementById("bannerTitle"),bannerText=document.getElementById("bannerText"),starsEl=document.getElementById("stars"),bannerAction=document.getElementById("bannerAction");
 
 let levels=[];
+const GAME_VERSION="V43.4-radius-runtime-bake-fix";
+setTimeout(()=>{const v=document.getElementById("gameVersionBadge"); if(v)v.textContent=GAME_VERSION;},0);
 let gameSettings={fallDelayMs:135,rotationDurationMs:320};
 let fallbackLevels=[]; // V57: aucun niveau de gameplay en dur. levels.json est obligatoire.
 
 let currentLevel=0,baseMap=[],b=[],p={x:0,y:0},start={x:0,y:0},exit={x:0,y:0};
-let door=false,busy=false,edit=false,moves=0,gameOver=false,confettiTimer=null,deadPlayer=false,idleTick=0,painting=false,lastPaintKey='',visualOri=0,squash=0,soundOn=true,audioCtx=null,rotatorCooldown=false;
+let door=false,busy=false,edit=!!window.CG_EDITOR_MODE,moves=0,gameOver=false,confettiTimer=null,deadPlayer=false,idleTick=0,painting=false,lastPaintKey='',visualOri=0,squash=0,soundOn=true,audioCtx=null,rotatorCooldown=false;
 let activeSwitchKey=null;
+let activeSwitchHeld=false;
 
 function E(n,a){let e=document.createElementNS("http://www.w3.org/2000/svg",n);for(let k in a)e.setAttribute(k,a[k]);return e}
 function rect(x,y,w,h,f,s,sw=4){grid.appendChild(E("rect",{x,y,width:w,height:h,fill:f,stroke:s,"stroke-width":sw,"pointer-events":"none"}))}
@@ -1883,7 +1891,7 @@ function resetPlay(){
   levels[currentLevel].map=map();
   b=arr(levels[currentLevel].map);
   door=baseDoorOpen();
-  moves=0;busy=false;gameOver=false;deadPlayer=false;rotatorCooldown=false;activeSwitchKey=null;hideBanner();
+  moves=0;busy=false;gameOver=false;deadPlayer=false;rotatorCooldown=false;activeSwitchKey=null;activeSwitchHeld=false;hideBanner();
   rot.setAttribute("transform",`rotate(0 ${BOARD/2} ${BOARD/2})`);visualOri=0;
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){
     if(b[y][x]=="A"){p={x,y};start={x,y};b[y][x]="."}
@@ -2052,7 +2060,7 @@ function appendVectorLayer(parent,l,t){
     el=E("text",{x:l.x??20,y:l.y??20,"font-size":l.fontSize??12,"font-weight":900,"font-family":"monospace","text-anchor":"middle"});
     el.textContent=l.text??"?";
   }else{
-    el=E("rect",{x:l.x??0,y:l.y??0,width:l.w??10,height:l.h??10,rx:l.rx??0,ry:l.rx??0});
+    el=E("rect",{x:l.x??0,y:l.y??0,width:l.w??10,height:l.h??10,rx:l.rx??0,ry:l.ry??l.rx??0});
   }
   el.setAttribute("fill",l.fill??"transparent");
   el.setAttribute("stroke",l.stroke??"transparent");
@@ -2238,12 +2246,14 @@ function draw(){
     c.addEventListener("pointermove",paintMove);
     grid.appendChild(c);
   }
-  document.body.classList.toggle("editing",edit);
-  modeLabel.textContent=(edit?"EDIT":"PLAY");
-  document.getElementById("toggleEdit").textContent=edit?"ÉDITION":"⚙";
-  document.getElementById("toggleEdit").title=edit?"Quitter l’édition":"Ouvrir les outils";
-  document.getElementById("toggleEdit").className=edit?"active gearBtn":"gearBtn";
-  editPanel.className=edit?"":"hidden";
+  if(!window.CG_EDITOR_MODE && edit){ edit=false; }
+  document.body.classList.toggle("editing",edit && window.CG_EDITOR_MODE);
+  modeLabel.textContent=(edit && window.CG_EDITOR_MODE ? "EDIT" : "PLAY");
+  const editToggle=document.getElementById("toggleEdit");
+  editToggle.textContent=(edit && window.CG_EDITOR_MODE)?"ÉDITION":"⚙";
+  editToggle.title=(edit && window.CG_EDITOR_MODE)?"Quitter l’édition":"Ouvrir les outils";
+  editToggle.className=(edit && window.CG_EDITOR_MODE)?"active gearBtn":"gearBtn";
+  editPanel.className=(edit && window.CG_EDITOR_MODE)?"":"hidden";
   document.getElementById("levelInput").value=currentLevel+1;updateLockUI();
 }
 
@@ -2378,14 +2388,19 @@ function touchSwitch(){
   if(!p || !b[p.y])return false;
   const onSwitch=b[p.y][p.x]==="S";
   if(!onSwitch){
+    // Le bouton ne sera réarmé qu'après avoir réellement quitté une case bouton.
     activeSwitchKey=null;
+    activeSwitchHeld=false;
     return false;
   }
-  const key=p.x+","+p.y;
-  // Réagit dès que le cube ENTRE sur le bouton, pas quand il sort.
-  // Ne retoggle pas en boucle tant que le cube reste sur la même case.
-  if(activeSwitchKey===key)return false;
-  activeSwitchKey=key;
+
+  // Important : pendant une rotation, la case bouton et le joueur changent de coordonnées ensemble.
+  // On ne doit donc pas utiliser uniquement x,y pour décider d'un nouveau déclenchement.
+  // Tant que le cube est encore sur un bouton, l'état des portes reste figé.
+  if(activeSwitchHeld)return false;
+
+  activeSwitchHeld=true;
+  activeSwitchKey=p.x+","+p.y;
   toggleDoors();
   status.textContent="Bouton activé : portes inversées.";
   draw();
@@ -2991,13 +3006,20 @@ function solverToggleDoors(m){
 }
 function solverFall(state){
   let m=cloneGrid(state.m), p={...state.p}, ex={...state.ex};
-  let safety=0, rotCooldown=false;
+  let safety=0, rotCooldown=!!state.rotCooldown, switchHeld=!!state.switchHeld;
   while(true){
     if(safety++>180)return {dead:true, reason:"boucle pendant la chute"};
     let c=m[p.y][p.x];
 
     if(c=="X")return {dead:true, reason:"mort"};
-    if(c=="S"){ m=solverToggleDoors(m); }
+    if(c=="S"){
+      if(!switchHeld){
+        m=solverToggleDoors(m);
+        switchHeld=true;
+      }
+    }else{
+      switchHeld=false;
+    }
 
     if((c=="R"||c=="L") && !rotCooldown){
       let d=c=="R"?1:-1;
@@ -3015,7 +3037,7 @@ function solverFall(state){
       continue;
     }
 
-    return {dead:false,m,p,ex};
+    return {dead:false,m,p,ex,rotCooldown,switchHeld};
   }
 }
 function solverRotate(state,d){
@@ -3025,7 +3047,7 @@ function solverRotate(state,d){
   return solverFall({m,p,ex});
 }
 function solverKey(s){
-  return s.p.x+","+s.p.y+"|"+s.ex.x+","+s.ex.y+"|"+s.m.map(r=>r.join("")).join("");
+  return s.p.x+","+s.p.y+"|"+s.ex.x+","+s.ex.y+"|sw="+(s.switchHeld?1:0)+"|"+s.m.map(r=>r.join("")).join("");
 }
 function testCurrentLevel(){
   try{
@@ -3230,7 +3252,7 @@ document.getElementById("companionSkip").onclick=()=>{
 };
 document.getElementById("companionHelp").onclick=()=>showCompanion(companionMessage("hint"),false);
 
-document.getElementById("toggleEdit").onclick=()=>{edit=!edit;if(!edit){resetPlay();scheduleCompanion(true)}else{busy=false;gameOver=false;hideBanner();hideCompanion(false);draw()}};
+document.getElementById("toggleEdit").onclick=()=>{if(!window.CG_EDITOR_MODE){edit=false;draw();return;}edit=!edit;if(!edit){resetPlay();scheduleCompanion(true)}else{busy=false;gameOver=false;hideBanner();hideCompanion(false);draw()}};
 document.getElementById("companionSkip").onclick=()=>{
   const stage=companionStage();
   if(stage){
@@ -3625,4 +3647,5 @@ loadAssets()
 })();
 </script>
 
+<script>if(window.CG_EDITOR_MODE){console.log("Editor mode enabled");}</script>
 </body></html>
