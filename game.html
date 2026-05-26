@@ -17,6 +17,18 @@ html,body,*{
 html,body{margin:0;width:100%;height:100%;background:#101018;color:#fff;font-family:Arial,sans-serif;overflow:hidden;touch-action:none}body.biome-cosmic{--bg1:#382cff;--bg2:#090018;--accent:#00e5ff}body.biome-forest{--bg1:#00c853;--bg2:#031407;--accent:#b6ff00}body.biome-desert{--bg1:#ff8a00;--bg2:#210b00;--accent:#ffd000}body.biome-ice{--bg1:#00b8ff;--bg2:#001524;--accent:#d8fbff}body.biome-rainbow{--bg1:#ff2bd6;--bg2:#120018;--accent:#fff000}
 body{display:flex;flex-direction:column}
 #gameVersionBadge{position:fixed;left:12px;top:12px;z-index:80;padding:5px 9px;border-radius:999px;background:rgba(5,10,35,.72);border:1px solid rgba(255,255,255,.18);color:#d7ddff;font-size:11px;font-weight:900;letter-spacing:.05em;pointer-events:none}
+#pauseBtn{position:fixed;right:12px;top:12px;z-index:90;width:46px;height:46px;border-radius:16px;background:rgba(21,27,61,.92);border:1px solid rgba(255,255,255,.2);font-size:22px;color:#fff;box-shadow:0 8px 20px rgba(0,0,0,.35)}
+#pauseMenu{position:fixed;inset:0;z-index:120;background:rgba(3,5,18,.72);backdrop-filter:blur(6px);display:flex;align-items:center;justify-content:center;padding:18px}
+#pauseMenu.hidden{display:none!important}
+.pauseCard{width:min(420px,94vw);background:linear-gradient(180deg,#202544,#12162b);border:2px solid rgba(255,255,255,.16);border-radius:26px;padding:22px;box-shadow:0 22px 60px rgba(0,0,0,.55);text-align:center}
+.pauseTitle{font-size:28px;font-weight:1000;letter-spacing:.06em;margin-bottom:8px;color:#f5f7ff}
+.pauseSub{font-size:13px;color:#b8bddc;margin-bottom:18px}
+.pauseGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0}
+.pauseGrid button,.pauseCard>button{width:100%;border-radius:16px;padding:13px 12px;font-size:15px;font-weight:900}
+#pauseResume{background:#52f28a;color:#061407}
+#pauseMainMenu{background:#ffca5f;color:#241400}
+#pauseRestart{background:#3ce7ff;color:#03141a}
+
 #top{padding:6px 8px;background:#05050a;border-bottom:1px solid #303246;font-size:12px;line-height:1.2;max-height:42vh;overflow:auto}
 #title{font-weight:900;font-size:16px;margin-bottom:4px;text-align:center;font-family:monospace;letter-spacing:1px;text-shadow:0 2px 0 #000,0 0 10px var(--accent,#3fc1ff)}
 #bar{display:flex;gap:6px;flex-wrap:wrap;margin-top:5px}.group{display:flex;gap:4px;align-items:center;background:#151827;border:1px solid #2d3150;border-radius:10px;padding:5px}.groupTitle{font-size:9px;opacity:.7;font-weight:900;margin-right:1px;text-transform:uppercase;letter-spacing:.4px}.group.collapsed>*:not(.groupTitle):not(.foldBtn){display:none}.foldBtn{background:#2a2e48;color:#dfe3ff;padding:5px 7px;font-size:11px}
@@ -1650,6 +1662,20 @@ body.force-game-start #homeMenu {
   <button id="reset">RESET</button>
   <button id="sideRight" class="bottomTurn">⟳</button>
 </div>
+<button id="pauseBtn" aria-label="Pause" title="Pause">Ⅱ</button>
+<div id="pauseMenu" class="hidden" aria-label="Menu pause">
+  <div class="pauseCard">
+    <div class="pauseTitle">PAUSE</div>
+    <div class="pauseSub">Réglages rapides. Même le cube a droit à une convention collective.</div>
+    <button id="pauseResume">Reprendre</button>
+    <div class="pauseGrid">
+      <button id="pauseSfxToggle">SFX ON</button>
+      <button id="pauseMusicToggle">Music ON</button>
+      <button id="pauseRestart">Rejouer</button>
+      <button id="pauseMainMenu">Menu</button>
+    </div>
+  </div>
+</div>
 
 <script>
 const BOARD=520; let W=11,H=11,T=BOARD/W,HALF=T/2;
@@ -1722,14 +1748,14 @@ const editPanel=document.getElementById("editPanel"),levelNameInput=document.get
 const banner=document.getElementById("banner"),bannerTitle=document.getElementById("bannerTitle"),bannerText=document.getElementById("bannerText"),starsEl=document.getElementById("stars"),bannerAction=document.getElementById("bannerAction");
 
 let levels=[];
-const GAME_VERSION="V43.5-audio-eternal-fall";
+const GAME_VERSION="V43.6-pause-audio-mix";
 setTimeout(()=>{const v=document.getElementById("gameVersionBadge"); if(v)v.textContent=GAME_VERSION;},0);
 let gameSettings={fallDelayMs:135,rotationDurationMs:320};
 let fallbackLevels=[]; // V57: aucun niveau de gameplay en dur. levels.json est obligatoire.
 
 let currentLevel=0,baseMap=[],b=[],p={x:0,y:0},start={x:0,y:0},exit={x:0,y:0};
-let door=false,busy=false,edit=!!window.CG_EDITOR_MODE,moves=0,gameOver=false,confettiTimer=null,deadPlayer=false,idleTick=0,painting=false,lastPaintKey='',visualOri=0,squash=0,soundOn=true,audioCtx=null,rotatorCooldown=false;
-let wallNoteIndex=0,lastWallSoundAt=0,eternalFallWraps=0,elevatorMusicTimer=null,elevatorMusicStarted=false;
+let door=false,busy=false,edit=!!window.CG_EDITOR_MODE,moves=0,gameOver=false,confettiTimer=null,deadPlayer=false,idleTick=0,painting=false,lastPaintKey='',visualOri=0,squash=0,soundOn=true,sfxOn=true,musicOn=true,audioCtx=null,rotatorCooldown=false,gamePaused=false;
+let wallNoteIndex=0,lastWallSoundAt=0,eternalFallWraps=0,elevatorMusicTimer=null,elevatorMusicStarted=false,musicStep=0;
 let activeSwitchKey=null;
 let activeSwitchHeld=false;
 
@@ -1892,14 +1918,14 @@ function resetPlay(){
   levels[currentLevel].map=map();
   b=arr(levels[currentLevel].map);
   door=baseDoorOpen();
-  moves=0;busy=false;gameOver=false;deadPlayer=false;rotatorCooldown=false;eternalFallWraps=0;activeSwitchKey=null;activeSwitchHeld=false;hideBanner();
+  moves=0;busy=false;gameOver=false;deadPlayer=false;rotatorCooldown=false;eternalFallWraps=0;gamePaused=false;activeSwitchKey=null;activeSwitchHeld=false;hideBanner();
   rot.setAttribute("transform",`rotate(0 ${BOARD/2} ${BOARD/2})`);visualOri=0;
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){
     if(b[y][x]=="A"){p={x,y};start={x,y};b[y][x]="."}
     if(b[y][x]=="B")exit={x,y}
   }
   draw(); updateStats();
-  if(!edit){busy=true;setTimeout(fall,getFallDelayMs());scheduleCompanion(false)}
+  if(!edit){if(musicOn)startElevatorMusic();busy=true;setTimeout(fall,getFallDelayMs());scheduleCompanion(false)}
 }
 function updateStats(){
   const max=levels[currentLevel].maxMoves||"?";
@@ -1936,62 +1962,81 @@ function ensureAudio(){
   if(audioCtx.state==="suspended")audioCtx.resume().catch(()=>{});
   return audioCtx;
 }
+function beep(freq=440,dur=.08,type="square",gain=.04,kind="sfx"){
+  if(kind==="sfx" && (!soundOn || !sfxOn))return;
+  if(kind==="music" && (!soundOn || !musicOn))return;
+  const ac=ensureAudio(); if(!ac)return;
+  const o=ac.createOscillator(), g=ac.createGain(), f=ac.createBiquadFilter();
+  o.type=type; o.frequency.value=freq;
+  f.type="lowpass"; f.frequency.value=kind==="music"?1200:2200;
+  g.gain.setValueAtTime(Math.max(0.0001,gain),ac.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+Math.max(.02,dur));
+  o.connect(f); f.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime+dur);
+}
 function startElevatorMusic(){
-  if(elevatorMusicStarted || !soundOn)return;
+  if(elevatorMusicStarted || !soundOn || !musicOn)return;
   elevatorMusicStarted=true;
-  const playBar=()=>{
-    if(!soundOn)return;
-    const chord=[261.63,329.63,392.00,493.88];
-    chord.forEach((f,i)=>setTimeout(()=>beep(f,.34,"sine",.008),i*95));
-    setTimeout(()=>beep(220,.42,"triangle",.006),360);
+  musicStep=0;
+  const bass=[196,196,220,174.61,196,261.63,246.94,220];
+  const melody=[329.63,392.00,369.99,329.63,293.66,329.63,392.00,493.88];
+  const playTick=()=>{
+    if(!soundOn || !musicOn || gamePaused)return;
+    const i=musicStep++%bass.length;
+    beep(bass[i],.42,"sine",.006,"music");
+    setTimeout(()=>beep(melody[i],.18,"triangle",.007,"music"),120);
+    if(i%2===0)setTimeout(()=>beep(melody[(i+2)%melody.length],.16,"sine",.0045,"music"),360);
   };
-  playBar();
-  elevatorMusicTimer=setInterval(playBar,1650);
+  playTick();
+  elevatorMusicTimer=setInterval(playTick,620);
 }
 function stopElevatorMusic(){
   if(elevatorMusicTimer){clearInterval(elevatorMusicTimer);elevatorMusicTimer=null;}
   elevatorMusicStarted=false;
 }
-function beep(freq=440,dur=.08,type="square",gain=.04){
-  const ac=ensureAudio(); if(!ac)return;
-  const o=ac.createOscillator(), g=ac.createGain();
-  o.type=type; o.frequency.value=freq;
-  g.gain.setValueAtTime(gain,ac.currentTime);
-  g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+dur);
-  o.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime+dur);
+function updatePauseButtons(){
+  const a=document.getElementById("pauseSfxToggle"),m=document.getElementById("pauseMusicToggle"),e=document.getElementById("soundToggle");
+  if(a)a.textContent=sfxOn?"SFX ON":"SFX OFF";
+  if(m)m.textContent=musicOn?"Music ON":"Music OFF";
+  if(e)e.textContent=(soundOn&&sfxOn&&musicOn)?"🔊 Son":"🔈 Son";
 }
-function soundMove(){beep(210,.045,"square",.018)}
+function setPaused(v){
+  gamePaused=!!v;
+  const menu=document.getElementById("pauseMenu");
+  if(menu)menu.classList.toggle("hidden",!gamePaused);
+  if(gamePaused)stopElevatorMusic(); else if(!edit&&!gameOver)startElevatorMusic();
+}
+function soundMove(){beep(210,.045,"square",.012,"sfx")}
 function soundRotate(d){
-  if(d>0){beep(260,.055,"triangle",.035);setTimeout(()=>beep(360,.07,"sine",.03),65)}
-  else{beep(360,.055,"triangle",.035);setTimeout(()=>beep(240,.07,"sine",.03),65)}
+  if(d>0){beep(260,.055,"triangle",.026,"sfx");setTimeout(()=>beep(360,.07,"sine",.022,"sfx"),65)}
+  else{beep(360,.055,"triangle",.026,"sfx");setTimeout(()=>beep(240,.07,"sine",.022,"sfx"),65)}
 }
 function soundLand(d=1){
   const now=performance.now();
-  if(now-lastWallSoundAt<90)return;
+  if(now-lastWallSoundAt<110)return;
   lastWallSoundAt=now;
-  const notes=[196,220,247,294,330,392,440,523];
-  const f=notes[wallNoteIndex++%notes.length] + Math.min(d,6)*4;
-  beep(f,.12,"sine",.045);
-  setTimeout(()=>beep(f*1.5,.08,"triangle",.022),55);
+  const notes=[196,220,246.94,261.63,293.66,329.63,349.23,392];
+  const f=notes[wallNoteIndex++%notes.length];
+  beep(f,.105,"sine",.028,"sfx");
+  setTimeout(()=>beep(f*2,.055,"triangle",.010,"sfx"),55);
 }
-function soundCrash(){beep(70,.18,"sawtooth",.06);setTimeout(()=>beep(45,.18,"square",.04),70)}
+function soundCrash(){beep(110,.14,"triangle",.026,"sfx");setTimeout(()=>beep(82,.18,"sine",.018,"sfx"),90)}
 function soundWin(){
-  [523,659,784,1046].forEach((f,i)=>setTimeout(()=>beep(f,.13,"triangle",.045),i*90));
-  for(let i=0;i<12;i++)setTimeout(()=>beep(700+Math.random()*600,.06,"sine",.018),220+i*55);
+  [523,659,784,1046].forEach((f,i)=>setTimeout(()=>beep(f,.12,"triangle",.034,"sfx"),i*85));
+  for(let i=0;i<10;i++)setTimeout(()=>beep(650+Math.random()*500,.045,"sine",.012,"sfx"),230+i*50);
 }
-function soundLove(){beep(523,.08,"sine",.04);setTimeout(()=>beep(784,.12,"sine",.04),100)}
-function soundLose(){beep(392,.16,"triangle",.045);setTimeout(()=>beep(370,.18,"triangle",.04),180);setTimeout(()=>beep(330,.45,"sawtooth",.035),390)}
-function soundDoor(){beep(180,.06,"square",.035);setTimeout(()=>beep(420,.12,"triangle",.032),70);}
-function soundEternalFall(){beep(160,.16,"sawtooth",.045);setTimeout(()=>beep(120,.22,"sine",.04),160);setTimeout(()=>beep(90,.35,"triangle",.035),360)}
-function userAudioGesture(){ensureAudio();startElevatorMusic();}
+function soundLove(){beep(523,.08,"sine",.03,"sfx");setTimeout(()=>beep(784,.12,"sine",.028,"sfx"),100)}
+function soundLose(){beep(330,.16,"triangle",.026,"sfx");setTimeout(()=>beep(294,.18,"triangle",.022,"sfx"),170);setTimeout(()=>beep(247,.34,"sine",.018,"sfx"),350)}
+function soundDoor(){beep(180,.045,"square",.024,"sfx");setTimeout(()=>beep(420,.10,"triangle",.024,"sfx"),60);}
+function soundEternalFall(){beep(150,.14,"triangle",.025,"sfx");setTimeout(()=>beep(120,.20,"sine",.020,"sfx"),150);setTimeout(()=>beep(98,.28,"sine",.016,"sfx"),330)}
+function userAudioGesture(){ensureAudio(); if(musicOn)startElevatorMusic();}
 function toggleSound(){
-  soundOn=!soundOn;
-  document.getElementById("soundToggle").textContent=soundOn?"🔊 Son":"🔇 Son";
+  soundOn=!soundOn; sfxOn=soundOn; musicOn=soundOn;
+  updatePauseButtons();
   if(soundOn){userAudioGesture();status.textContent="Son activé.";}else{stopElevatorMusic();status.textContent="Son coupé.";}
 }
 
 function hideBanner(){banner.classList.add("hidden");banner.classList.remove("lose");svg.style.filter="none";stopConfetti()}
-function showBanner(title,msg,stars,kind){hideCompanion(false);
+function showBanner(title,msg,stars,kind){hideCompanion(false);stopElevatorMusic();
   bannerTitle.textContent=title; bannerText.textContent=msg; starsEl.textContent=stars||"";
   bannerAction.textContent=kind==="win"?"NEXT LEVEL":"RESTART LEVEL";
   bannerAction.onclick=()=>{ if(kind==="win"){goLevel((currentLevel+1)%levels.length)} else resetPlay(); };
@@ -2401,7 +2446,7 @@ function toggleDoors(){
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){if(b[y][x]=="D")b[y][x]="O";else if(b[y][x]=="O")b[y][x]="D";}
 }
 function turn(d){
-  if(edit||busy||gameOver)return;
+  if(edit||busy||gameOver||gamePaused)return;
   hideCompanion(false);clearTimeout(companionTimer);clearTimeout(companionIdleTimer);
   busy=true;moves++;rotatorCooldown=false;userAudioGesture();soundRotate(d);updateStats();
   const dur=getRotationDurationMs();
@@ -2581,12 +2626,12 @@ function triggerEternalFall(){
 }
 
 function fall(){
-  if(edit||gameOver)return;
+  if(edit||gameOver||gamePaused){busy=false;return;}
   let dist=0;
   let safety=0;
 
   const step=()=>{
-    if(edit||gameOver){busy=false;return}
+    if(edit||gameOver||gamePaused){busy=false;return}
     if(safety++>160){
       busy=false;
       status.textContent="Boucle stoppée pour sécurité.";
@@ -3318,6 +3363,13 @@ document.getElementById("companionSkip").onclick=()=>{
   hideCompanion(true);
 };
 document.getElementById("companionHelp").onclick=()=>showCompanion(companionMessage("hint"),false);
+document.getElementById("pauseBtn")?.addEventListener("click",()=>{userAudioGesture();setPaused(!gamePaused);});
+document.getElementById("pauseResume")?.addEventListener("click",()=>setPaused(false));
+document.getElementById("pauseSfxToggle")?.addEventListener("click",()=>{sfxOn=!sfxOn;soundOn=sfxOn||musicOn;updatePauseButtons();});
+document.getElementById("pauseMusicToggle")?.addEventListener("click",()=>{musicOn=!musicOn;soundOn=sfxOn||musicOn;updatePauseButtons();if(musicOn&&!gamePaused)startElevatorMusic();else stopElevatorMusic();});
+document.getElementById("pauseRestart")?.addEventListener("click",()=>{setPaused(false);resetPlay();});
+document.getElementById("pauseMainMenu")?.addEventListener("click",()=>{setPaused(false);stopElevatorMusic();document.getElementById("mainMenu")?.classList.remove("hidden");});
+updatePauseButtons();
 document.getElementById("sideLeft").onclick=()=>turn(-1);document.getElementById("sideRight").onclick=()=>turn(1);document.getElementById("reset").onclick=()=>{userAudioGesture();resetPlay();};
 document.getElementById("saveLocal").onclick=saveLocal;document.getElementById("loadLocal").onclick=loadLocal;
 document.getElementById("exportJson").onclick=exportJson;document.getElementById("importBtn").onclick=()=>document.getElementById("importFile").click();
@@ -3500,6 +3552,7 @@ loadAssets()
   function closeMainMenu(){
     if(!menu)return;
     menu.classList.add("hidden");
+    setPaused(false); userAudioGesture();
     try{ if(typeof scheduleCompanion === "function") scheduleCompanion(false); }catch(e){}
   }
   if(menu) menu.addEventListener("pointerdown", closeMainMenu, {passive:true});
