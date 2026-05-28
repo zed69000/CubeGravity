@@ -1557,6 +1557,31 @@ body.editing #pauseBtn{display:none!important}
   #fullscreenBtn{top:calc(128px + env(safe-area-inset-top))!important;width:58px!important;height:58px!important}
 }
 
+/* ===== V43.18 clean audio mixer ===== */
+.audioSliderRow{
+  display:grid;
+  grid-template-columns:86px 1fr 44px;
+  gap:10px;
+  align-items:center;
+  margin:12px 0 0;
+  padding:10px 12px;
+  border-radius:16px;
+  background:rgba(255,255,255,.07);
+  border:1px solid rgba(255,255,255,.12);
+  color:#eef2ff;
+  font-weight:900;
+}
+.audioSliderRow input[type=range]{
+  width:100%;
+  padding:0;
+  accent-color:#3ce7ff;
+}
+.audioSliderRow span:last-child{
+  font-family:monospace;
+  color:#ffd95f;
+  text-align:right;
+}
+
 </style>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1721,6 +1746,16 @@ body.editing #pauseBtn{display:none!important}
       <button id="pauseRestart">Rejouer</button>
       <button id="pauseMainMenu">Menu</button>
     </div>
+    <label class="audioSliderRow" for="musicVolumeSlider">
+      <span>Musique</span>
+      <input id="musicVolumeSlider" type="range" min="0" max="100" step="1" value="15">
+      <span id="musicVolumeLabel">15%</span>
+    </label>
+    <label class="audioSliderRow" for="sfxVolumeSlider">
+      <span>SFX</span>
+      <input id="sfxVolumeSlider" type="range" min="0" max="100" step="1" value="30">
+      <span id="sfxVolumeLabel">30%</span>
+    </label>
   </div>
 </div>
 
@@ -1845,7 +1880,7 @@ const editPanel=document.getElementById("editPanel"),levelNameInput=document.get
 const banner=document.getElementById("banner"),bannerTitle=document.getElementById("bannerTitle"),bannerText=document.getElementById("bannerText"),starsEl=document.getElementById("stars"),bannerAction=document.getElementById("bannerAction");
 
 let levels=[];
-const GAME_VERSION="V43.17-loud-sfx-music-15-slider-fix";
+const GAME_VERSION="V43.18-clean-audio-mixer";
 setTimeout(()=>{const v=document.getElementById("gameVersionBadge"); if(v)v.textContent=GAME_VERSION;},0);
 let gameSettings={fallDelayMs:135,rotationDurationMs:320};
 let fallbackLevels=[]; // V57: aucun niveau de gameplay en dur. levels.json est obligatoire.
@@ -1855,10 +1890,13 @@ let currentLevel=0,baseMap=[],b=[],p={x:0,y:0},start={x:0,y:0},exit={x:0,y:0};
 let door=false,busy=false,edit=!!window.CG_EDITOR_MODE,moves=0,gameOver=false,confettiTimer=null,deadPlayer=false,idleTick=0,painting=false,lastPaintKey='',visualOri=0,squash=0,soundOn=true,sfxOn=true,musicOn=true,audioCtx=null,rotatorCooldown=false,gamePaused=false;
 let wallNoteIndex=0,lastWallSoundAt=0,eternalFallWraps=0,elevatorMusicTimer=null,elevatorMusicStarted=false,musicStep=0,bgMusic=null;
 const BG_MUSIC_PATH="audio/music/Petals_in_Perfect_Order.mp3";
-const DEFAULT_MUSIC_VOLUME=0.05;
-const DEFAULT_SFX_VOLUME=1;
-const SFX_GAIN_BOOST=4.0;
-const SFX_MAX_GAIN=0.5;
+// V43.18 : une seule source de vérité.
+// Musique = volume direct du MP3 HTMLAudioElement.
+// SFX = volume WebAudio global multiplié par un boost maître.
+const DEFAULT_MUSIC_VOLUME=0.15;
+const DEFAULT_SFX_VOLUME=0.30;
+const SFX_GAIN_BOOST=10.0;
+const SFX_MAX_GAIN=0.95;
 let musicVolume=DEFAULT_MUSIC_VOLUME;
 let sfxVolume=DEFAULT_SFX_VOLUME;
 let activeSwitchKey=null;
@@ -2072,29 +2110,34 @@ function ensureAudio(){
   return audioCtx;
 }
 function clamp01(v){return Math.max(0,Math.min(1,Number(v)||0));}
+function percent(v){return Math.round(clamp01(v)*100);}
+function syncAudioSliders(){
+  const ml=document.getElementById("musicVolumeLabel");
+  const sl=document.getElementById("sfxVolumeLabel");
+  const ms=document.getElementById("musicVolumeSlider");
+  const ss=document.getElementById("sfxVolumeSlider");
+  if(ml)ml.textContent=percent(musicVolume)+"%";
+  if(sl)sl.textContent=percent(sfxVolume)+"%";
+  if(ms && document.activeElement!==ms)ms.value=String(percent(musicVolume));
+  if(ss && document.activeElement!==ss)ss.value=String(percent(sfxVolume));
+}
 function applyAudioVolumes(){
   musicVolume=clamp01(musicVolume);
   sfxVolume=clamp01(sfxVolume);
-  if(bgMusic)bgMusic.volume=musicOn?sfxSafeMusicVolume():0;
-  const ml=document.getElementById("musicVolumeLabel"), sl=document.getElementById("sfxVolumeLabel");
-  const ms=document.getElementById("musicVolumeSlider"), ss=document.getElementById("sfxVolumeSlider");
-  if(ml)ml.textContent=Math.round(musicVolume*100)+"%";
-  if(sl)sl.textContent=Math.round(sfxVolume*100)+"%";
-  if(ms && document.activeElement!==ms)ms.value=String(Math.round(musicVolume*100));
-  if(ss && document.activeElement!==ss)ss.value=String(Math.round(sfxVolume*100));
+  if(bgMusic)bgMusic.volume=(soundOn && musicOn) ? musicVolume : 0;
+  syncAudioSliders();
 }
-function sfxSafeMusicVolume(){return Math.max(0,Math.min(0.35,musicVolume));}
 function beep(freq=440,dur=.08,type="square",gain=.04,kind="sfx"){
-  if(kind==="sfx" && (!soundOn || !sfxOn))return;
-  if(kind==="music" && (!soundOn || !musicOn))return;
+  if(kind==="sfx" && (!soundOn || !sfxOn || sfxVolume<=0))return;
+  if(kind==="music" && (!soundOn || !musicOn || musicVolume<=0))return;
   const ac=ensureAudio(); if(!ac)return;
   const o=ac.createOscillator(), g=ac.createGain(), f=ac.createBiquadFilter();
   o.type=type; o.frequency.value=freq;
-  f.type="lowpass"; f.frequency.value=kind==="music"?1200:3600;
-  const volume = kind==="music" ? musicVolume : sfxVolume;
+  f.type="lowpass"; f.frequency.value=kind==="music"?1200:4200;
+  const baseVolume = kind==="music" ? musicVolume : sfxVolume;
   const boost = kind==="sfx" ? SFX_GAIN_BOOST : 1;
-  const maxGain = kind==="sfx" ? SFX_MAX_GAIN : 0.12;
-  const finalGain=Math.max(0.0001,Math.min(maxGain,gain*volume*boost));
+  const maxGain = kind==="sfx" ? SFX_MAX_GAIN : 0.18;
+  const finalGain=Math.max(0.0001,Math.min(maxGain,gain*baseVolume*boost));
   g.gain.setValueAtTime(finalGain,ac.currentTime);
   g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+Math.max(.02,dur));
   o.connect(f); f.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime+dur);
@@ -2107,7 +2150,6 @@ function startElevatorMusic(){
     bgMusic.preload="auto";
     bgMusic.playsInline=true;
   }
-  bgMusic.volume=sfxSafeMusicVolume();
   applyAudioVolumes();
   if(!bgMusic.paused)return;
   elevatorMusicStarted=true;
@@ -3498,10 +3540,36 @@ document.getElementById("companionSkip").onclick=()=>{
 document.getElementById("companionHelp").onclick=()=>showCompanion(companionMessage("hint"),false);
 document.getElementById("pauseBtn")?.addEventListener("click",()=>{userAudioGesture();setPaused(!gamePaused);});
 document.getElementById("pauseResume")?.addEventListener("click",()=>setPaused(false));
-document.getElementById("pauseSfxToggle")?.addEventListener("click",()=>{sfxOn=!sfxOn;soundOn=sfxOn||musicOn;updatePauseButtons();});
-document.getElementById("pauseMusicToggle")?.addEventListener("click",()=>{musicOn=!musicOn;soundOn=sfxOn||musicOn;updatePauseButtons();applyAudioVolumes();if(musicOn&&!gamePaused)startElevatorMusic();else stopElevatorMusic();});
-document.getElementById("musicVolumeSlider")?.addEventListener("input",e=>{musicVolume=Number(e.target.value)/100;musicOn=musicVolume>0;soundOn=sfxOn||musicOn;applyAudioVolumes();updatePauseButtons();if(musicOn&&!gamePaused)startElevatorMusic();else stopElevatorMusic();});
-document.getElementById("sfxVolumeSlider")?.addEventListener("input",e=>{sfxVolume=Number(e.target.value)/100;sfxOn=sfxVolume>0;soundOn=sfxOn||musicOn;applyAudioVolumes();updatePauseButtons();});
+document.getElementById("pauseSfxToggle")?.addEventListener("click",()=>{
+  sfxOn=!sfxOn;
+  if(sfxOn && sfxVolume<=0)sfxVolume=DEFAULT_SFX_VOLUME;
+  soundOn=sfxOn||musicOn;
+  applyAudioVolumes();
+  updatePauseButtons();
+});
+document.getElementById("pauseMusicToggle")?.addEventListener("click",()=>{
+  musicOn=!musicOn;
+  if(musicOn && musicVolume<=0)musicVolume=DEFAULT_MUSIC_VOLUME;
+  soundOn=sfxOn||musicOn;
+  applyAudioVolumes();
+  updatePauseButtons();
+  if(musicOn&&!gamePaused)startElevatorMusic();else stopElevatorMusic();
+});
+document.getElementById("musicVolumeSlider")?.addEventListener("input",e=>{
+  musicVolume=clamp01(Number(e.target.value)/100);
+  musicOn=musicVolume>0;
+  soundOn=sfxOn||musicOn;
+  applyAudioVolumes();
+  updatePauseButtons();
+  if(musicOn&&!gamePaused)startElevatorMusic();else stopElevatorMusic();
+});
+document.getElementById("sfxVolumeSlider")?.addEventListener("input",e=>{
+  sfxVolume=clamp01(Number(e.target.value)/100);
+  sfxOn=sfxVolume>0;
+  soundOn=sfxOn||musicOn;
+  applyAudioVolumes();
+  updatePauseButtons();
+});
 document.getElementById("pauseRestart")?.addEventListener("click",()=>{setPaused(false);resetPlay();});
 document.getElementById("pauseMainMenu")?.addEventListener("click",()=>{setPaused(false);stopElevatorMusic();window.location.href="index.html";});
 applyAudioVolumes();
