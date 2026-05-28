@@ -1715,6 +1715,8 @@ body.editing #pauseBtn{display:none!important}
     <div class="pauseTitle">PAUSE</div>
     <div class="pauseSub">Réglages rapides. Même le cube a droit à une convention collective.</div>
     <button id="pauseResume">Reprendre</button>
+    <div class="pauseSlider"><label><span>Musique</span><span id="musicVolumeLabel">15%</span></label><input id="musicVolumeSlider" type="range" min="0" max="100" value="15"></div>
+    <div class="pauseSlider"><label><span>Bruitages</span><span id="sfxVolumeLabel">30%</span></label><input id="sfxVolumeSlider" type="range" min="0" max="100" value="30"></div>
     <div class="pauseGrid">
       <button id="pauseSfxToggle">SFX ON</button>
       <button id="pauseMusicToggle">Music ON</button>
@@ -1845,16 +1847,20 @@ const editPanel=document.getElementById("editPanel"),levelNameInput=document.get
 const banner=document.getElementById("banner"),bannerTitle=document.getElementById("bannerTitle"),bannerText=document.getElementById("bannerText"),starsEl=document.getElementById("stars"),bannerAction=document.getElementById("bannerAction");
 
 let levels=[];
-const GAME_VERSION="V43.12-mp3-music";
+const GAME_VERSION="V43.16-audio-sliders-ios-fix";
 setTimeout(()=>{const v=document.getElementById("gameVersionBadge"); if(v)v.textContent=GAME_VERSION;},0);
 let gameSettings={fallDelayMs:135,rotationDurationMs:320};
 let fallbackLevels=[]; // V57: aucun niveau de gameplay en dur. levels.json est obligatoire.
+const EMBEDDED_LEVELS_DATA={"version":5,"settings":{"fallDelayMs":60,"rotationDurationMs":120,"boardWidth":11,"boardHeight":11,"boardReduction":"13x13_to_11x11_crop_outer_ring_preserve_edge_blocks","defaultGridSize":11,"gridSizePerLevel":true},"levels":[{"name":"Nouveau niveau 51","maxMoves":999,"locked":true,"difficulty":1,"gridSize":7,"biome":"rainbow","map":["####.##","#A....#","#..##.#",".##.#..","......#","....#B#","....###"]},{"name":"Nouveau niveau 52","maxMoves":999,"locked":true,"difficulty":1,"gridSize":7,"biome":"rainbow","map":["..#....","#A...#.",".#.....",".#.....","....##.","....B..",".....##"]},{"name":"Nouveau niveau 53","maxMoves":999,"locked":true,"difficulty":1,"gridSize":7,"biome":"rainbow","map":["..#....",".#.....",".OS....","..ADB..","..#....",".......","......."]},{"name":"02 - Base","maxMoves":2,"locked":true,"difficulty":2,"biome":"forest","solution":"RL","map":["..B........",".#######...",".#.....#...",".#.....#...",".#.#####...","...........","...........","...###.#.##","...#......#","...#.....A.","...########"],"gridSize":11},{"name":"03 - Base","maxMoves":5,"locked":true,"difficulty":3,"biome":"desert","solution":"RLLRL","map":["...........","...A.......","...........","........##B","....###....","........###",".........##",".####......","........##.","...........","..........."],"gridSize":11},{"name":"04 - Base","maxMoves":4,"locked":true,"difficulty":4,"biome":"ice","solution":"LLLL","map":["...........",".......#..A",".......#...","...........",".......#...","......B#...",".....#####.","....#######",".......#...",".......#...","..........."],"gridSize":11},{"name":"05 - Base","maxMoves":3,"locked":true,"difficulty":5,"biome":"rainbow","solution":"LLL","map":["...........","...A.......","...........","......#####",".......B#..","....#####..","........#..","..####..#..","........#..","#.##....#..","..........."],"gridSize":11},{"name":"06 - Bouton","maxMoves":5,"locked":true,"difficulty":6,"biome":"cosmic","solution":"LLLLL","map":["...........","...........","...#B......",".###.##D##.","...#.......","...#.......",".S.#....A..","...#.......","###########","...#.......","..........."],"gridSize":11},{"name":"07 - Bouton","maxMoves":3,"locked":true,"difficulty":7,"biome":"forest","solution":"LRR","map":["...........",".B#........","..######...","..#........",".S.........","..#........","..#........","..D........","###........","A.#........","..........."],"gridSize":11},{"name":"08 - Bouton","maxMoves":6,"locked":true,"difficulty":8,"biome":"desert","solution":"RLRLRL","map":["...........","...........","...........","....#......","...B....##.",".####......","....####...","D..........","...........","...S.......","..A........"],"gridSize":11},{"name":"09 - Bouton","maxMoves":5,"locked":true,"difficulty":9,"biome":"ice","solution":"LRRLL","map":["...........","...........","...........","....#.O###D","....#......","A...####...","....#B.....","..####.....","....#......","#.###......","..........S"],"gridSize":11},{"name":"10 - Jeanne labyrinthe","maxMoves":999,"locked":true,"difficulty":10,"biome":"desert","requiredMechanic":"button","solution":"LRRRLLL","solutionUses":["O","S"],"designNote":"Niveau de Jeanne injecté dans le chapitre bouton/porte.","validation":{"testedSolvable":true,"mainBrickRequired":true,"forcedPosition":10,"source":"capture / ancien Nouveau niveau 21"},"map":["....#......","#...#......","...S#...##.","...##..#.#.",".......D.#.","..#....D.#.","..#...##.#.","..#...#B.#.","..#....##..","..#.A#.....","..#.##....."],"gridSize":11},{"name":"11 - Bouton","maxMoves":5,"locked":true,"difficulty":11,"biome":"rainbow","solution":"RRRRR","map":["S..........","...........","...........","...#..####D","..B#.......","...#####...","...#.......","..####.....","...#.......","##.#.......","..A........"],"gridSize":11},{"name":"12 - Danger","maxMoves":5,"locked":true,"difficulty":12,"biome":"cosmic","solution":"LLLLL","map":[".........S.",".....#...X.",".....#.....",".....#.....",".....#.....",".########D.",".....#.....",".....#.....",".....#B....",".A####.##..","..........."],"gridSize":11},{"name":"13 - Danger","maxMoves":5,"locked":true,"difficulty":13,"biome":"forest","solution":"LLLLL","map":["......A....","...#.......","...#.......","...#....S..","...#.......","...#X......","...#B......",".##D##.....","#.#####O...","...#.......","..........."],"gridSize":11},{"name":"14 - Danger","maxMoves":6,"locked":true,"difficulty":14,"biome":"desert","solution":"RRLRLR","map":["...........","...........","...###.....","..A........",".......###.",".###.......","..........X","...........","##.......S.","B..#D##...#","...###...##"],"gridSize":11},{"name":"15 - Danger","maxMoves":8,"locked":true,"difficulty":15,"biome":"ice","solution":"LLLLLLRL","map":["...........","...........",".....X....#","##......O.#",".###.......","...A###....","...........","...........","......#D#..",".......B..#","..S......##"],"gridSize":11},{"name":"16 - Danger","maxMoves":3,"locked":true,"difficulty":16,"biome":"rainbow","solution":"RRR","map":["...........","...........","...........","...X...#...",".#######.#.",".......#B.S",".......#...",".......#...","#######D###",".....A.#...","...X......."],"gridSize":11},{"name":"16 - Danger","maxMoves":7,"locked":true,"difficulty":16,"biome":"rainbow","solution":"RRRRRRR","map":["...........","...........","...........","...X...#...",".#######.#.",".......#B.S",".......#...",".......#...","#######D###",".....A.#...","...X......."],"gridSize":11},{"name":"17 - Rotateur","maxMoves":8,"locked":true,"difficulty":17,"biome":"cosmic","solution":"RRRLRRRR","map":["###........","B.....R....","....D.##...","..###......","...........",".####......",".....##....","...........","...S.....X.","...AX......","..........."],"gridSize":11},{"name":"18 - Rotateur","maxMoves":8,"locked":true,"difficulty":18,"biome":"forest","solution":"RRRRRRLR","map":["......L....",".##.####...",".#.....#...",".#.....#...",".##.####...","..B........","........X..","X..#.######","...#...S.AD","...#......#","...####.###"],"gridSize":11},{"name":"19 - Rotateur","maxMoves":8,"locked":true,"difficulty":19,"biome":"desert","solution":"RRLLRRLL","map":["...........",".###A##....",".#.....D...",".#.X..S#...",".#.#####...","...........","...X.......","....###.###","...#.......","...#......#","R.B###.O###"],"gridSize":11},{"name":"20 - Rotateur","maxMoves":12,"locked":true,"difficulty":20,"biome":"ice","solution":"LLLLRRLRLLLL","map":["...........",".####..#..R",".#.....#...",".#A....O...",".#####.#...",".....X.....","..S..L...B.","...##.#..##","..X#......#","...#.......","...##D###.#"],"gridSize":11},{"name":"21 - Rotateur","maxMoves":9,"locked":true,"difficulty":21,"biome":"rainbow","solution":"RLLLRRRRR","map":[".X.........","...........",".L.........","....X######",".....#S.A..",".R..##.#...",".....#.....","..####.....",".....#B....","###D.#.....","..........."],"gridSize":11},{"name":"22 - Premier sourire","maxMoves":6,"locked":true,"difficulty":22,"biome":"love","solution":"RRRLLL","map":["...........","..######...","..#.....#..","...#DD#B#..","......##...",".........##","####.....A#","..S#.......",".....######","...........",".#........."],"gridSize":11},{"name":"23 - Message maladroit","maxMoves":7,"locked":true,"difficulty":23,"biome":"garden","solution":"RLLLRRR","map":["......#....","......#...#",".##...#S...",".#.#..##...",".#.D.......",".#.D....#..",".#.##...#..",".#.B#...#..","..##....#..",".....#A.#..",".....##.#.."],"gridSize":11},{"name":"24 - Café annulé","maxMoves":8,"locked":true,"difficulty":24,"biome":"kiss","solution":"LLRRRLLL","map":[".........#.","...........","######.....",".......#S..","#A.....####","##.........","...##......","..#B#DD#...","..#.....#..","...######..","..........."],"gridSize":11},{"name":"25 - Silence radio","maxMoves":9,"locked":true,"difficulty":25,"biome":"starry","solution":"LLLRRRLLL","map":[".....##.#..",".....#A.#..","..##....#..",".#.B#...#..",".#.##...#..",".#.D....#..",".#.D.......",".#.#..##...",".##...#S...","......#...#","......#...."],"gridSize":11},{"name":"26 - Mauvais timing","maxMoves":9,"locked":true,"difficulty":26,"biome":"rainbow","solution":"RLLLLLRRR","map":["..#.##.....","..#.A#.....","..#....##..","..#...#B.#.","..#...##.#.","..#....D.#.",".......D.#.","...##..#.#.","...S#...##.","#...#......","....#......"],"gridSize":11},{"name":"27 - Deuxième chance","maxMoves":3,"locked":true,"difficulty":27,"biome":"forest","solution":"RRR","map":["........A..",".......#.##",".......#...",".....####..",".......#...","...#####...",".......#B..","D####..#...","...........","...........","..........S"],"gridSize":11},{"name":"28 - Conversation bancale","maxMoves":3,"locked":true,"difficulty":28,"biome":"love","solution":"LLL","map":["..A........","##.#.......","...#.......","..####.....","...#.......","...#####...","..B#.......","...#..####D","...........","...........","S.........."],"gridSize":11},{"name":"29 - Presque rendez-vous","maxMoves":5,"locked":true,"difficulty":29,"biome":"desert","solution":"LLLLL","map":["..........S","...........","...........","D####..#...",".......#B..","...#####...",".......#...",".....####..",".......#...",".......#.##","........A.."],"gridSize":11},{"name":"30 - Profil mystère","maxMoves":3,"locked":true,"difficulty":30,"biome":"garden","solution":"LLL","map":["...........","..##.####A.","....B#.....",".....#.....",".....#.....",".D########.",".....#.....",".....#.....",".....#.....",".X...#.....",".S........."],"gridSize":11},{"name":"31 - Trop loin","maxMoves":3,"locked":true,"difficulty":31,"biome":"ice","solution":"RRR","map":["...........",".A####.##..",".....#B....",".....#.....",".....#.....",".########D.",".....#.....",".....#.....",".....#.....",".....#...X.",".........S."],"gridSize":11},{"name":"32 - Trop vite","maxMoves":4,"locked":true,"difficulty":32,"biome":"kiss","solution":"RLLL","map":["...........",".A...#.....",".#...#.....",".#...#.....",".#...#.....",".#########.","..B..#.....",".#...#.....",".#...#.....",".....D...XS","..........."],"gridSize":11},{"name":"33 - Trop compliqué","maxMoves":4,"locked":true,"difficulty":33,"biome":"cosmic","solution":"LLLL","map":["...........","SX...D.....",".....#...#.",".....#...#.",".....#..B..",".#########.",".....#...#.",".....#...#.",".....#...#.",".....#...A.","..........."],"gridSize":11},{"name":"34 - Le bon détour","maxMoves":5,"locked":true,"difficulty":34,"biome":"starry","solution":"RRRRR","map":[".S.........",".X...#.....",".....#.....",".....#.....",".....#.....",".D########.",".....#.....",".....#.....","....B#.....","..##.####A.","..........."],"gridSize":11},{"name":"35 - Papillons prudents","maxMoves":3,"locked":true,"difficulty":35,"biome":"rainbow","solution":"LLL","map":["...........",".......#...","...O#####.#",".....##D##.","......B#...","......X#...",".......#...","..S....#...",".......#...",".......#...","....A......"],"gridSize":11},{"name":"36 - Promesse fragile","maxMoves":3,"locked":true,"difficulty":36,"biome":"love","solution":"RRR","map":["...........","...#.......","#.#####O...",".##D##.....","...#B......","...#X......","...#.......","...#....S..","...#.......","...#.......","......A...."],"gridSize":11},{"name":"37 - Le doute","maxMoves":5,"locked":true,"difficulty":37,"biome":"garden","solution":"LLRRR","map":["....A......",".......#...",".......#...","..S....#...",".......#...","......X#...","......B#...",".....##D##.","...O#####.#",".......#...","..........."],"gridSize":11},{"name":"38 - Le retour","maxMoves":6,"locked":true,"difficulty":38,"biome":"kiss","solution":"LLRLRL","map":["...........","...........",".....###...","........A..",".###.......",".......###.","X..........","...........",".S.......##","#...##D#..B","##...###..."],"gridSize":11},{"name":"39 - Nouvelle rencontre","maxMoves":1,"locked":true,"difficulty":39,"biome":"forest","solution":"L","map":["..##.....##","..........#","...O....#..","........DB.",".....#..#..","..X..#.....",".....#.....","....#A.....","....#.....S","...##......","...#......."],"gridSize":11},{"name":"40 - Signes contradictoires","maxMoves":2,"locked":true,"difficulty":40,"biome":"starry","solution":"RL","map":["###.....S..","...B.......","..#D#......","...........","...........","....###A...","#......###.","#.O......##",".....X.....","...........","..........."],"gridSize":11},{"name":"41 - L’étincelle","maxMoves":2,"locked":true,"difficulty":41,"biome":"rainbow","solution":"LR","map":["..S......##",".......B..#","......#D#..","...........","...........","...A###....",".###......#","##......O.#",".....X.....","...........","..........."],"gridSize":11},{"name":"42 - Rendez-vous réel","maxMoves":3,"locked":true,"difficulty":42,"biome":"love","solution":"RRL","map":[".......#...","......##...","S.....#....",".....A#....",".....#.....",".....#..X..","..#..#.....",".BD........","..#....O...","#......#...","##.....#..."],"gridSize":11},{"name":"43 - Main tendue","maxMoves":8,"locked":true,"difficulty":43,"biome":"garden","solution":"RRRRRRLR","map":["...........","...........","#....X.....","#.O......##",".......###.","....###A...","...........","...........","..#D#......","#..B.......","##......S.."],"gridSize":11},{"name":"44 - Pas si simple","maxMoves":4,"locked":true,"difficulty":44,"biome":"cosmic","solution":"RRRR","map":[".....S..#..","....#...#..",".....B..#..","...#####D#.","....#...#..","....#...#A.","....#...#..","...X#...#.X","....#...#..","....#...#..","........#.."],"gridSize":11},{"name":"45 - Ça recommence","maxMoves":5,"locked":true,"difficulty":45,"biome":"kiss","solution":"RRRRR","map":[".......X...","...#.A.....","###D#######","...#.......","...#.......","S.B#.......",".#.#######.","...#...X...","...........","...........","..........."],"gridSize":11},{"name":"46 - Enfin fluide","maxMoves":5,"locked":true,"difficulty":46,"biome":"starry","solution":"LLLLL","map":["...X.......",".....A.#...","#######D###",".......#...",".......#...",".......#B.S",".#######.#.","...X...#...","...........","...........","..........."],"gridSize":11},{"name":"47 - Le vrai choix","maxMoves":6,"locked":true,"difficulty":47,"biome":"rainbow","solution":"RRRRRR","map":["..#........","..#...#....","..#...#....","X.#...#X...","..#...#....",".A#...#....","..#...#....",".#D#####...","..#..B.....","..#...#....","..#..S....."],"gridSize":11},{"name":"48 - Dernier virage","maxMoves":7,"locked":true,"difficulty":48,"biome":"love","solution":"LLLLLLL","map":["...........","...........","...........","...#...X...",".#.#######.","S.B#.......","...#.......","...#.......","###D#######","...#.A.....",".......X..."],"gridSize":11},{"name":"49 - Presque sûr","maxMoves":6,"locked":true,"difficulty":49,"biome":"garden","solution":"RLRRRR","map":["...........","......XA...",".X.....S...","...........","....##.....","......####.","...........","......###..","...##.D....","....R.....B","........###"],"gridSize":11},{"name":"50 - La bonne personne","maxMoves":6,"locked":true,"difficulty":50,"biome":"kiss","solution":"LRLLLL","map":["...........","...AX......","...S.....X.","...........",".....##....",".####......","...........","..###......","....D.##...","B.....L....","###........"],"gridSize":11}]}; // fallback shipping si fetch levels.json échoue
 
 let currentLevel=0,baseMap=[],b=[],p={x:0,y:0},start={x:0,y:0},exit={x:0,y:0};
 let door=false,busy=false,edit=!!window.CG_EDITOR_MODE,moves=0,gameOver=false,confettiTimer=null,deadPlayer=false,idleTick=0,painting=false,lastPaintKey='',visualOri=0,squash=0,soundOn=true,sfxOn=true,musicOn=true,audioCtx=null,rotatorCooldown=false,gamePaused=false;
 let wallNoteIndex=0,lastWallSoundAt=0,eternalFallWraps=0,elevatorMusicTimer=null,elevatorMusicStarted=false,musicStep=0,bgMusic=null;
 const BG_MUSIC_PATH="audio/music/Petals_in_Perfect_Order.mp3";
-const BG_MUSIC_VOLUME=0.28;
+const DEFAULT_MUSIC_VOLUME=0.15;
+const DEFAULT_SFX_VOLUME=0.30;
+let musicVolume=DEFAULT_MUSIC_VOLUME;
+let sfxVolume=DEFAULT_SFX_VOLUME;
 let activeSwitchKey=null;
 let activeSwitchHeld=false;
 
@@ -2072,23 +2078,34 @@ function beep(freq=440,dur=.08,type="square",gain=.04,kind="sfx"){
   const o=ac.createOscillator(), g=ac.createGain(), f=ac.createBiquadFilter();
   o.type=type; o.frequency.value=freq;
   f.type="lowpass"; f.frequency.value=kind==="music"?1200:2200;
-  g.gain.setValueAtTime(Math.max(0.0001,gain),ac.currentTime);
+  const finalGain=gain*(kind==="music"?musicVolume:sfxVolume);
+  g.gain.setValueAtTime(Math.max(0.0001,finalGain),ac.currentTime);
   g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+Math.max(.02,dur));
   o.connect(f); f.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime+dur);
 }
+function applyAudioVolumes(){
+  if(bgMusic)bgMusic.volume=Math.max(0,Math.min(1,musicVolume));
+  const ml=document.getElementById("musicVolumeLabel"), sl=document.getElementById("sfxVolumeLabel");
+  const ms=document.getElementById("musicVolumeSlider"), ss=document.getElementById("sfxVolumeSlider");
+  if(ml)ml.textContent=Math.round(musicVolume*100)+"%";
+  if(sl)sl.textContent=Math.round(sfxVolume*100)+"%";
+  if(ms)ms.value=String(Math.round(musicVolume*100));
+  if(ss)ss.value=String(Math.round(sfxVolume*100));
+}
 function startElevatorMusic(){
-  if(elevatorMusicStarted || !soundOn || !musicOn || gamePaused)return;
-  elevatorMusicStarted=true;
+  if(!soundOn || !musicOn || gamePaused || edit || gameOver)return;
   if(!bgMusic){
     bgMusic=new Audio(BG_MUSIC_PATH);
     bgMusic.loop=true;
     bgMusic.preload="auto";
-    bgMusic.volume=BG_MUSIC_VOLUME;
+    bgMusic.playsInline=true;
   }
-  bgMusic.volume=BG_MUSIC_VOLUME;
-  bgMusic.play().catch(()=>{
-    elevatorMusicStarted=false;
-  });
+  bgMusic.volume=Math.max(0,Math.min(1,musicVolume));
+  // iOS coupe parfois un Audio() si on relance play() pendant une interaction rapide.
+  // Donc on ne relance que si la musique est réellement en pause. Oui, Safari aime tester notre patience.
+  if(!bgMusic.paused)return;
+  elevatorMusicStarted=true;
+  bgMusic.play().catch(()=>{elevatorMusicStarted=false;});
 }
 function stopElevatorMusic(){
   if(elevatorMusicTimer){clearInterval(elevatorMusicTimer);elevatorMusicTimer=null;}
@@ -2100,6 +2117,7 @@ function updatePauseButtons(){
   if(a)a.textContent=sfxOn?"SFX ON":"SFX OFF";
   if(m)m.textContent=musicOn?"Music ON":"Music OFF";
   if(e)e.textContent=(soundOn&&sfxOn&&musicOn)?"🔊 Son":"🔈 Son";
+  applyAudioVolumes();
 }
 function setPaused(v){
   gamePaused=!!v;
@@ -2130,7 +2148,12 @@ function soundLove(){beep(523,.08,"sine",.03,"sfx");setTimeout(()=>beep(784,.12,
 function soundLose(){beep(330,.16,"triangle",.026,"sfx");setTimeout(()=>beep(294,.18,"triangle",.022,"sfx"),170);setTimeout(()=>beep(247,.34,"sine",.018,"sfx"),350)}
 function soundDoor(){beep(180,.045,"square",.024,"sfx");setTimeout(()=>beep(420,.10,"triangle",.024,"sfx"),60);}
 function soundEternalFall(){beep(150,.14,"triangle",.025,"sfx");setTimeout(()=>beep(120,.20,"sine",.020,"sfx"),150);setTimeout(()=>beep(98,.28,"sine",.016,"sfx"),330)}
-function userAudioGesture(){ensureAudio(); if(bgMusic)bgMusic.load(); if(musicOn)startElevatorMusic();}
+function userAudioGesture(){
+  ensureAudio();
+  // Ne jamais appeler bgMusic.load() ici. Ne pas relancer play() non plus si le MP3 joue déjà.
+  // Sur iPhone, une rotation est une interaction utilisateur et Safari peut couper/reprendre l'Audio().
+  if(musicOn && !gamePaused && !edit && !gameOver && (!bgMusic || bgMusic.paused))startElevatorMusic();
+}
 function toggleSound(){
   soundOn=!soundOn; sfxOn=soundOn; musicOn=soundOn;
   updatePauseButtons();
@@ -2244,7 +2267,8 @@ function appendVectorLayer(parent,l,t){
     const pts=(l.points||[]).map(p=>Array.isArray(p)?p.join(","):p).join(" ");
     el=E("polygon",{points:pts});
   }else if(shape==="path"){
-    el=E("path",{d:l.d||""});
+    const d=l.d || (Array.isArray(l.points) ? pointsToPath(l.points,l.curveMode||"smooth") : "");
+    el=E("path",{d:d});
   }else if(shape==="text"){
     el=E("text",{x:l.x??20,y:l.y??20,"font-size":l.fontSize??12,"font-weight":900,"font-family":"monospace","text-anchor":"middle"});
     el.textContent=l.text??"?";
@@ -2259,8 +2283,9 @@ function appendVectorLayer(parent,l,t){
   const hasScale=Number.isFinite(Number(l.scaleX))||Number.isFinite(Number(l.scaleY));
   const hasRot=Number.isFinite(Number(l.rotation));
   if(hasScale||hasRot){
-    const cx=Number(l.pivotX ?? ((Number(l.x??0)+Number(l.w??0)/2)||20));
-    const cy=Number(l.pivotY ?? ((Number(l.y??0)+Number(l.h??0)/2)||20));
+    const bb=layerBBox(l);
+    const cx=Number(l.pivotX ?? (bb.x+bb.w/2));
+    const cy=Number(l.pivotY ?? (bb.y+bb.h/2));
     const sx=Number.isFinite(Number(l.scaleX))?Number(l.scaleX):1;
     const sy=Number.isFinite(Number(l.scaleY))?Number(l.scaleY):1;
     const r=Number.isFinite(Number(l.rotation))?Number(l.rotation):0;
@@ -2277,14 +2302,14 @@ function appendVectorLayer(parent,l,t){
 function layerBBox(l){
   if(!l)return {x:0,y:0,w:0,h:0};
   if(l.shape==="circle"){const r=Number(l.r??0);return {x:Number(l.x??0)-r,y:Number(l.y??0)-r,w:r*2,h:r*2};}
-  if(l.shape==="polygon"){
+  if(l.shape==="polygon" || l.shape==="path" || l.shape==="line"){
     const pts=(l.points||[]).map(p=>Array.isArray(p)?p:String(p).split(",")).map(p=>({x:Number(p[0]??0),y:Number(p[1]??0)}));
     if(!pts.length)return {x:0,y:0,w:0,h:0};
     const xs=pts.map(p=>p.x), ys=pts.map(p=>p.y);
     const minX=Math.min(...xs), maxX=Math.max(...xs), minY=Math.min(...ys), maxY=Math.max(...ys);
     return {x:minX,y:minY,w:maxX-minX,h:maxY-minY};
   }
-  if(l.shape==="text"){return {x:Number(l.x??0),y:Number(l.y??0)-Number(l.fontSize??12),w:String(l.text??"").length*Number(l.fontSize??12)*0.6,h:Number(l.fontSize??12)};}
+  if(l.shape==="text"){const fs=Number(l.fontSize??12),w=String(l.text??"").length*fs*0.6;return {x:Number(l.x??0)-w/2,y:Number(l.y??0)-fs,w:w,h:fs};}
   return {x:Number(l.x??0),y:Number(l.y??0),w:Number(l.w??10),h:Number(l.h??10)};
 }
 function groupBBox(g,layersList){
@@ -3470,6 +3495,9 @@ document.getElementById("pauseBtn")?.addEventListener("click",()=>{userAudioGest
 document.getElementById("pauseResume")?.addEventListener("click",()=>setPaused(false));
 document.getElementById("pauseSfxToggle")?.addEventListener("click",()=>{sfxOn=!sfxOn;soundOn=sfxOn||musicOn;updatePauseButtons();});
 document.getElementById("pauseMusicToggle")?.addEventListener("click",()=>{musicOn=!musicOn;soundOn=sfxOn||musicOn;updatePauseButtons();if(musicOn&&!gamePaused)startElevatorMusic();else stopElevatorMusic();});
+document.getElementById("musicVolumeSlider")?.addEventListener("input",e=>{musicVolume=Number(e.target.value)/100;applyAudioVolumes();});
+document.getElementById("sfxVolumeSlider")?.addEventListener("input",e=>{sfxVolume=Number(e.target.value)/100;applyAudioVolumes();});
+applyAudioVolumes();
 document.getElementById("pauseRestart")?.addEventListener("click",()=>{setPaused(false);resetPlay();});
 document.getElementById("pauseMainMenu")?.addEventListener("click",()=>{setPaused(false);stopElevatorMusic();window.location.href="index.html";});
 updatePauseButtons();
@@ -3645,13 +3673,19 @@ function manualImportLevelsJson(){
 
 async function loadStaticLevels(){
   setLoadingText("Chargement levels.json…");
-  // V57 STRICT EXTERNAL : aucun niveau embarqué, aucun fallback localStorage.
-  // On teste plusieurs chemins pour éviter le gag du fichier au mauvais niveau.
+  // Shipping robuste : on tente le fichier externe, puis le snapshot embarqué dans game.html.
+  // Comme ça, si le serveur, le cache ou le chemin joue au clown, le joueur voit quand même le jeu.
   try{
     const result=await fetchJsonFromCandidates("LEVELS",["./levels.json","levels.json","/levels.json"]);
     applyLevelsData(result.data,result.path);
   }catch(err){
-    showLevelsJsonError(err);
+    console.warn("[LEVELS] levels.json externe indisponible, fallback embarqué utilisé",err);
+    try{
+      applyLevelsData(EMBEDDED_LEVELS_DATA,"fallback embarqué game.html");
+      status.textContent="OK : niveaux chargés depuis le fallback embarqué. Replace levels.json quand tu publies.";
+    }catch(fallbackErr){
+      showLevelsJsonError(err);
+    }
   }
 }
 
