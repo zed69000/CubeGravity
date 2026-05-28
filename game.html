@@ -1715,8 +1715,6 @@ body.editing #pauseBtn{display:none!important}
     <div class="pauseTitle">PAUSE</div>
     <div class="pauseSub">Réglages rapides. Même le cube a droit à une convention collective.</div>
     <button id="pauseResume">Reprendre</button>
-    <div class="pauseSlider"><label><span>Musique</span><span id="musicVolumeLabel">15%</span></label><input id="musicVolumeSlider" type="range" min="0" max="100" value="15"></div>
-    <div class="pauseSlider"><label><span>Bruitages</span><span id="sfxVolumeLabel">30%</span></label><input id="sfxVolumeSlider" type="range" min="0" max="100" value="30"></div>
     <div class="pauseGrid">
       <button id="pauseSfxToggle">SFX ON</button>
       <button id="pauseMusicToggle">Music ON</button>
@@ -1847,7 +1845,7 @@ const editPanel=document.getElementById("editPanel"),levelNameInput=document.get
 const banner=document.getElementById("banner"),bannerTitle=document.getElementById("bannerTitle"),bannerText=document.getElementById("bannerText"),starsEl=document.getElementById("stars"),bannerAction=document.getElementById("bannerAction");
 
 let levels=[];
-const GAME_VERSION="V43.16-audio-sliders-ios-fix";
+const GAME_VERSION="V43.17-loud-sfx-music-15-slider-fix";
 setTimeout(()=>{const v=document.getElementById("gameVersionBadge"); if(v)v.textContent=GAME_VERSION;},0);
 let gameSettings={fallDelayMs:135,rotationDurationMs:320};
 let fallbackLevels=[]; // V57: aucun niveau de gameplay en dur. levels.json est obligatoire.
@@ -1859,6 +1857,8 @@ let wallNoteIndex=0,lastWallSoundAt=0,eternalFallWraps=0,elevatorMusicTimer=null
 const BG_MUSIC_PATH="audio/music/Petals_in_Perfect_Order.mp3";
 const DEFAULT_MUSIC_VOLUME=0.15;
 const DEFAULT_SFX_VOLUME=0.30;
+const SFX_GAIN_BOOST=4.0;
+const SFX_MAX_GAIN=0.22;
 let musicVolume=DEFAULT_MUSIC_VOLUME;
 let sfxVolume=DEFAULT_SFX_VOLUME;
 let activeSwitchKey=null;
@@ -2071,26 +2071,33 @@ function ensureAudio(){
   if(audioCtx.state==="suspended")audioCtx.resume().catch(()=>{});
   return audioCtx;
 }
+function clamp01(v){return Math.max(0,Math.min(1,Number(v)||0));}
+function applyAudioVolumes(){
+  musicVolume=clamp01(musicVolume);
+  sfxVolume=clamp01(sfxVolume);
+  if(bgMusic)bgMusic.volume=musicOn?sfxSafeMusicVolume():0;
+  const ml=document.getElementById("musicVolumeLabel"), sl=document.getElementById("sfxVolumeLabel");
+  const ms=document.getElementById("musicVolumeSlider"), ss=document.getElementById("sfxVolumeSlider");
+  if(ml)ml.textContent=Math.round(musicVolume*100)+"%";
+  if(sl)sl.textContent=Math.round(sfxVolume*100)+"%";
+  if(ms && document.activeElement!==ms)ms.value=String(Math.round(musicVolume*100));
+  if(ss && document.activeElement!==ss)ss.value=String(Math.round(sfxVolume*100));
+}
+function sfxSafeMusicVolume(){return Math.max(0,Math.min(0.35,musicVolume));}
 function beep(freq=440,dur=.08,type="square",gain=.04,kind="sfx"){
   if(kind==="sfx" && (!soundOn || !sfxOn))return;
   if(kind==="music" && (!soundOn || !musicOn))return;
   const ac=ensureAudio(); if(!ac)return;
   const o=ac.createOscillator(), g=ac.createGain(), f=ac.createBiquadFilter();
   o.type=type; o.frequency.value=freq;
-  f.type="lowpass"; f.frequency.value=kind==="music"?1200:2200;
-  const finalGain=gain*(kind==="music"?musicVolume:sfxVolume);
-  g.gain.setValueAtTime(Math.max(0.0001,finalGain),ac.currentTime);
+  f.type="lowpass"; f.frequency.value=kind==="music"?1200:3600;
+  const volume = kind==="music" ? musicVolume : sfxVolume;
+  const boost = kind==="sfx" ? SFX_GAIN_BOOST : 1;
+  const maxGain = kind==="sfx" ? SFX_MAX_GAIN : 0.12;
+  const finalGain=Math.max(0.0001,Math.min(maxGain,gain*volume*boost));
+  g.gain.setValueAtTime(finalGain,ac.currentTime);
   g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+Math.max(.02,dur));
   o.connect(f); f.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime+dur);
-}
-function applyAudioVolumes(){
-  if(bgMusic)bgMusic.volume=Math.max(0,Math.min(1,musicVolume));
-  const ml=document.getElementById("musicVolumeLabel"), sl=document.getElementById("sfxVolumeLabel");
-  const ms=document.getElementById("musicVolumeSlider"), ss=document.getElementById("sfxVolumeSlider");
-  if(ml)ml.textContent=Math.round(musicVolume*100)+"%";
-  if(sl)sl.textContent=Math.round(sfxVolume*100)+"%";
-  if(ms)ms.value=String(Math.round(musicVolume*100));
-  if(ss)ss.value=String(Math.round(sfxVolume*100));
 }
 function startElevatorMusic(){
   if(!soundOn || !musicOn || gamePaused || edit || gameOver)return;
@@ -2100,9 +2107,8 @@ function startElevatorMusic(){
     bgMusic.preload="auto";
     bgMusic.playsInline=true;
   }
-  bgMusic.volume=Math.max(0,Math.min(1,musicVolume));
-  // iOS coupe parfois un Audio() si on relance play() pendant une interaction rapide.
-  // Donc on ne relance que si la musique est réellement en pause. Oui, Safari aime tester notre patience.
+  bgMusic.volume=sfxSafeMusicVolume();
+  applyAudioVolumes();
   if(!bgMusic.paused)return;
   elevatorMusicStarted=true;
   bgMusic.play().catch(()=>{elevatorMusicStarted=false;});
@@ -2117,7 +2123,6 @@ function updatePauseButtons(){
   if(a)a.textContent=sfxOn?"SFX ON":"SFX OFF";
   if(m)m.textContent=musicOn?"Music ON":"Music OFF";
   if(e)e.textContent=(soundOn&&sfxOn&&musicOn)?"🔊 Son":"🔈 Son";
-  applyAudioVolumes();
 }
 function setPaused(v){
   gamePaused=!!v;
@@ -2150,9 +2155,9 @@ function soundDoor(){beep(180,.045,"square",.024,"sfx");setTimeout(()=>beep(420,
 function soundEternalFall(){beep(150,.14,"triangle",.025,"sfx");setTimeout(()=>beep(120,.20,"sine",.020,"sfx"),150);setTimeout(()=>beep(98,.28,"sine",.016,"sfx"),330)}
 function userAudioGesture(){
   ensureAudio();
-  // Ne jamais appeler bgMusic.load() ici. Ne pas relancer play() non plus si le MP3 joue déjà.
-  // Sur iPhone, une rotation est une interaction utilisateur et Safari peut couper/reprendre l'Audio().
-  if(musicOn && !gamePaused && !edit && !gameOver && (!bgMusic || bgMusic.paused))startElevatorMusic();
+  // Ne jamais appeler bgMusic.load() ici : sur mobile, chaque rotation déclenche userAudioGesture(),
+  // et load() remet le MP3 au début / provoque une coupure. La musique doit survivre aux rotations.
+  if(musicOn && !gamePaused && !edit && !gameOver)startElevatorMusic();
 }
 function toggleSound(){
   soundOn=!soundOn; sfxOn=soundOn; musicOn=soundOn;
@@ -3494,12 +3499,12 @@ document.getElementById("companionHelp").onclick=()=>showCompanion(companionMess
 document.getElementById("pauseBtn")?.addEventListener("click",()=>{userAudioGesture();setPaused(!gamePaused);});
 document.getElementById("pauseResume")?.addEventListener("click",()=>setPaused(false));
 document.getElementById("pauseSfxToggle")?.addEventListener("click",()=>{sfxOn=!sfxOn;soundOn=sfxOn||musicOn;updatePauseButtons();});
-document.getElementById("pauseMusicToggle")?.addEventListener("click",()=>{musicOn=!musicOn;soundOn=sfxOn||musicOn;updatePauseButtons();if(musicOn&&!gamePaused)startElevatorMusic();else stopElevatorMusic();});
-document.getElementById("musicVolumeSlider")?.addEventListener("input",e=>{musicVolume=Number(e.target.value)/100;applyAudioVolumes();});
-document.getElementById("sfxVolumeSlider")?.addEventListener("input",e=>{sfxVolume=Number(e.target.value)/100;applyAudioVolumes();});
-applyAudioVolumes();
+document.getElementById("pauseMusicToggle")?.addEventListener("click",()=>{musicOn=!musicOn;soundOn=sfxOn||musicOn;updatePauseButtons();applyAudioVolumes();if(musicOn&&!gamePaused)startElevatorMusic();else stopElevatorMusic();});
+document.getElementById("musicVolumeSlider")?.addEventListener("input",e=>{musicVolume=Number(e.target.value)/100;musicOn=musicVolume>0;soundOn=sfxOn||musicOn;applyAudioVolumes();updatePauseButtons();if(musicOn&&!gamePaused)startElevatorMusic();else stopElevatorMusic();});
+document.getElementById("sfxVolumeSlider")?.addEventListener("input",e=>{sfxVolume=Number(e.target.value)/100;sfxOn=sfxVolume>0;soundOn=sfxOn||musicOn;applyAudioVolumes();updatePauseButtons();});
 document.getElementById("pauseRestart")?.addEventListener("click",()=>{setPaused(false);resetPlay();});
 document.getElementById("pauseMainMenu")?.addEventListener("click",()=>{setPaused(false);stopElevatorMusic();window.location.href="index.html";});
+applyAudioVolumes();
 updatePauseButtons();
 document.getElementById("title")?.addEventListener("click",showLevelRecap);
 document.getElementById("playStats")?.addEventListener("click",showLevelRecap);
