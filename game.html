@@ -1518,6 +1518,45 @@ body.force-game-start #homeMenu {
   pointer-events:none !important;
 }
 
+
+
+/* ===== V43.11 play HUD/loading polish ===== */
+#gameVersionBadge{display:none!important}
+#loadingOverlay{position:fixed;inset:0;z-index:500;display:flex;align-items:center;justify-content:center;background:radial-gradient(circle at 50% 35%,rgba(22,34,78,.98),rgba(3,5,18,.98) 68%);color:#fff;font-family:monospace;text-align:center;padding:24px}
+#loadingOverlay.hidden{display:none!important}
+.loadingCard{width:min(420px,90vw);border:2px solid rgba(61,220,255,.45);border-radius:26px;background:rgba(7,13,39,.86);box-shadow:0 0 34px rgba(61,220,255,.24),0 22px 70px rgba(0,0,0,.55);padding:28px 22px}
+.loadingTitle{font-size:24px;font-weight:1000;letter-spacing:.12em;color:#3ddcff;text-shadow:0 0 14px rgba(61,220,255,.35);margin-bottom:12px}
+.loadingText{font-size:14px;color:#d8e4ff;line-height:1.45}
+.loadingDots{margin-top:16px;font-size:28px;letter-spacing:6px;color:#ff63c6;animation:loadingPulse .9s steps(3,end) infinite}
+@keyframes loadingPulse{0%{opacity:.35}50%{opacity:1}100%{opacity:.55}}
+body:not(.editing) #levelBadge{display:none!important}
+body:not(.editing) #title{font-size:clamp(16px,4.8vw,28px)!important;letter-spacing:.06em!important;padding:0 86px!important;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#f5f7ff!important;text-shadow:0 0 12px rgba(255,99,198,.35)!important}
+body:not(.editing) #status{display:none!important}
+body:not(.editing) #top{min-height:122px!important;max-height:122px!important;padding-top:calc(8px + env(safe-area-inset-top))!important}
+body:not(.editing) #playStats{top:52px!important;width:calc(100vw - 18px)!important}
+body:not(.editing) .objectiveLine{border-radius:20px!important;border-width:3px!important;background:rgba(5,11,42,.94)!important}
+body:not(.editing) .objectiveLine .metric{padding:12px 8px!important;gap:6px!important}
+body:not(.editing) .objectiveLine .metric small{font-size:11px!important;font-weight:1000!important;letter-spacing:.02em!important;opacity:1!important;color:#f4f6ff!important}
+body:not(.editing) .objectiveLine .metric b{font-size:24px!important;text-shadow:0 0 10px currentColor!important}
+body:not(.editing) .objectiveLine .metric i{font-size:18px!important}
+.boardWrap{overflow:visible!important}
+.boardWrap svg{position:relative!important;z-index:2!important}
+.electricEdge{inset:-9px!important;z-index:1!important;border-width:5px!important;border-radius:18px!important;box-sizing:border-box!important}
+.electricEdge:after{inset:8px!important;border-radius:12px!important}
+#pauseBtn{right:12px!important;top:calc(70px + env(safe-area-inset-top))!important;width:54px!important;height:54px!important;border-radius:18px!important;display:flex!important;align-items:center!important;justify-content:center!important}
+#fullscreenBtn{right:12px!important;top:calc(136px + env(safe-area-inset-top))!important;width:54px!important;height:54px!important;border-radius:18px!important;display:flex!important;align-items:center!important;justify-content:center!important}
+body.editing #pauseBtn{display:none!important}
+@media (max-width:700px){
+  body:not(.editing) #top{min-height:128px!important;max-height:128px!important}
+  body:not(.editing) #title{font-size:clamp(15px,5.3vw,23px)!important;padding-left:10px!important;padding-right:84px!important;text-align:left!important}
+  body:not(.editing) #playStats{top:62px!important}
+  body:not(.editing) .objectiveLine .metric{padding:10px 4px!important}
+  body:not(.editing) .objectiveLine .metric small{font-size:10px!important}
+  body:not(.editing) .objectiveLine .metric b{font-size:22px!important}
+  #pauseBtn{top:calc(58px + env(safe-area-inset-top))!important;width:58px!important;height:58px!important}
+  #fullscreenBtn{top:calc(128px + env(safe-area-inset-top))!important;width:58px!important;height:58px!important}
+}
+
 </style>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1597,6 +1636,14 @@ body.force-game-start #homeMenu {
     </div>
     <div class="menuText"></div>
     <div class="menuSub">tap / click pour jouer</div>
+  </div>
+</div>
+
+<div id="loadingOverlay" role="status" aria-live="polite">
+  <div class="loadingCard">
+    <div class="loadingTitle">GRAVITY CUBE</div>
+    <div id="loadingText" class="loadingText">Chargement des niveaux et des assets…</div>
+    <div class="loadingDots">•••</div>
   </div>
 </div>
 
@@ -1697,11 +1744,42 @@ function levelGridSize(level){
 function setBoardSizeFromLevel(level){
   setBoardSize(levelGridSize(level));
 }
+function getLevelContentBounds(rows){
+  rows=(rows||[]).map(r=>String(r));
+  let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity,count=0;
+  for(let y=0;y<rows.length;y++){
+    const row=rows[y]||"";
+    for(let x=0;x<row.length;x++){
+      const ch=row[x];
+      if(ch && ch!=="."){
+        minX=Math.min(minX,x); minY=Math.min(minY,y);
+        maxX=Math.max(maxX,x); maxY=Math.max(maxY,y);
+        count++;
+      }
+    }
+  }
+  if(!count)return null;
+  return {minX,minY,maxX,maxY,width:maxX-minX+1,height:maxY-minY+1,count};
+}
+
 function resizeCurrentLevelTo(size){
   const lvl=levels[currentLevel];
   if(!lvl) return;
   const oldMap=map();
-  lvl.gridSize=clampGridSize(size);
+  const target=clampGridSize(size);
+  const bounds=getLevelContentBounds(oldMap);
+
+  // V43.10 : réduction non destructive. Si le contenu ne rentre pas dans la
+  // nouvelle grille, on refuse au lieu d'effacer des blocs en silence. Oui,
+  // c'est fou, un outil d'édition qui ne mange pas le niveau.
+  if(bounds && (bounds.width>target || bounds.height>target)){
+    const input=document.getElementById("gridSizeInput");
+    if(input) input.value=W;
+    setStatus("Grille trop petite : le contenu actuel occupe "+bounds.width+"×"+bounds.height+". Réduction annulée pour ne supprimer aucun bloc.");
+    return;
+  }
+
+  lvl.gridSize=target;
   setBoardSizeFromLevel(lvl);
   lvl.map=normalizeLevelMapSize(oldMap);
   baseMap=arr(lvl.map);
@@ -1710,7 +1788,7 @@ function resizeCurrentLevelTo(size){
   const input=document.getElementById("gridSizeInput");
   if(input) input.value=W;
   resetPlay();
-  setStatus("Grille niveau : "+W+"×"+H+". Les blocs ont été réadaptés. Oui, ça bouge sans tout détruire, miracle.");
+  setStatus("Grille niveau : "+W+"×"+H+". Redimensionnement centré sans suppression de blocs.");
 }
 
 
@@ -1718,25 +1796,44 @@ function normalizeLevelMapSize(map){
   const targetW=W,targetH=H;
   const rows=(map||[]).map(r=>String(r));
   if(rows.length===targetH && rows.every(r=>r.length===targetW)) return rows;
+
   const out=Array.from({length:targetH},()=>Array(targetW).fill("."));
-  const oldH=rows.length, oldW=Math.max(0,...rows.map(r=>r.length));
+  const oldH=rows.length;
+  const oldW=Math.max(0,...rows.map(r=>r.length));
+
+  // V43.9 : resize centré sur le CONTENU utile, pas sur l'origine [0,0].
+  // Avant, un +1 finissait soit accroché haut-gauche, soit poussé bas-droite.
+  // Ici on prend la bounding box des tuiles non vides et on la recale au centre
+  // de la nouvelle grille. Si on réduit trop, on croppe symétriquement autour du centre.
+  let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
   for(let y=0;y<oldH;y++){
-    for(let x=0;x<(rows[y]||"").length;x++){
-      const ch=rows[y][x];
-      if(!ch || ch===".") continue;
-      const nx=Math.max(0,Math.min(targetW-1, x-Math.floor((oldW-targetW)/2)));
-      const ny=Math.max(0,Math.min(targetH-1, y-Math.floor((oldH-targetH)/2)));
-      if(out[ny][nx]===".") out[ny][nx]=ch;
-      else {
-        let placed=false;
-        for(let r=1;r<Math.max(targetW,targetH)&&!placed;r++){
-          for(let yy=Math.max(0,ny-r);yy<=Math.min(targetH-1,ny+r)&&!placed;yy++){
-            for(let xx=Math.max(0,nx-r);xx<=Math.min(targetW-1,nx+r);xx++){
-              if(out[yy][xx]==="."){out[yy][xx]=ch;placed=true;break;}
-            }
-          }
-        }
+    const row=rows[y]||"";
+    for(let x=0;x<row.length;x++){
+      const ch=row[x];
+      if(ch && ch!=="."){
+        minX=Math.min(minX,x); minY=Math.min(minY,y);
+        maxX=Math.max(maxX,x); maxY=Math.max(maxY,y);
       }
+    }
+  }
+
+  // Niveau vide : on garde une grille propre, inutile de déplacer le néant avec précision.
+  if(!Number.isFinite(minX)) return out.map(r=>r.join(""));
+
+  const contentW=maxX-minX+1;
+  const contentH=maxY-minY+1;
+  const dstMinX=Math.floor((targetW-contentW)/2);
+  const dstMinY=Math.floor((targetH-contentH)/2);
+
+  for(let y=minY;y<=maxY;y++){
+    const row=rows[y]||"";
+    for(let x=minX;x<=maxX;x++){
+      const ch=row[x];
+      if(!ch || ch===".") continue;
+      const nx=(x-minX)+dstMinX;
+      const ny=(y-minY)+dstMinY;
+      if(nx<0 || nx>=targetW || ny<0 || ny>=targetH) continue;
+      if(out[ny][nx]===".") out[ny][nx]=ch;
     }
   }
   return out.map(r=>r.join(""));
@@ -1748,14 +1845,16 @@ const editPanel=document.getElementById("editPanel"),levelNameInput=document.get
 const banner=document.getElementById("banner"),bannerTitle=document.getElementById("bannerTitle"),bannerText=document.getElementById("bannerText"),starsEl=document.getElementById("stars"),bannerAction=document.getElementById("bannerAction");
 
 let levels=[];
-const GAME_VERSION="V43.6-pause-audio-mix";
+const GAME_VERSION="V43.12-mp3-music";
 setTimeout(()=>{const v=document.getElementById("gameVersionBadge"); if(v)v.textContent=GAME_VERSION;},0);
 let gameSettings={fallDelayMs:135,rotationDurationMs:320};
 let fallbackLevels=[]; // V57: aucun niveau de gameplay en dur. levels.json est obligatoire.
 
 let currentLevel=0,baseMap=[],b=[],p={x:0,y:0},start={x:0,y:0},exit={x:0,y:0};
 let door=false,busy=false,edit=!!window.CG_EDITOR_MODE,moves=0,gameOver=false,confettiTimer=null,deadPlayer=false,idleTick=0,painting=false,lastPaintKey='',visualOri=0,squash=0,soundOn=true,sfxOn=true,musicOn=true,audioCtx=null,rotatorCooldown=false,gamePaused=false;
-let wallNoteIndex=0,lastWallSoundAt=0,eternalFallWraps=0,elevatorMusicTimer=null,elevatorMusicStarted=false,musicStep=0;
+let wallNoteIndex=0,lastWallSoundAt=0,eternalFallWraps=0,elevatorMusicTimer=null,elevatorMusicStarted=false,musicStep=0,bgMusic=null;
+const BG_MUSIC_PATH="audio/music/Petals_in_Perfect_Order.mp3";
+const BG_MUSIC_VOLUME=0.28;
 let activeSwitchKey=null;
 let activeSwitchHeld=false;
 
@@ -1767,6 +1866,7 @@ function text(x,y,t,f,sz=22){let a=E("text",{x,y,fill:f,"font-size":sz,"font-wei
 let assetPack=null;
 
 async function loadAssets(){
+  setLoadingText("Chargement assets.json…");
   // V57 : assets.json externe obligatoire en priorité, mais on teste plusieurs chemins.
   // Aucun asset gameplay n'est embarqué ici : si assets.json manque, on tombe seulement sur les fallbacks graphiques codés.
   const candidates=["./assets.json","assets.json","/assets.json"];
@@ -1930,13 +2030,16 @@ function resetPlay(){
 function updateStats(){
   const max=levels[currentLevel].maxMoves||"?";
   const name=levels[currentLevel].name||("Niveau "+(currentLevel+1));
+  const titleEl=document.getElementById("title");
   if(edit){
     playStats.textContent="";
+    if(titleEl)titleEl.innerHTML='<span class="t-mark">▣</span> <span class="t-gravity">GRAVITY</span> <span class="t-cube">CUBE</span> <span class="t-mark">▣</span> <span id="modeLabel"></span>';
   }else{
+    if(titleEl)titleEl.textContent=(currentLevel+1)+" - "+name;
     playStats.innerHTML =
-      '<div class="objectiveLine">'+
+      '<div class="objectiveLine" title="Résumé du niveau">'+
         '<span class="metric metricMoves"><i>⟳</i><small>Coups</small><b>'+moves+'</b></span>'+
-        '<span class="metric metricGoal"><i>★</i><small>objectif 3♥</small><b>'+max+'</b></span>'+
+        '<span class="metric metricGoal"><i>★</i><small>Objectif 3♥</small><b>'+max+'</b></span>'+
         '<span class="metric metricDiff"><i>✦</i><small>Difficulté</small><b>'+(levels[currentLevel].difficulty||1)+'</b></span>'+
       '</div>';
   }
@@ -1974,24 +2077,23 @@ function beep(freq=440,dur=.08,type="square",gain=.04,kind="sfx"){
   o.connect(f); f.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime+dur);
 }
 function startElevatorMusic(){
-  if(elevatorMusicStarted || !soundOn || !musicOn)return;
+  if(elevatorMusicStarted || !soundOn || !musicOn || gamePaused)return;
   elevatorMusicStarted=true;
-  musicStep=0;
-  const bass=[196,196,220,174.61,196,261.63,246.94,220];
-  const melody=[329.63,392.00,369.99,329.63,293.66,329.63,392.00,493.88];
-  const playTick=()=>{
-    if(!soundOn || !musicOn || gamePaused)return;
-    const i=musicStep++%bass.length;
-    beep(bass[i],.42,"sine",.006,"music");
-    setTimeout(()=>beep(melody[i],.18,"triangle",.007,"music"),120);
-    if(i%2===0)setTimeout(()=>beep(melody[(i+2)%melody.length],.16,"sine",.0045,"music"),360);
-  };
-  playTick();
-  elevatorMusicTimer=setInterval(playTick,620);
+  if(!bgMusic){
+    bgMusic=new Audio(BG_MUSIC_PATH);
+    bgMusic.loop=true;
+    bgMusic.preload="auto";
+    bgMusic.volume=BG_MUSIC_VOLUME;
+  }
+  bgMusic.volume=BG_MUSIC_VOLUME;
+  bgMusic.play().catch(()=>{
+    elevatorMusicStarted=false;
+  });
 }
 function stopElevatorMusic(){
   if(elevatorMusicTimer){clearInterval(elevatorMusicTimer);elevatorMusicTimer=null;}
   elevatorMusicStarted=false;
+  if(bgMusic)bgMusic.pause();
 }
 function updatePauseButtons(){
   const a=document.getElementById("pauseSfxToggle"),m=document.getElementById("pauseMusicToggle"),e=document.getElementById("soundToggle");
@@ -2028,7 +2130,7 @@ function soundLove(){beep(523,.08,"sine",.03,"sfx");setTimeout(()=>beep(784,.12,
 function soundLose(){beep(330,.16,"triangle",.026,"sfx");setTimeout(()=>beep(294,.18,"triangle",.022,"sfx"),170);setTimeout(()=>beep(247,.34,"sine",.018,"sfx"),350)}
 function soundDoor(){beep(180,.045,"square",.024,"sfx");setTimeout(()=>beep(420,.10,"triangle",.024,"sfx"),60);}
 function soundEternalFall(){beep(150,.14,"triangle",.025,"sfx");setTimeout(()=>beep(120,.20,"sine",.020,"sfx"),150);setTimeout(()=>beep(98,.28,"sine",.016,"sfx"),330)}
-function userAudioGesture(){ensureAudio(); if(musicOn)startElevatorMusic();}
+function userAudioGesture(){ensureAudio(); if(bgMusic)bgMusic.load(); if(musicOn)startElevatorMusic();}
 function toggleSound(){
   soundOn=!soundOn; sfxOn=soundOn; musicOn=soundOn;
   updatePauseButtons();
@@ -2068,6 +2170,7 @@ function validateVectorAssetsData(data){
 }
 
 async function loadVectorAssets(){
+  setLoadingText("Chargement vector_assets_runtime.json…");
   const candidates=["./vector_assets_runtime.json","vector_assets_runtime.json","/vector_assets_runtime.json","./vector_assets.json","vector_assets.json","/vector_assets.json"];
   let lastErr=null;
   setVectorStatus("SVG loading...\\nexpected 3563ce4af1","");
@@ -2966,7 +3069,7 @@ function calcMoves(){
     const maxDepth=32;
     if(start.dead){
       levels[currentLevel].maxMoves=999;
-      status.innerHTML='<span class="testBad">Calc coups : impossible dès le départ ('+start.reason+').</span>';
+      solverPopup('Calc coups','Impossible dès le départ : <b>'+start.reason+'</b>',false);
       updateStats();
       return;
     }
@@ -2978,7 +3081,7 @@ function calcMoves(){
         levels[currentLevel].maxMoves=s.path.length;
         levels[currentLevel].solution=s.path.map(d=>d>0?'R':'L').join('');
         updateStats();
-        status.innerHTML='<span class="testOk">Calc coups : objectif 3♥ = '+s.path.length+' coup(s). Solution : '+(levels[currentLevel].solution||'déjà sur la sortie')+'</span>';
+        solverPopup('Calc coups','Objectif 3♥ = <b>'+s.path.length+' coup(s)</b><br>Solution : <b>'+(levels[currentLevel].solution||'déjà sur la sortie')+'</b>',true);
         return;
       }
       if(s.path.length>=maxDepth)continue;
@@ -2994,10 +3097,10 @@ function calcMoves(){
     }
     levels[currentLevel].maxMoves=999;
     updateStats();
-    status.innerHTML='<span class="testBad">Calc coups : aucune solution trouvée jusqu’à '+maxDepth+' coups.</span>';
+    solverPopup('Calc coups','Aucune solution trouvée jusqu’à <b>'+maxDepth+' coups</b>.',false);
   }catch(e){
     console.error('[CALC] erreur',e);
-    status.innerHTML='<span class="testBad">Calc coups : erreur JS - '+(e.message||e)+'</span>';
+    solverPopup('Calc coups','Erreur JS : <b>'+(e.message||e)+'</b>',false);
   }
 }
 
@@ -3160,7 +3263,7 @@ function testCurrentLevel(){
     const maxDepth=32;
 
     if(start.dead){
-      status.innerHTML='<span class="testBad">Test du jeu : impossible dès le départ ('+start.reason+').</span>';
+      solverPopup('Test du jeu','Impossible dès le départ : <b>'+start.reason+'</b>',false);
       return;
     }
 
@@ -3174,7 +3277,7 @@ function testCurrentLevel(){
         levels[currentLevel].maxMoves=s.path.length;
         levels[currentLevel].solution=s.path.map(d=>d>0?'R':'L').join('');
         updateStats();
-        status.innerHTML='<span class="testOk">Test du jeu : OK, finissable en '+s.path.length+' coup(s). Solution : '+(path||"déjà sur la sortie")+'</span>';
+        solverPopup('Test du jeu','OK, finissable en <b>'+s.path.length+' coup(s)</b><br>Solution : <b>'+(path||'déjà sur la sortie')+'</b>',true);
         return;
       }
       if(s.path.length>=maxDepth)continue;
@@ -3189,10 +3292,10 @@ function testCurrentLevel(){
       }
     }
 
-    status.innerHTML='<span class="testBad">Test du jeu : aucune solution trouvée jusqu’à '+maxDepth+' coups. Niveau probablement bloquant.</span>';
+    solverPopup('Test du jeu','Aucune solution trouvée jusqu’à <b>'+maxDepth+' coups</b>.<br>Niveau probablement bloquant.',false);
   }catch(e){
     console.error('[TEST] erreur',e);
-    status.innerHTML='<span class="testBad">Test du jeu : erreur JS - '+(e.message||e)+'</span>';
+    solverPopup('Test du jeu','Erreur JS : <b>'+(e.message||e)+'</b>',false);
   }
 }
 
@@ -3368,8 +3471,11 @@ document.getElementById("pauseResume")?.addEventListener("click",()=>setPaused(f
 document.getElementById("pauseSfxToggle")?.addEventListener("click",()=>{sfxOn=!sfxOn;soundOn=sfxOn||musicOn;updatePauseButtons();});
 document.getElementById("pauseMusicToggle")?.addEventListener("click",()=>{musicOn=!musicOn;soundOn=sfxOn||musicOn;updatePauseButtons();if(musicOn&&!gamePaused)startElevatorMusic();else stopElevatorMusic();});
 document.getElementById("pauseRestart")?.addEventListener("click",()=>{setPaused(false);resetPlay();});
-document.getElementById("pauseMainMenu")?.addEventListener("click",()=>{setPaused(false);stopElevatorMusic();document.getElementById("mainMenu")?.classList.remove("hidden");});
+document.getElementById("pauseMainMenu")?.addEventListener("click",()=>{setPaused(false);stopElevatorMusic();window.location.href="index.html";});
 updatePauseButtons();
+document.getElementById("title")?.addEventListener("click",showLevelRecap);
+document.getElementById("playStats")?.addEventListener("click",showLevelRecap);
+document.getElementById("levelBadge")?.addEventListener("click",showLevelRecap);
 document.getElementById("sideLeft").onclick=()=>turn(-1);document.getElementById("sideRight").onclick=()=>turn(1);document.getElementById("reset").onclick=()=>{userAudioGesture();resetPlay();};
 document.getElementById("saveLocal").onclick=saveLocal;document.getElementById("loadLocal").onclick=loadLocal;
 document.getElementById("exportJson").onclick=exportJson;document.getElementById("importBtn").onclick=()=>document.getElementById("importFile").click();
@@ -3408,6 +3514,40 @@ window.onkeydown=e=>{
   if(e.key=="ArrowRight"||k=="d")turn(1);
   if(k=="r")resetPlay();
 };
+
+function setLoadingText(msg){
+  const el=document.getElementById("loadingText");
+  if(el)el.textContent=msg;
+}
+function hideLoadingOverlay(){
+  const el=document.getElementById("loadingOverlay");
+  if(el)el.classList.add("hidden");
+}
+function showInfoBanner(title,html){
+  if(!banner)return;
+  bannerTitle.textContent=title;
+  bannerText.innerHTML=html;
+  starsEl.textContent="";
+  bannerAction.textContent="OK";
+  bannerAction.onclick=()=>banner.classList.add("hidden");
+  banner.classList.remove("lose");
+  banner.classList.remove("hidden");
+}
+function showLevelRecap(){
+  if(edit || !levels[currentLevel])return;
+  const l=levels[currentLevel];
+  const best=loadProgress().best?.[currentLevel] || null;
+  const solution=l.solution ? String(l.solution).replaceAll("L","↺ ").replaceAll("R","↻ ").trim() : "Non calculée";
+  showInfoBanner((currentLevel+1)+" - "+(l.name||"Niveau"),
+    "Objectif 3♥ : <b>"+(l.maxMoves||"?")+" coup(s)</b><br>"+
+    "Difficulté : <b>"+(l.difficulty||1)+"</b><br>"+
+    (best?"Meilleur score : <b>"+best.moves+" coup(s)</b><br>":"")+
+    "Solution connue : <b>"+solution+"</b>");
+}
+function solverPopup(title,html,ok){
+  status.innerHTML='<span class="'+(ok?'testOk':'testBad')+'">'+html.replace(/<br>/g,' ')+'</span>';
+  if(edit)showInfoBanner(title,html);
+}
 
 async function fetchJsonFromCandidates(kind,candidates){
   let lastErr=null;
@@ -3449,12 +3589,15 @@ function applyLevelsData(data,source){
 
   console.log("[LEVELS] OK source =",source,"|",levels.length,"niveau(x)",levels.map(l=>l.name));
   loadFromLevel(currentLevel);
+  setLoadingText("Préparation du niveau…");
+  requestAnimationFrame(()=>setTimeout(hideLoadingOverlay,120));
 
   status.style.display="block";
   status.textContent="OK : niveaux chargés depuis "+source+" ("+levels.length+" niveau(x)).";
 }
 
 function showLevelsJsonError(err){
+  hideLoadingOverlay();
   console.error("[LEVELS] ECHEC CHARGEMENT levels.json", err);
   levels=[];
   status.style.display="block";
@@ -3501,6 +3644,7 @@ function manualImportLevelsJson(){
 }
 
 async function loadStaticLevels(){
+  setLoadingText("Chargement levels.json…");
   // V57 STRICT EXTERNAL : aucun niveau embarqué, aucun fallback localStorage.
   // On teste plusieurs chemins pour éviter le gag du fichier au mauvais niveau.
   try{
