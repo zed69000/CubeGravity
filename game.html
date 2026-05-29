@@ -1637,6 +1637,127 @@ body:not(.editing) #playStats{
   #fullscreenBtn{right:80px!important}
 }
 
+
+/* ===== V43.29 HUD cleanup: pause only, fullscreen in pause, no pink board frame ===== */
+body:not(.editing) #top{
+  min-height:136px!important;
+  max-height:136px!important;
+  padding-top:calc(8px + env(safe-area-inset-top))!important;
+  background:linear-gradient(180deg,rgba(4,6,24,.98),rgba(4,6,24,.66) 72%,rgba(4,6,24,0))!important;
+}
+body:not(.editing) #title{
+  width:calc(100vw - 96px)!important;
+  max-width:720px!important;
+  min-height:42px!important;
+  margin:0 auto!important;
+  padding:0 54px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  text-align:center!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  border-radius:0!important;
+  color:#ff63c6!important;
+  font-family:monospace!important;
+  font-weight:1000!important;
+  font-size:clamp(22px,5.6vw,36px)!important;
+  letter-spacing:.08em!important;
+  line-height:1!important;
+  text-shadow:
+    0 4px 0 rgba(41,11,52,.75),
+    0 0 14px rgba(255,99,198,.62),
+    0 0 28px rgba(255,99,198,.28)!important;
+}
+body:not(.editing) #playStats{
+  top:62px!important;
+  width:calc(100vw - 18px)!important;
+}
+#pauseBtn{
+  right:14px!important;
+  top:calc(10px + env(safe-area-inset-top))!important;
+  width:48px!important;
+  height:48px!important;
+  min-width:48px!important;
+  min-height:48px!important;
+  border-radius:16px!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  font-size:24px!important;
+  line-height:1!important;
+}
+#fullscreenBtn{
+  display:none!important;
+  visibility:hidden!important;
+  opacity:0!important;
+  pointer-events:none!important;
+}
+body.editing #pauseBtn{
+  display:none!important;
+}
+.electricEdge{
+  display:none!important;
+}
+.boardWrap svg{
+  border-color:#2cf7ff!important;
+  box-shadow:0 0 0 3px rgba(44,247,255,.18),0 18px 34px rgba(0,0,0,.42)!important;
+}
+#stage{
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  padding-top:0!important;
+  padding-bottom:0!important;
+}
+.boardWrap{
+  margin:auto!important;
+  transform:translateY(-1.5vh);
+}
+.pauseGrid{
+  grid-template-columns:1fr 1fr!important;
+}
+#pauseFullscreen{
+  background:#7d6dff!important;
+  color:#fff!important;
+}
+@media (max-width:700px){
+  body:not(.editing) #top{
+    min-height:138px!important;
+    max-height:138px!important;
+    padding-top:calc(8px + env(safe-area-inset-top))!important;
+  }
+  body:not(.editing) #title{
+    width:calc(100vw - 84px)!important;
+    padding:0 48px 0 10px!important;
+    font-size:clamp(20px,6.2vw,31px)!important;
+    letter-spacing:.06em!important;
+  }
+  body:not(.editing) #playStats{
+    top:62px!important;
+    width:calc(100vw - 16px)!important;
+  }
+  #pauseBtn{
+    right:13px!important;
+    top:calc(9px + env(safe-area-inset-top))!important;
+    width:48px!important;
+    height:48px!important;
+    min-width:48px!important;
+    min-height:48px!important;
+  }
+  #stage{
+    align-items:center!important;
+    justify-content:center!important;
+  }
+  .boardWrap{
+    transform:translateY(-1vh);
+  }
+}
+
 </style>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1800,6 +1921,7 @@ body:not(.editing) #playStats{
       <button id="pauseMusicToggle">Music ON</button>
       <button id="pauseRestart">Rejouer</button>
       <button id="pauseMainMenu">Menu</button>
+      <button id="pauseFullscreen">Plein écran</button>
     </div>
     <label class="audioSliderRow" for="musicVolumeSlider">
       <span>Musique</span>
@@ -4064,4 +4186,52 @@ loadAssets()
 </script>
 
 <script>if(window.CG_EDITOR_MODE){console.log("Editor mode enabled");}</script>
+
+<script>
+/* ===== V43.29 fullscreen moved into pause menu ===== */
+(function(){
+  const btn=document.getElementById("pauseFullscreen");
+  if(!btn)return;
+
+  function isIOS(){
+    return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+      (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
+  }
+
+  function showFullscreenHelp(){
+    const msg=isIOS()
+      ? "Sur iPhone, Safari ne donne pas toujours le vrai plein écran par bouton. Pour le rendu plein écran : Partager → Ajouter à l’écran d’accueil, puis lance le jeu depuis l’icône."
+      : "Ton navigateur bloque le plein écran. Essaie depuis Chrome/Edge ou lance le jeu en mode application.";
+    if(typeof banner!=="undefined" && banner && typeof bannerTitle!=="undefined"){
+      bannerTitle.textContent="Plein écran";
+      bannerText.textContent=msg;
+      if(typeof starsEl!=="undefined")starsEl.textContent="";
+      bannerAction.textContent="OK";
+      bannerAction.onclick=()=>banner.classList.add("hidden");
+      banner.classList.remove("hidden");
+    }else{
+      alert(msg);
+    }
+  }
+
+  btn.addEventListener("click",async()=>{
+    try{
+      const target=document.documentElement;
+      if(target.requestFullscreen){
+        await target.requestFullscreen({navigationUI:"hide"});
+        return;
+      }
+      if(target.webkitRequestFullscreen){
+        target.webkitRequestFullscreen();
+        return;
+      }
+      showFullscreenHelp();
+    }catch(e){
+      console.warn("[PAUSE FULLSCREEN]",e);
+      showFullscreenHelp();
+    }
+  });
+})();
+</script>
+
 </body></html>
