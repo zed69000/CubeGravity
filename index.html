@@ -345,6 +345,10 @@ body::before{
   .playBtn{min-height:62px;padding:14px 24px;border-radius:26px}
   .optionBtn{min-height:50px;padding:12px 22px}
 }
+
+.heroAssetWrap{opacity:0;transition:opacity .18s ease;}
+.heroAssetWrap.assetReady{opacity:1;}
+
 </style>
 </head>
 <body>
@@ -374,7 +378,7 @@ body::before{
 
     <div class="heroAssetWrap">
       <svg id="playerHeroSvg" class="assetHidden" viewBox="0 0 40 40" preserveAspectRatio="xMidYMid meet"></svg>
-      <div id="fallbackCube" class="fallbackCube">
+      <div id="fallbackCube" class="fallbackCube assetHidden">
         <div class="fallbackEye left"></div>
         <div class="fallbackEye right"></div>
         <div class="fallbackMouth"></div>
@@ -664,6 +668,7 @@ function drawLayer(layer){
 async function loadPlayerAsset(){
   const svg=document.getElementById("playerHeroSvg");
   const fallback=document.getElementById("fallbackCube");
+  const wrap=document.querySelector(".heroAssetWrap");
   const candidates=[
     "vector_assets_runtime.json",
     "./vector_assets_runtime.json",
@@ -692,6 +697,7 @@ async function loadPlayerAsset(){
 
       svg.classList.remove("assetHidden");
       fallback.classList.add("assetHidden");
+      wrap && wrap.classList.add("assetReady");
       console.log("[MAINMENU] player asset loaded from",path);
       return;
     }catch(err){
@@ -699,6 +705,8 @@ async function loadPlayerAsset(){
     }
   }
 
+  fallback.classList.remove("assetHidden");
+  wrap && wrap.classList.add("assetReady");
   console.warn("[MAINMENU] fallback cube used");
 }
 
