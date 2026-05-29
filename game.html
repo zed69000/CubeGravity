@@ -28,6 +28,10 @@ body{display:flex;flex-direction:column}
 #pauseResume{background:#52f28a;color:#061407}
 #pauseMainMenu{background:#ffca5f;color:#241400}
 #pauseRestart{background:#3ce7ff;color:#03141a}
+#pauseHint{background:#ff63c6;color:#240014}
+.pauseSlider{margin:12px 0;text-align:left;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:16px;padding:10px 12px}
+.pauseSlider label{display:flex;justify-content:space-between;align-items:center;background:transparent!important;padding:0!important;margin-bottom:8px;color:#eef2ff;font-size:13px}
+.pauseSlider input[type="range"]{width:100%;accent-color:#3ce7ff;padding:0;background:transparent}
 
 #top{padding:6px 8px;background:#05050a;border-bottom:1px solid #303246;font-size:12px;line-height:1.2;max-height:42vh;overflow:auto}
 #title{font-weight:900;font-size:16px;margin-bottom:4px;text-align:center;font-family:monospace;letter-spacing:1px;text-shadow:0 2px 0 #000,0 0 10px var(--accent,#3fc1ff)}
@@ -471,7 +475,7 @@ body.editing #bar{position:static!important;max-width:none!important;margin-top:
 #playStats{position:absolute!important;left:50%!important;top:64px!important;transform:translateX(-50%)!important;width:min(800px,95vw)!important;text-align:center!important;pointer-events:none!important}
 body.editing #playStats{display:none!important}
 .objectiveTitle{display:none!important}
-.objectiveLine{display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:0!important;align-items:stretch!important;background:rgba(5,11,42,.9)!important;border:2px solid rgba(100,118,255,.45)!important;border-radius:14px!important;overflow:hidden!important;box-shadow:0 0 0 1px rgba(17,255,255,.08),0 10px 26px rgba(0,0,0,.25)!important}
+.objectiveLine{display:grid!important;grid-template-columns:repeat(4,minmax(0,1fr))!important;gap:0!important;align-items:stretch!important;background:rgba(5,11,42,.9)!important;border:2px solid rgba(100,118,255,.45)!important;border-radius:14px!important;overflow:hidden!important;box-shadow:0 0 0 1px rgba(17,255,255,.08),0 10px 26px rgba(0,0,0,.25)!important}
 .objectiveLine .metric{display:flex!important;align-items:center!important;justify-content:center!important;gap:9px!important;padding:10px 12px!important;position:relative!important;min-width:0}
 .objectiveLine .metric:not(:last-child)::after{content:"";position:absolute;right:0;top:12px;bottom:12px;width:1px;background:rgba(160,180,255,.25)}
 .objectiveLine .metric i{font-style:normal;font-size:20px;font-weight:900}
@@ -480,6 +484,7 @@ body.editing #playStats{display:none!important}
 .objectiveLine .metricMoves i,.objectiveLine .metricMoves b{color:#3ddcff}
 .objectiveLine .metricGoal i,.objectiveLine .metricGoal b{color:#ffd54a}
 .objectiveLine .metricDiff i,.objectiveLine .metricDiff b{color:#ff63c6}
+.objectiveLine .metricMoney i,.objectiveLine .metricMoney b{color:#ff8fc2}
 #levelBadge{top:12px!important;background:rgba(15,10,50,.92)!important;border:2px solid rgba(120,88,255,.75)!important;color:#f4f6ff!important;border-radius:14px!important;padding:8px 20px!important;font-size:16px!important;box-shadow:0 0 18px rgba(112,78,255,.25)!important;max-width:min(70vw,640px)!important}
 #stage{background:radial-gradient(circle at 50% 40%, rgba(35,31,118,.42), transparent 36%),radial-gradient(circle at 50% 35%, rgba(9,10,50,.98), #03051a 74%)!important}
 #pixelBg{opacity:.75!important;filter:saturate(1.2) brightness(1.0)!important}
@@ -972,6 +977,8 @@ html,body{
 .objectiveLine .metricGoal b{color:var(--gc-yellow)!important}
 .objectiveLine .metricDiff i,
 .objectiveLine .metricDiff b{color:var(--gc-pink)!important}
+.objectiveLine .metricMoney i,
+.objectiveLine .metricMoney b{color:#ff8fc2!important}
 
 #levelBadge{
   background:rgba(58,8,42,.90)!important;
@@ -1125,6 +1132,8 @@ html,body{
 .objectiveLine .metricGoal b{color:var(--gc-yellow)!important}
 .objectiveLine .metricDiff i,
 .objectiveLine .metricDiff b{color:var(--gc-pink)!important}
+.objectiveLine .metricMoney i,
+.objectiveLine .metricMoney b{color:#ff8fc2!important}
 
 #levelBadge{
   background:rgba(58,8,42,.92)!important;
@@ -1557,31 +1566,6 @@ body.editing #pauseBtn{display:none!important}
   #fullscreenBtn{top:calc(128px + env(safe-area-inset-top))!important;width:58px!important;height:58px!important}
 }
 
-/* ===== V43.18 clean audio mixer ===== */
-.audioSliderRow{
-  display:grid;
-  grid-template-columns:86px 1fr 44px;
-  gap:10px;
-  align-items:center;
-  margin:12px 0 0;
-  padding:10px 12px;
-  border-radius:16px;
-  background:rgba(255,255,255,.07);
-  border:1px solid rgba(255,255,255,.12);
-  color:#eef2ff;
-  font-weight:900;
-}
-.audioSliderRow input[type=range]{
-  width:100%;
-  padding:0;
-  accent-color:#3ce7ff;
-}
-.audioSliderRow span:last-child{
-  font-family:monospace;
-  color:#ffd95f;
-  text-align:right;
-}
-
 </style>
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -1740,22 +1724,15 @@ body.editing #pauseBtn{display:none!important}
     <div class="pauseTitle">PAUSE</div>
     <div class="pauseSub">Réglages rapides. Même le cube a droit à une convention collective.</div>
     <button id="pauseResume">Reprendre</button>
+    <div class="pauseSlider"><label><span>Musique</span><span id="musicVolumeLabel">15%</span></label><input id="musicVolumeSlider" type="range" min="0" max="100" value="15"></div>
+    <div class="pauseSlider"><label><span>Bruitages</span><span id="sfxVolumeLabel">30%</span></label><input id="sfxVolumeSlider" type="range" min="0" max="100" value="30"></div>
     <div class="pauseGrid">
       <button id="pauseSfxToggle">SFX ON</button>
       <button id="pauseMusicToggle">Music ON</button>
+      <button id="pauseHint">Indice 💖</button>
       <button id="pauseRestart">Rejouer</button>
       <button id="pauseMainMenu">Menu</button>
     </div>
-    <label class="audioSliderRow" for="musicVolumeSlider">
-      <span>Musique</span>
-      <input id="musicVolumeSlider" type="range" min="0" max="100" step="1" value="15">
-      <span id="musicVolumeLabel">15%</span>
-    </label>
-    <label class="audioSliderRow" for="sfxVolumeSlider">
-      <span>SFX</span>
-      <input id="sfxVolumeSlider" type="range" min="0" max="100" step="1" value="30">
-      <span id="sfxVolumeLabel">30%</span>
-    </label>
   </div>
 </div>
 
@@ -1880,7 +1857,7 @@ const editPanel=document.getElementById("editPanel"),levelNameInput=document.get
 const banner=document.getElementById("banner"),bannerTitle=document.getElementById("bannerTitle"),bannerText=document.getElementById("bannerText"),starsEl=document.getElementById("stars"),bannerAction=document.getElementById("bannerAction");
 
 let levels=[];
-const GAME_VERSION="V43.18-clean-audio-mixer";
+const GAME_VERSION="V43.20-softmoney-hints";
 setTimeout(()=>{const v=document.getElementById("gameVersionBadge"); if(v)v.textContent=GAME_VERSION;},0);
 let gameSettings={fallDelayMs:135,rotationDurationMs:320};
 let fallbackLevels=[]; // V57: aucun niveau de gameplay en dur. levels.json est obligatoire.
@@ -1888,17 +1865,14 @@ const EMBEDDED_LEVELS_DATA={"version":5,"settings":{"fallDelayMs":60,"rotationDu
 
 let currentLevel=0,baseMap=[],b=[],p={x:0,y:0},start={x:0,y:0},exit={x:0,y:0};
 let door=false,busy=false,edit=!!window.CG_EDITOR_MODE,moves=0,gameOver=false,confettiTimer=null,deadPlayer=false,idleTick=0,painting=false,lastPaintKey='',visualOri=0,squash=0,soundOn=true,sfxOn=true,musicOn=true,audioCtx=null,rotatorCooldown=false,gamePaused=false;
-let wallNoteIndex=0,lastWallSoundAt=0,eternalFallWraps=0,elevatorMusicTimer=null,elevatorMusicStarted=false,musicStep=0,bgMusic=null;
+let wallNoteIndex=0,lastWallSoundAt=0,eternalFallWraps=0,elevatorMusicTimer=null,elevatorMusicStarted=false,musicStep=0;
 const BG_MUSIC_PATH="audio/music/Petals_in_Perfect_Order.mp3";
-// V43.18 : une seule source de vérité.
-// Musique = volume direct du MP3 HTMLAudioElement.
-// SFX = volume WebAudio global multiplié par un boost maître.
 const DEFAULT_MUSIC_VOLUME=0.15;
 const DEFAULT_SFX_VOLUME=0.30;
-const SFX_GAIN_BOOST=10.0;
-const SFX_MAX_GAIN=0.95;
+const SFX_GAIN_BOOST=7.0;
 let musicVolume=DEFAULT_MUSIC_VOLUME;
 let sfxVolume=DEFAULT_SFX_VOLUME;
+let masterGain=null,musicGain=null,sfxGain=null,musicBuffer=null,musicSource=null,musicLoadingPromise=null;
 let activeSwitchKey=null;
 let activeSwitchHeld=false;
 
@@ -2085,6 +2059,7 @@ function updateStats(){
         '<span class="metric metricMoves"><i>⟳</i><small>Coups</small><b>'+moves+'</b></span>'+
         '<span class="metric metricGoal"><i>★</i><small>Objectif 3♥</small><b>'+max+'</b></span>'+
         '<span class="metric metricDiff"><i>✦</i><small>Difficulté</small><b>'+(levels[currentLevel].difficulty||1)+'</b></span>'+
+        '<span class="metric metricMoney"><i>💖</i><small>Cœurs</small><b>'+loadHearts()+'</b></span>'+
       '</div>';
   }
   const badge=document.getElementById("levelBadge");
@@ -2103,74 +2078,104 @@ function toggleLock(){
   updateLockUI();
   status.textContent=isLocked()?"Niveau protégé. Déverrouille pour modifier.":"Niveau déverrouillé.";
 }
+function clamp01(v){return Math.max(0,Math.min(1,Number(v)||0));}
 function ensureAudio(){
   if(!soundOn)return null;
   if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+  if(!masterGain){
+    masterGain=audioCtx.createGain();
+    musicGain=audioCtx.createGain();
+    sfxGain=audioCtx.createGain();
+    musicGain.connect(masterGain);
+    sfxGain.connect(masterGain);
+    masterGain.connect(audioCtx.destination);
+  }
   if(audioCtx.state==="suspended")audioCtx.resume().catch(()=>{});
+  applyAudioVolumes();
   return audioCtx;
-}
-function clamp01(v){return Math.max(0,Math.min(1,Number(v)||0));}
-function percent(v){return Math.round(clamp01(v)*100);}
-function syncAudioSliders(){
-  const ml=document.getElementById("musicVolumeLabel");
-  const sl=document.getElementById("sfxVolumeLabel");
-  const ms=document.getElementById("musicVolumeSlider");
-  const ss=document.getElementById("sfxVolumeSlider");
-  if(ml)ml.textContent=percent(musicVolume)+"%";
-  if(sl)sl.textContent=percent(sfxVolume)+"%";
-  if(ms && document.activeElement!==ms)ms.value=String(percent(musicVolume));
-  if(ss && document.activeElement!==ss)ss.value=String(percent(sfxVolume));
 }
 function applyAudioVolumes(){
   musicVolume=clamp01(musicVolume);
   sfxVolume=clamp01(sfxVolume);
-  if(bgMusic)bgMusic.volume=(soundOn && musicOn) ? musicVolume : 0;
-  syncAudioSliders();
+  if(musicGain)musicGain.gain.setTargetAtTime((soundOn&&musicOn&&!gamePaused&&!edit&&!gameOver)?musicVolume:0,audioCtx.currentTime,0.02);
+  if(sfxGain)sfxGain.gain.setTargetAtTime((soundOn&&sfxOn)?sfxVolume:0,audioCtx.currentTime,0.01);
+  const ml=document.getElementById("musicVolumeLabel"), sl=document.getElementById("sfxVolumeLabel");
+  const ms=document.getElementById("musicVolumeSlider"), ss=document.getElementById("sfxVolumeSlider");
+  if(ml)ml.textContent=Math.round(musicVolume*100)+"%";
+  if(sl)sl.textContent=Math.round(sfxVolume*100)+"%";
+  if(ms && document.activeElement!==ms)ms.value=String(Math.round(musicVolume*100));
+  if(ss && document.activeElement!==ss)ss.value=String(Math.round(sfxVolume*100));
 }
-function beep(freq=440,dur=.08,type="square",gain=.04,kind="sfx"){
-  if(kind==="sfx" && (!soundOn || !sfxOn || sfxVolume<=0))return;
-  if(kind==="music" && (!soundOn || !musicOn || musicVolume<=0))return;
-  const ac=ensureAudio(); if(!ac)return;
-  const o=ac.createOscillator(), g=ac.createGain(), f=ac.createBiquadFilter();
-  o.type=type; o.frequency.value=freq;
-  f.type="lowpass"; f.frequency.value=kind==="music"?1200:4200;
-  const baseVolume = kind==="music" ? musicVolume : sfxVolume;
-  const boost = kind==="sfx" ? SFX_GAIN_BOOST : 1;
-  const maxGain = kind==="sfx" ? SFX_MAX_GAIN : 0.18;
-  const finalGain=Math.max(0.0001,Math.min(maxGain,gain*baseVolume*boost));
-  g.gain.setValueAtTime(finalGain,ac.currentTime);
-  g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+Math.max(.02,dur));
-  o.connect(f); f.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime+dur);
+async function loadMusicBuffer(){
+  const ac=ensureAudio();
+  if(!ac)return null;
+  if(musicBuffer)return musicBuffer;
+  if(musicLoadingPromise)return musicLoadingPromise;
+  musicLoadingPromise=fetch(BG_MUSIC_PATH,{cache:"force-cache"})
+    .then(r=>{if(!r.ok)throw new Error("MP3 introuvable: "+r.status);return r.arrayBuffer();})
+    .then(buf=>new Promise((resolve,reject)=>{
+      const copy=buf.slice(0);
+      const p=ac.decodeAudioData(copy,resolve,reject);
+      if(p && typeof p.then==="function")p.then(resolve).catch(reject);
+    }))
+    .then(buffer=>{musicBuffer=buffer;return buffer;})
+    .catch(e=>{console.warn("[AUDIO] musique MP3 non chargée",e);musicLoadingPromise=null;return null;});
+  return musicLoadingPromise;
+}
+function startMusicSource(buffer){
+  const ac=ensureAudio();
+  if(!ac||!buffer||musicSource)return;
+  const src=ac.createBufferSource();
+  src.buffer=buffer;
+  src.loop=true;
+  src.connect(musicGain);
+  src.onended=()=>{if(musicSource===src)musicSource=null;};
+  try{src.start(0);}catch(e){console.warn("[AUDIO] start musique refusé",e);return;}
+  musicSource=src;
+  elevatorMusicStarted=true;
+  applyAudioVolumes();
 }
 function startElevatorMusic(){
-  if(!soundOn || !musicOn || gamePaused || edit || gameOver)return;
-  if(!bgMusic){
-    bgMusic=new Audio(BG_MUSIC_PATH);
-    bgMusic.loop=true;
-    bgMusic.preload="auto";
-    bgMusic.playsInline=true;
-  }
-  applyAudioVolumes();
-  if(!bgMusic.paused)return;
-  elevatorMusicStarted=true;
-  bgMusic.play().catch(()=>{elevatorMusicStarted=false;});
+  if(!soundOn || !musicOn || gamePaused || edit || gameOver){applyAudioVolumes();return;}
+  const ac=ensureAudio(); if(!ac)return;
+  if(musicSource){applyAudioVolumes();return;}
+  loadMusicBuffer().then(buffer=>{
+    if(buffer && soundOn && musicOn && !gamePaused && !edit && !gameOver)startMusicSource(buffer);
+  });
 }
 function stopElevatorMusic(){
   if(elevatorMusicTimer){clearInterval(elevatorMusicTimer);elevatorMusicTimer=null;}
   elevatorMusicStarted=false;
-  if(bgMusic)bgMusic.pause();
+  // iPhone/Safari : on ne détruit pas la source pendant une simple pause.
+  // On baisse le gain à zéro, sinon Safari adore recouper/redémarrer l'audio à chaque interaction.
+  applyAudioVolumes();
+}
+function beep(freq=440,dur=.08,type="square",gain=.04,kind="sfx"){
+  if(kind==="sfx" && (!soundOn || !sfxOn))return;
+  if(kind==="music" && (!soundOn || !musicOn))return;
+  const ac=ensureAudio(); if(!ac)return;
+  const o=ac.createOscillator(), g=ac.createGain(), f=ac.createBiquadFilter();
+  o.type=type; o.frequency.value=freq;
+  f.type="lowpass"; f.frequency.value=kind==="music"?1200:4200;
+  const baseGain = kind==="sfx" ? gain*SFX_GAIN_BOOST : gain;
+  const safeGain = Math.max(0.0001, Math.min(1.5, baseGain));
+  g.gain.setValueAtTime(safeGain,ac.currentTime);
+  g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+Math.max(.02,dur));
+  o.connect(f); f.connect(g); g.connect(kind==="sfx"?sfxGain:musicGain); o.start(); o.stop(ac.currentTime+dur);
 }
 function updatePauseButtons(){
   const a=document.getElementById("pauseSfxToggle"),m=document.getElementById("pauseMusicToggle"),e=document.getElementById("soundToggle");
   if(a)a.textContent=sfxOn?"SFX ON":"SFX OFF";
   if(m)m.textContent=musicOn?"Music ON":"Music OFF";
   if(e)e.textContent=(soundOn&&sfxOn&&musicOn)?"🔊 Son":"🔈 Son";
+  applyAudioVolumes();
 }
 function setPaused(v){
   gamePaused=!!v;
   const menu=document.getElementById("pauseMenu");
   if(menu)menu.classList.toggle("hidden",!gamePaused);
   if(gamePaused)stopElevatorMusic(); else if(!edit&&!gameOver)startElevatorMusic();
+  applyAudioVolumes();
 }
 function soundMove(){beep(210,.045,"square",.012,"sfx")}
 function soundRotate(d){
@@ -2204,7 +2209,7 @@ function userAudioGesture(){
 function toggleSound(){
   soundOn=!soundOn; sfxOn=soundOn; musicOn=soundOn;
   updatePauseButtons();
-  if(soundOn){userAudioGesture();status.textContent="Son activé.";}else{stopElevatorMusic();status.textContent="Son coupé.";}
+  if(soundOn){userAudioGesture();status.textContent="Son activé.";}else{stopElevatorMusic();status.textContent="Son coupé.";} applyAudioVolumes();
 }
 
 function hideBanner(){banner.classList.add("hidden");banner.classList.remove("lose");svg.style.filter="none";stopConfetti()}
@@ -2884,7 +2889,7 @@ function fall(){
             "final"
           );
         }else{
-          showBanner("DESTINÉE RETROUVÉE","« "+levels[currentLevel].name+" » · "+moves+" coups · objectif 3♥ : "+levels[currentLevel].maxMoves,stars,"win");
+          showBanner("DESTINÉE RETROUVÉE","« "+levels[currentLevel].name+" » · "+moves+" coups · objectif 3♥ : "+levels[currentLevel].maxMoves+"<br>Gain : +"+victoryHeartReward()+" 💖 · Solde : "+loadHearts()+" 💖",stars,"win");
         }
       }
     }
@@ -3375,6 +3380,53 @@ function testCurrentLevel(){
 
 
 const PROGRESS_KEY="gravity_cube_player_progress_v1";
+const HEARTS_KEY="gravity_cube_soft_hearts_v1";
+const HINT_COST=3;
+function loadHearts(){
+  try{return Math.max(0,parseInt(localStorage.getItem(HEARTS_KEY)||"0",10)||0)}catch(e){return 0}
+}
+function saveHearts(v){
+  try{localStorage.setItem(HEARTS_KEY,String(Math.max(0,parseInt(v,10)||0)))}catch(e){}
+}
+function addHearts(v){
+  const next=loadHearts()+Math.max(0,parseInt(v,10)||0);
+  saveHearts(next);
+  updateStats();
+  return next;
+}
+function spendHearts(v){
+  const cost=Math.max(0,parseInt(v,10)||0);
+  const cur=loadHearts();
+  if(cur<cost)return false;
+  saveHearts(cur-cost);
+  updateStats();
+  return true;
+}
+function victoryHeartReward(){
+  const s=starScore();
+  return Math.max(1,s);
+}
+function buildPaidHint(){
+  const l=levels[currentLevel]||{};
+  const sol=String(l.solution||"");
+  if(sol && moves<sol.length){
+    const next=sol[moves]==="L"?"↺ gauche":"↻ droite";
+    return "Indice acheté : essaye maintenant <b>"+next+"</b>.";
+  }
+  if(sol){
+    return "Indice acheté : tu as déjà utilisé autant de coups que la solution connue. Recommence le niveau pour viser le chemin optimal.";
+  }
+  return "Indice acheté : "+(companionMessage("hint")||"observe où le cube s’arrête après la chute, puis prépare la rotation suivante.");
+}
+function buyHint(){
+  if(edit)return;
+  if(loadHearts()<HINT_COST){
+    showInfoBanner("Pas assez de cœurs","Il faut <b>"+HINT_COST+" 💖</b> pour acheter un indice.<br>Tu as <b>"+loadHearts()+" 💖</b>. Gagne des niveaux, cette économie de l’amour est impitoyable.");
+    return;
+  }
+  spendHearts(HINT_COST);
+  showInfoBanner("Indice 💖",buildPaidHint()+"<br><br>Coût : <b>"+HINT_COST+" 💖</b><br>Solde : <b>"+loadHearts()+" 💖</b>");
+}
 
 function loadProgress(){
   try{
@@ -3393,6 +3445,9 @@ function saveCurrentProgress(){
   saveProgress(pr);
 }
 function saveWinProgress(){
+  const reward=victoryHeartReward();
+  addHearts(reward);
+  status.textContent="Victoire : +"+reward+" 💖. Solde : "+loadHearts()+" 💖.";
   const pr=loadProgress();
   const stars=starScore();
   const best=pr.best||{};
@@ -3540,39 +3595,13 @@ document.getElementById("companionSkip").onclick=()=>{
 document.getElementById("companionHelp").onclick=()=>showCompanion(companionMessage("hint"),false);
 document.getElementById("pauseBtn")?.addEventListener("click",()=>{userAudioGesture();setPaused(!gamePaused);});
 document.getElementById("pauseResume")?.addEventListener("click",()=>setPaused(false));
-document.getElementById("pauseSfxToggle")?.addEventListener("click",()=>{
-  sfxOn=!sfxOn;
-  if(sfxOn && sfxVolume<=0)sfxVolume=DEFAULT_SFX_VOLUME;
-  soundOn=sfxOn||musicOn;
-  applyAudioVolumes();
-  updatePauseButtons();
-});
-document.getElementById("pauseMusicToggle")?.addEventListener("click",()=>{
-  musicOn=!musicOn;
-  if(musicOn && musicVolume<=0)musicVolume=DEFAULT_MUSIC_VOLUME;
-  soundOn=sfxOn||musicOn;
-  applyAudioVolumes();
-  updatePauseButtons();
-  if(musicOn&&!gamePaused)startElevatorMusic();else stopElevatorMusic();
-});
-document.getElementById("musicVolumeSlider")?.addEventListener("input",e=>{
-  musicVolume=clamp01(Number(e.target.value)/100);
-  musicOn=musicVolume>0;
-  soundOn=sfxOn||musicOn;
-  applyAudioVolumes();
-  updatePauseButtons();
-  if(musicOn&&!gamePaused)startElevatorMusic();else stopElevatorMusic();
-});
-document.getElementById("sfxVolumeSlider")?.addEventListener("input",e=>{
-  sfxVolume=clamp01(Number(e.target.value)/100);
-  sfxOn=sfxVolume>0;
-  soundOn=sfxOn||musicOn;
-  applyAudioVolumes();
-  updatePauseButtons();
-});
+document.getElementById("pauseSfxToggle")?.addEventListener("click",()=>{sfxOn=!sfxOn;soundOn=sfxOn||musicOn;updatePauseButtons();});
+document.getElementById("pauseMusicToggle")?.addEventListener("click",()=>{musicOn=!musicOn;soundOn=sfxOn||musicOn;updatePauseButtons();if(musicOn&&!gamePaused)startElevatorMusic();else stopElevatorMusic();});
+document.getElementById("musicVolumeSlider")?.addEventListener("input",e=>{musicVolume=Number(e.target.value)/100;musicOn=musicVolume>0;soundOn=sfxOn||musicOn;applyAudioVolumes();updatePauseButtons();if(musicOn&&!gamePaused&&!edit&&!gameOver)startElevatorMusic();});
+document.getElementById("sfxVolumeSlider")?.addEventListener("input",e=>{sfxVolume=Number(e.target.value)/100;sfxOn=sfxVolume>0;soundOn=sfxOn||musicOn;applyAudioVolumes();updatePauseButtons();});
+document.getElementById("pauseHint")?.addEventListener("click",()=>{setPaused(false);buyHint();});
 document.getElementById("pauseRestart")?.addEventListener("click",()=>{setPaused(false);resetPlay();});
 document.getElementById("pauseMainMenu")?.addEventListener("click",()=>{setPaused(false);stopElevatorMusic();window.location.href="index.html";});
-applyAudioVolumes();
 updatePauseButtons();
 document.getElementById("title")?.addEventListener("click",showLevelRecap);
 document.getElementById("playStats")?.addEventListener("click",showLevelRecap);
@@ -3594,7 +3623,7 @@ document.getElementById("fallDelayInput").oninput=()=>{writeGlobalSettingsFromIn
 document.getElementById("rotationDurationInput").oninput=()=>{writeGlobalSettingsFromInputs();status.textContent="Rotation globale : "+getRotationDurationMs()+" ms.";};
 
 document.getElementById("sortDifficulty").onclick=sortByDifficulty;
-document.getElementById("resetProgress").onclick=()=>{localStorage.removeItem(PROGRESS_KEY);status.textContent="Progression joueur remise à zéro.";};
+document.getElementById("resetProgress").onclick=()=>{localStorage.removeItem(PROGRESS_KEY);localStorage.removeItem(HEARTS_KEY);updateStats();status.textContent="Progression joueur et cœurs remis à zéro.";};
 document.getElementById("resetTutorial").onclick=()=>{
   ["core","button","death","rotator"].forEach(s=>{
     try{localStorage.removeItem(companionSeenKey(s))}catch(e){}
@@ -3642,6 +3671,7 @@ function showLevelRecap(){
   showInfoBanner((currentLevel+1)+" - "+(l.name||"Niveau"),
     "Objectif 3♥ : <b>"+(l.maxMoves||"?")+" coup(s)</b><br>"+
     "Difficulté : <b>"+(l.difficulty||1)+"</b><br>"+
+    "Cœurs : <b>"+loadHearts()+" 💖</b> · Indice : <b>"+HINT_COST+" 💖</b><br>"+
     (best?"Meilleur score : <b>"+best.moves+" coup(s)</b><br>":"")+
     "Solution connue : <b>"+solution+"</b>");
 }
@@ -4010,3 +4040,4 @@ loadAssets()
 
 <script>if(window.CG_EDITOR_MODE){console.log("Editor mode enabled");}</script>
 </body></html>
+<!-- V43.20 softmoney hints patch applied -->
