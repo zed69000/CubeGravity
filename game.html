@@ -2188,11 +2188,11 @@ const EMBEDDED_LEVELS_DATA={"version":5,"settings":{"fallDelayMs":60,"rotationDu
 
 let currentLevel=0,baseMap=[],b=[],p={x:0,y:0},start={x:0,y:0},exit={x:0,y:0};
 let door=false,busy=false,edit=!!window.CG_EDITOR_MODE,moves=0,gameOver=false,confettiTimer=null,deadPlayer=false,idleTick=0,painting=false,lastPaintKey='',visualOri=0,squash=0,soundOn=true,sfxOn=true,musicOn=true,audioCtx=null,rotatorCooldown=false,gamePaused=false;
-let wallNoteIndex=0,lastWallSoundAt=0,eternalFallWraps=0,elevatorMusicTimer=null,elevatorMusicStarted=false,musicStep=0,bgMusic=null;
+let wallNoteIndex=0,lastWallSoundAt=0,eternalFallWraps=0,elevatorMusicTimer=null,elevatorMusicStarted=false,musicStep=0,bgMusic=null,musicSourceNode=null,musicGainNode=null;
 const BG_MUSIC_PATH="audio/music/Petals_in_Perfect_Order.mp3";
-// V43.18 : une seule source de vérité.
-// Musique = volume direct du MP3 HTMLAudioElement.
-// SFX = volume WebAudio global multiplié par un boost maître.
+// V43.31 : audio protégé iPhone.
+ // Musique MP3 routée dans WebAudio GainNode si possible, car iOS ignore parfois HTMLAudioElement.volume.
+ // SFX = volume WebAudio global multiplié par un boost maître.
 const DEFAULT_MUSIC_VOLUME=0.15;
 const DEFAULT_SFX_VOLUME=0.30;
 const SFX_GAIN_BOOST=10.0;
@@ -2419,6 +2419,30 @@ function ensureAudio(){
   if(audioCtx.state==="suspended")audioCtx.resume().catch(()=>{});
   return audioCtx;
 }
+
+function ensureMusicRouting(){
+  if(!bgMusic)return null;
+  const ac=ensureAudio();
+  if(!ac)return null;
+
+  if(!musicGainNode){
+    musicGainNode=ac.createGain();
+    musicGainNode.connect(ac.destination);
+  }
+
+  if(!musicSourceNode){
+    try{
+      musicSourceNode=ac.createMediaElementSource(bgMusic);
+      musicSourceNode.connect(musicGainNode);
+      bgMusic.volume=1;
+    }catch(e){
+      // Si le navigateur refuse la route WebAudio, on garde le fallback HTMLAudioElement.volume.
+      console.warn("[AUDIO] routing musique WebAudio impossible, fallback HTML volume", e);
+    }
+  }
+
+  return musicGainNode;
+}
 function clamp01(v){return Math.max(0,Math.min(1,Number(v)||0));}
 function percent(v){return Math.round(clamp01(v)*100);}
 function syncAudioSliders(){
@@ -2434,7 +2458,25 @@ function syncAudioSliders(){
 function applyAudioVolumes(){
   musicVolume=clamp01(musicVolume);
   sfxVolume=clamp01(sfxVolume);
-  if(bgMusic)bgMusic.volume=(soundOn && musicOn) ? musicVolume : 0;
+
+  const targetMusicVolume=(soundOn && musicOn) ? musicVolume : 0;
+
+  if(bgMusic){
+    if(musicGainNode && audioCtx){
+      try{
+        musicGainNode.gain.cancelScheduledValues(audioCtx.currentTime);
+        musicGainNode.gain.setTargetAtTime(targetMusicVolume,audioCtx.currentTime,0.025);
+        // Quand la musique passe par WebAudio, le volume HTML reste à 1.
+        // Le vrai contrôle est musicGainNode.gain. Oui, iOS mérite une petite laisse.
+        bgMusic.volume=1;
+      }catch(e){
+        bgMusic.volume=targetMusicVolume;
+      }
+    }else{
+      bgMusic.volume=targetMusicVolume;
+    }
+  }
+
   syncAudioSliders();
 }
 function beep(freq=440,dur=.08,type="square",gain=.04,kind="sfx"){
@@ -2460,6 +2502,7 @@ function startElevatorMusic(){
     bgMusic.preload="auto";
     bgMusic.playsInline=true;
   }
+  ensureMusicRouting();
   applyAudioVolumes();
   if(!bgMusic.paused)return;
   elevatorMusicStarted=true;
@@ -4364,6 +4407,47 @@ loadAssets()
       showFullscreenHelp();
     }
   });
+})();
+</script>
+
+
+<script>
+/* ===== V43.31 audio slider safety: do not regress music volume on iPhone ===== */
+(function(){
+  function bindAudioSliderSafety(){
+    const ms=document.getElementById("musicVolumeSlider");
+    const ss=document.getElementById("sfxVolumeSlider");
+
+    if(ms && !ms.dataset.v4331Bound){
+      ms.dataset.v4331Bound="1";
+      ["input","change","pointerup","touchend"].forEach(evt=>{
+        ms.addEventListener(evt,()=>{
+          if(typeof musicVolume!=="undefined")musicVolume=Math.max(0,Math.min(1,Number(ms.value)/100));
+          if(typeof musicOn!=="undefined")musicOn=musicVolume>0;
+          if(typeof soundOn!=="undefined")soundOn=(typeof sfxOn==="undefined"?true:sfxOn)||musicOn;
+          if(typeof ensureMusicRouting==="function")ensureMusicRouting();
+          if(typeof applyAudioVolumes==="function")applyAudioVolumes();
+          if(typeof updatePauseButtons==="function")updatePauseButtons();
+        },{passive:true});
+      });
+    }
+
+    if(ss && !ss.dataset.v4331Bound){
+      ss.dataset.v4331Bound="1";
+      ["input","change","pointerup","touchend"].forEach(evt=>{
+        ss.addEventListener(evt,()=>{
+          if(typeof sfxVolume!=="undefined")sfxVolume=Math.max(0,Math.min(1,Number(ss.value)/100));
+          if(typeof sfxOn!=="undefined")sfxOn=sfxVolume>0;
+          if(typeof soundOn!=="undefined")soundOn=sfxOn||(typeof musicOn==="undefined"?true:musicOn);
+          if(typeof applyAudioVolumes==="function")applyAudioVolumes();
+          if(typeof updatePauseButtons==="function")updatePauseButtons();
+        },{passive:true});
+      });
+    }
+  }
+
+  if(document.readyState==="loading")document.addEventListener("DOMContentLoaded",bindAudioSliderSafety);
+  else bindAudioSliderSafety();
 })();
 </script>
 
