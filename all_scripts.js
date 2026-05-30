@@ -179,13 +179,14 @@ const editPanel=document.getElementById("editPanel"),levelNameInput=document.get
 const banner=document.getElementById("banner"),bannerTitle=document.getElementById("bannerTitle"),bannerText=document.getElementById("bannerText"),starsEl=document.getElementById("stars"),bannerAction=document.getElementById("bannerAction");
 
 let levels=[];
-const GAME_VERSION="V43.12-mp3-music";
+const GAME_VERSION="V43.18-speed-trail";
 setTimeout(()=>{const v=document.getElementById("gameVersionBadge"); if(v)v.textContent=GAME_VERSION;},0);
 let gameSettings={fallDelayMs:135,rotationDurationMs:320};
 let fallbackLevels=[]; // V57: aucun niveau de gameplay en dur. levels.json est obligatoire.
 
 let currentLevel=0,baseMap=[],b=[],p={x:0,y:0},start={x:0,y:0},exit={x:0,y:0};
-let door=false,busy=false,edit=!!window.CG_EDITOR_MODE,moves=0,gameOver=false,confettiTimer=null,deadPlayer=false,idleTick=0,painting=false,lastPaintKey='',visualOri=0,squash=0,soundOn=true,sfxOn=true,musicOn=true,audioCtx=null,rotatorCooldown=false,gamePaused=false;
+let door=false,busy=false,edit=!!window.CG_EDITOR_MODE,moves=0,gameOver=false,confettiTimer=null,deadPlayer=false,idleTick=0,painting=false,lastPaintKey='',visualOri=0,squash=0,soundOn=true,sfxOn=true,musicOn=true,audioCtx=null,rotatorCooldown=false,teleporterCooldownType=null,gamePaused=false;
+let playerTrail=[]; // V43.18 : afterimages visuels pendant la chute, sans effet gameplay.
 let wallNoteIndex=0,lastWallSoundAt=0,eternalFallWraps=0,elevatorMusicTimer=null,elevatorMusicStarted=false,musicStep=0,bgMusic=null;
 const BG_MUSIC_PATH="audio/music/Petals_in_Perfect_Order.mp3";
 const BG_MUSIC_VOLUME=0.28;
@@ -352,7 +353,7 @@ function resetPlay(){
   levels[currentLevel].map=map();
   b=arr(levels[currentLevel].map);
   door=baseDoorOpen();
-  moves=0;busy=false;gameOver=false;deadPlayer=false;rotatorCooldown=false;eternalFallWraps=0;gamePaused=false;activeSwitchKey=null;activeSwitchHeld=false;hideBanner();
+  moves=0;busy=false;gameOver=false;deadPlayer=false;rotatorCooldown=false;teleporterCooldownType=null;eternalFallWraps=0;gamePaused=false;activeSwitchKey=null;activeSwitchHeld=false;resetPlayerTrail();hideBanner();
   rot.setAttribute("transform",`rotate(0 ${BOARD/2} ${BOARD/2})`);visualOri=0;
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){
     if(b[y][x]=="A"){p={x,y};start={x,y};b[y][x]="."}
@@ -555,15 +556,15 @@ function vectorAnimTransform(l,t){
   const a=l.anim;if(!a||!a.type)return "";
   const speed=Number(a.speed??0.004), amp=Number(a.amp??1), ampX=Number(a.ampX??amp);
   const s=Math.sin(t*speed);
-  const cx=Number(a.pivotX ?? ((Number(l.x??0)+Number(l.w??40)/2)||20));
-  const cy=Number(a.pivotY ?? ((Number(l.y??0)+Number(l.h??40)/2)||20));
+  const cx=Number(a.pivotX ?? l.pivotX ?? ((Number(l.x??0)+Number(l.w??40)/2)||20));
+  const cy=Number(a.pivotY ?? l.pivotY ?? ((Number(l.y??0)+Number(l.h??40)/2)||20));
   if(a.type==="look")return `translate(${s*ampX} 0)`;
   if(a.type==="bob")return `translate(0 ${s*amp})`;
   if(a.type==="shake")return `translate(${Math.sin(t*speed*5)*amp} ${Math.cos(t*speed*7)*amp})`;
   if(a.type==="spin")return `rotate(${s*amp} ${cx} ${cy})`;
   if(a.type==="rot90")return `rotate(${90*s} ${cx} ${cy})`;
   if(a.type==="rot-90")return `rotate(${-90*s} ${cx} ${cy})`;
-  if(a.type==="pulse"){const sc=1+s*amp;return `translate(${cx} ${cy}) scale(${sc}) translate(${-cx} ${-cy})`;}
+  if(a.type==="pulse"){const sc=1+s*amp*0.08;return `translate(${cx} ${cy}) scale(${sc}) translate(${-cx} ${-cy})`;}
   return "";
 }
 function vectorAnimOpacity(l,t){
@@ -659,7 +660,7 @@ function appendVectorAssetLayers(parent,a,t){
       const bb=groupBBox(gr,layersList);
       const ge=E("g",{"data-vector-group":gr.id,"pointer-events":"none"});
       const trParts=[];const st=vectorGroupStaticTransform(gr,bb);if(st)trParts.push(st);
-      const tr=vectorAnimTransform({...bb,anim:gr.anim},t);if(tr)trParts.push(tr);
+      const tr=vectorAnimTransform({...bb,pivotX:gr.anim?.pivotX??gr.pivotX,pivotY:gr.anim?.pivotY??gr.pivotY,anim:gr.anim},t);if(tr)trParts.push(tr);
       if(trParts.length)ge.setAttribute("transform",trParts.join(" "));
       layersList.forEach(child=>{
         if(child && child.visible!==false && (gr.children||[]).includes(child.id))appendVectorLayer(ge,child,t);
@@ -692,6 +693,206 @@ function drawVectorAsset(name,X,Y,parent=grid,opts={}){
     setVectorStatus("SVG ON\n"+(window.__vectorAssetsLoadedFrom||"?")+"\ndraw:"+window.__vectorDrawCount+" · "+name+"\nlayers:"+layerCount+" groups:"+groupCount+" · "+first,"ok");
   }
   return true;
+}
+
+
+/* ===== V43.13 TELEPORTER GAMEPLAY =====
+   Objectif : ajouter une brique lisible, limitée à 3 variantes de couleur,
+   sans toucher au système de coups ni à la logique principale de gravité.
+
+   Caractères utilisés dans levels.json :
+   - "1" : téléporteur cyan
+   - "2" : téléporteur rose
+   - "3" : téléporteur vert
+
+   Règle de gameplay : quand le cube arrive sur un téléporteur, il ressort
+   sur l'autre téléporteur de la même couleur. Le plateau ne tourne pas.
+   La gravité continue ensuite exactement dans le même sens visuel.
+*/
+const TELEPORTER_TYPES=["1","2","3"];
+const TELEPORTER_STYLES={
+  "1":{name:"cyan",label:"I",main:"#29e7ff",dark:"#073168",light:"#dffcff"},
+  "2":{name:"rose",label:"II",main:"#ff4f93",dark:"#5a1238",light:"#ffe0f0"},
+  "3":{name:"vert",label:"III",main:"#52f28a",dark:"#063b24",light:"#e1ffe9"}
+};
+
+function isTeleporterChar(c){
+  // Test volontairement centralisé : si un jour tu veux changer les symboles
+  // de map, tu ne pars pas à la chasse au "1", "2", "3" dans tout le fichier.
+  return TELEPORTER_TYPES.includes(String(c));
+}
+function teleporterStyle(c){
+  return TELEPORTER_STYLES[String(c)] || TELEPORTER_STYLES["1"];
+}
+function teleporterAssetName(c){
+  return "teleporter_"+String(c);
+}
+function teleporterLabel(c){
+  return teleporterStyle(c).label;
+}
+function findTeleportersInGrid(m,type){
+  // Retourne tous les téléporteurs d'une même couleur, triés en ordre stable.
+  // Usage normal : 2 cases. S'il y en a plus, on enchaîne au suivant pour éviter
+  // un comportement aléatoire, parce que le hasard dans un puzzle, c'est rarement brillant.
+  const pts=[];
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+    if(m[y] && m[y][x]===type)pts.push({x,y});
+  }
+  pts.sort((a,b)=>(a.y-b.y)||(a.x-b.x));
+  return pts;
+}
+function pairedTeleporterPosition(m,from){
+  const type=m?.[from.y]?.[from.x];
+  if(!isTeleporterChar(type))return null;
+  const pts=findTeleportersInGrid(m,type);
+  if(pts.length<2)return null;
+  const i=pts.findIndex(q=>q.x===from.x && q.y===from.y);
+  if(i<0)return null;
+  return pts[(i+1)%pts.length];
+}
+function currentTeleporterType(){
+  if(!p || !b[p.y])return null;
+  const c=b[p.y][p.x];
+  return isTeleporterChar(c) ? c : null;
+}
+function refreshTeleporterCooldown(){
+  // Le cooldown empêche de ressortir d'un téléporteur puis d'être renvoyé
+  // immédiatement dans l'autre sens. Il se réarme uniquement quand le cube
+  // quitte cette couleur. Même après une rotation manuelle, donc pas de ping-pong idiot.
+  const c=currentTeleporterType();
+  if(!c || c!==teleporterCooldownType)teleporterCooldownType=null;
+}
+function soundTeleport(){
+  beep(520,.045,"sine",.026,"sfx");
+  setTimeout(()=>beep(780,.055,"triangle",.018,"sfx"),48);
+  setTimeout(()=>beep(1040,.045,"sine",.012,"sfx"),95);
+}
+function teleportFx(x,y,type){
+  const svgRect=svg.getBoundingClientRect();
+  const scale=svgRect.width/BOARD;
+  const cx=svgRect.left + (x*T+HALF)*scale;
+  const cy=svgRect.top + (y*T+HALF)*scale;
+  const col=teleporterStyle(type).main;
+  for(let i=0;i<18;i++){
+    const d=document.createElement("div");
+    d.className="gravel";
+    d.style.left=(cx-3+(Math.random()*18-9))+"px";
+    d.style.top=(cy-3+(Math.random()*18-9))+"px";
+    d.style.background=col;
+    d.style.boxShadow="0 0 10px "+col;
+    d.style.setProperty("--dx",(Math.random()*90-45)+"px");
+    d.style.setProperty("--dy",(Math.random()*90-45)+"px");
+    document.body.appendChild(d);
+    setTimeout(()=>d.remove(),650);
+  }
+}
+function tryTeleportFromCurrentTile(){
+  const type=currentTeleporterType();
+  if(!type)return false;
+  if(teleporterCooldownType===type)return false;
+
+  const target=pairedTeleporterPosition(b,p);
+  if(!target){
+    status.textContent="Téléporteur "+teleporterLabel(type)+" sans paire.";
+    return false;
+  }
+
+  const from={x:p.x,y:p.y};
+  resetPlayerTrail(); // Téléportation instantanée : pas de fausse traînée entre deux cases éloignées.
+  p={x:target.x,y:target.y};
+  teleporterCooldownType=type;
+  eternalFallWraps=0;
+  status.textContent="Téléporteur "+teleporterLabel(type)+" : "+from.x+","+from.y+" → "+p.x+","+p.y+".";
+  soundTeleport();
+  teleportFx(from.x,from.y,type);
+  teleportFx(p.x,p.y,type);
+  draw();
+  return true;
+}
+function drawTeleporterFallback(c,X,Y){
+  // Fallback pur SVG : utilisé si l'asset vectoriel externe manque.
+  // Même design pour les 3 variantes, seules les couleurs changent.
+  const st=teleporterStyle(c);
+  grid.appendChild(E("circle",{cx:X+HALF,cy:Y+HALF,r:T*.37,fill:st.dark,stroke:st.main,"stroke-width":4,"pointer-events":"none"}));
+  grid.appendChild(E("circle",{cx:X+HALF,cy:Y+HALF,r:T*.25,fill:"rgba(255,255,255,.04)",stroke:st.light,"stroke-width":2,"pointer-events":"none"}));
+  grid.appendChild(E("circle",{cx:X+HALF,cy:Y+HALF,r:T*.11,fill:st.main,stroke:st.light,"stroke-width":1,"pointer-events":"none"}));
+  text(X+HALF,Y+HALF+5,teleporterLabel(c),st.light,Math.max(10,T*.24));
+}
+
+/* ===== V43.18 PLAYER SPEED TRAIL =====
+   Trail purement visuel : il ne modifie ni la physique, ni le nombre de coups,
+   ni le BFS. On garde quelques anciennes positions du cube pendant une chute,
+   puis on les dessine en silhouettes translucides derrière lui.
+
+   Le rendu est volontairement simple et peu coûteux : pas de filtre SVG, pas de
+   blur temps réel, pas de magie qui transforme un petit jeu mobile en radiateur.
+*/
+const PLAYER_TRAIL_MAX=5;
+const PLAYER_TRAIL_LIFE_MS=260;
+
+function resetPlayerTrail(){
+  playerTrail=[];
+}
+
+function prunePlayerTrail(now=Date.now()){
+  playerTrail=playerTrail.filter(t=>now-t.time<PLAYER_TRAIL_LIFE_MS);
+  if(playerTrail.length>PLAYER_TRAIL_MAX){
+    playerTrail=playerTrail.slice(playerTrail.length-PLAYER_TRAIL_MAX);
+  }
+}
+
+function pushPlayerTrailCell(x,y,fallDistance=1){
+  if(edit||deadPlayer||gameOver)return;
+  playerTrail.push({x,y,time:Date.now(),fallDistance});
+  prunePlayerTrail();
+}
+
+function drawPlayerSpeedTrail(){
+  if(edit||deadPlayer||!playerTrail.length)return;
+  const now=Date.now();
+  prunePlayerTrail(now);
+
+  for(let i=0;i<playerTrail.length;i++){
+    const t=playerTrail[i];
+    const age=now-t.time;
+    const life=1-age/PLAYER_TRAIL_LIFE_MS;
+    if(life<=0)continue;
+
+    const X=t.x*T;
+    const Y=t.y*T;
+    const alpha=Math.max(0,Math.min(.30,life*.28));
+    const scale=0.82+life*.12;
+
+    // Silhouette jaune du cube : lisible, mais assez transparente pour ne pas
+    // confondre le joueur avec sa traînée. Oui, on évite de mentir au joueur.
+    const g=E("g",{
+      transform:`translate(${X+HALF} ${Y+HALF}) scale(${scale}) translate(${-HALF} ${-HALF})`,
+      opacity:alpha,
+      "pointer-events":"none"
+    });
+
+    g.appendChild(E("rect",{
+      x:7,y:7,width:T-14,height:T-14,rx:Math.max(2,T*.08),ry:Math.max(2,T*.08),
+      fill:"#ffd640",
+      stroke:"#fff0a8",
+      "stroke-width":Math.max(1,T*.045),
+      "pointer-events":"none"
+    }));
+
+    // Petit trait vertical pour accentuer la chute sans ajouter un effet cartoon
+    // trop bruyant. La gravité reste celle du jeu, le trail ne décide de rien.
+    g.appendChild(E("rect",{
+      x:HALF-Math.max(2,T*.045),
+      y:T*.14,
+      width:Math.max(3,T*.09),
+      height:T*.68,
+      rx:Math.max(1,T*.04),
+      fill:"rgba(255,255,255,.55)",
+      "pointer-events":"none"
+    }));
+
+    grid.appendChild(g);
+  }
 }
 
 function draw(){
@@ -734,6 +935,14 @@ function draw(){
         text(X+HALF,Y+29,right?"↻":"↺","#eefcff",28);
       }
     }
+    if(isTeleporterChar(c)){
+      // Téléporteur : même silhouette pour les 3 couleurs.
+      // On tente l'asset vectoriel d'abord, puis un fallback SVG autonome.
+      const assetName=teleporterAssetName(c);
+      if(drawVectorAsset(assetName,X,Y)){}else if(!drawPixelAsset(assetName,X,Y)){
+        drawTeleporterFallback(c,X,Y);
+      }
+    }
     if(c=="X"){
       if(drawVectorAsset("danger",X,Y)){}else if(!drawPixelAsset("danger",X,Y)){
         grid.appendChild(E("rect",{x:X+6,y:Y+6,width:T-12,height:T-12,rx:2,ry:2,fill:"#ff304f",stroke:"#5a0010","stroke-width":3,"pointer-events":"none"}));
@@ -750,6 +959,8 @@ function draw(){
       }
     }
   }
+  drawPlayerSpeedTrail();
+
   if(!edit&&!deadPlayer){
     let X=p.x*T,Y=p.y*T;
     let idle=(!busy&&!gameOver)?Math.sin(idleTick*.12)*1.4:0;
@@ -878,7 +1089,7 @@ function outside(x,y){return x<0||y<0||x>=W||y>=H}
 function cw(m){let o=Array.from({length:H},()=>Array(W).fill("."));for(let y=0;y<H;y++)for(let x=0;x<W;x++)o[x][H-1-y]=m[y][x];return o}
 function ccw(m){let o=Array.from({length:H},()=>Array(W).fill("."));for(let y=0;y<H;y++)for(let x=0;x<W;x++)o[W-1-x][y]=m[y][x];return o}
 function pcw(q){return{x:H-1-q.y,y:q.x}}function pccw(q){return{x:q.y,y:W-1-q.x}}
-function apply(d){visualOri=(visualOri+d+4)%4;if(d>0){b=cw(b);p=pcw(p);exit=pcw(exit)}else{b=ccw(b);p=pccw(p);exit=pccw(exit)}}
+function apply(d){resetPlayerTrail();visualOri=(visualOri+d+4)%4;if(d>0){b=cw(b);p=pcw(p);exit=pcw(exit)}else{b=ccw(b);p=pccw(p);exit=pccw(exit)}}
 function toggleDoors(){
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){if(b[y][x]=="D")b[y][x]="O";else if(b[y][x]=="O")b[y][x]="D";}
 }
@@ -1082,6 +1293,12 @@ function fall(){
       return;
     }
 
+    refreshTeleporterCooldown();
+    if(tryTeleportFromCurrentTile()){
+      setTimeout(step,getFallDelayMs());
+      return;
+    }
+
     // Rotateur : se déclenche une seule fois tant que le cube n’a pas quitté la case.
     // Sinon il tourne en boucle comme une IA junior en panique. Non merci.
     if(isRotatorTile(p.x,p.y) && !rotatorCooldown){
@@ -1101,6 +1318,7 @@ function fall(){
         if(eternalFallWraps>=3){triggerEternalFall();return;}
       }
       const oldKey=p.x+","+p.y;
+      pushPlayerTrailCell(p.x,p.y,dist);
       p.y=ny;
       p.x=nx;
       const newKey=p.x+","+p.y;
@@ -1364,12 +1582,18 @@ function goLevel(i){writeCurrentLevel();loadFromLevel(i);saveCurrentProgress();s
 function goInput(){let n=parseInt(document.getElementById("levelInput").value,10);if(!isNaN(n))goLevel(n-1)}
 
 function simFall(state){
-  let {map,p}=state; let steps=0; let switchesHit=0;
+  let {map,p}=state; let steps=0; let switchesHit=0; let tpCooldown=state.tpCooldown||null;
   const isBlock=(c)=>c=="#"||c=="D";
   const out=(x,y)=>x<0||y<0||x>=W||y>=H;
   const sol=(x,y)=>out(x,y)||isBlock(map[y][x]);
   while(true){
-    if(map[p.y]&&map[p.y][p.x]=="S"){
+    const c=map[p.y]&&map[p.y][p.x];
+    if(!isTeleporterChar(c)||c!==tpCooldown)tpCooldown=null;
+    if(isTeleporterChar(c)&&tpCooldown!==c){
+      const target=pairedTeleporterPosition(map,p);
+      if(target){p={x:target.x,y:target.y};tpCooldown=c;steps++;if(steps>80)return {dead:true};continue;}
+    }
+    if(c=="S"){
       switchesHit++;
       if(switchesHit>8)return {dead:true};
       map=map.map(r=>r.map(c=>c=="D"?"O":c=="O"?"D":c));
@@ -1382,7 +1606,7 @@ function simFall(state){
       if(switchesHit>8)return {dead:true};
       map=map.map(r=>r.map(c=>c=="D"?"O":c=="O"?"D":c));
     }
-    return {map,p,dead:false};
+    return {map,p,dead:false,tpCooldown};
   }
 }
 function simRotate(state,d){
@@ -1391,9 +1615,9 @@ function simRotate(state,d){
   const rccw=(m)=>{let o=Array.from({length:H},()=>Array(W).fill("."));for(let y=0;y<H;y++)for(let x=0;x<W;x++)o[W-1-x][y]=m[y][x];return o};
   const qcw=(q)=>({x:H-1-q.y,y:q.x}), qccw=(q)=>({x:q.y,y:W-1-q.x});
   if(d>0){map=rcw(map);p=qcw(p);ex=qcw(ex)} else {map=rccw(map);p=qccw(p);ex=qccw(ex)}
-  return simFall({map,p,exit:ex});
+  return simFall({map,p,exit:ex,tpCooldown:state.tpCooldown||null});
 }
-function stateKey(s){return s.p.x+","+s.p.y+"|"+s.exit.x+","+s.exit.y+"|"+s.map.map(r=>r.join("")).join("")}
+function stateKey(s){return s.p.x+","+s.p.y+"|"+s.exit.x+","+s.exit.y+"|tp="+(s.tpCooldown||"")+"|"+s.map.map(r=>r.join("")).join("")}
 function calcMoves(){
   try{
     writeCurrentLevel();
@@ -1545,7 +1769,7 @@ function solverToggleDoors(m){
 }
 function solverFall(state){
   let m=cloneGrid(state.m), p={...state.p}, ex={...state.ex};
-  let safety=0, rotCooldown=!!state.rotCooldown, switchHeld=!!state.switchHeld;
+  let safety=0, rotCooldown=!!state.rotCooldown, switchHeld=!!state.switchHeld, tpCooldown=state.tpCooldown||null;
   while(true){
     if(safety++>180)return {dead:true, reason:"boucle pendant la chute"};
     let c=m[p.y][p.x];
@@ -1558,6 +1782,16 @@ function solverFall(state){
       }
     }else{
       switchHeld=false;
+    }
+
+    if(!isTeleporterChar(c)||c!==tpCooldown)tpCooldown=null;
+    if(isTeleporterChar(c) && tpCooldown!==c){
+      const target=pairedTeleporterPosition(m,p);
+      if(target){
+        p={x:target.x,y:target.y};
+        tpCooldown=c;
+        continue;
+      }
     }
 
     if((c=="R"||c=="L") && !rotCooldown){
@@ -1576,17 +1810,17 @@ function solverFall(state){
       continue;
     }
 
-    return {dead:false,m,p,ex,rotCooldown,switchHeld};
+    return {dead:false,m,p,ex,rotCooldown,switchHeld,tpCooldown};
   }
 }
 function solverRotate(state,d){
   let m=cloneGrid(state.m), p={...state.p}, ex={...state.ex};
   if(d>0){m=solverCw(m); p=solverPcw(p); ex=solverPcw(ex);}
   else{m=solverCcw(m); p=solverPccw(p); ex=solverPccw(ex);}
-  return solverFall({m,p,ex});
+  return solverFall({m,p,ex,switchHeld:!!state.switchHeld,tpCooldown:state.tpCooldown||null});
 }
 function solverKey(s){
-  return s.p.x+","+s.p.y+"|"+s.ex.x+","+s.ex.y+"|sw="+(s.switchHeld?1:0)+"|"+s.m.map(r=>r.join("")).join("");
+  return s.p.x+","+s.p.y+"|"+s.ex.x+","+s.ex.y+"|sw="+(s.switchHeld?1:0)+"|tp="+(s.tpCooldown||"")+"|"+s.m.map(r=>r.join("")).join("");
 }
 function testCurrentLevel(){
   try{
@@ -1675,7 +1909,7 @@ function savedStartLevel(){
 }
 
 let companionTimer=null, companionIdleTimer=null;
-const COMPANION_VERSION="v33";
+const COMPANION_VERSION="v34";
 
 function currentLevelString(){
   try{return (levels[currentLevel].map||[]).join("");}
@@ -1683,10 +1917,11 @@ function currentLevelString(){
 }
 function currentMechanics(){
   const s=currentLevelString();
-  return {button:/[SDO]/.test(s), death:s.includes("X"), rot:/[RL]/.test(s)};
+  return {button:/[SDO]/.test(s), death:s.includes("X"), rot:/[RL]/.test(s), teleporter:/[123]/.test(s)};
 }
 function companionStage(){
   const m=currentMechanics();
+  if(m.teleporter)return "teleporter";
   if(m.rot)return "rotator";
   if(m.death)return "death";
   if(m.button)return "button";
@@ -1714,6 +1949,11 @@ function companionMessage(kind="intro"){
     return kind==="hint"
       ? "Indice : le rotateur tourne le monde à ta place. Prévois ma chute après cette rotation forcée."
       : "Nouvelle brique : le rotateur. Quand je le touche, le plateau tourne automatiquement puis la gravité reprend.";
+  }
+  if(stage==="teleporter"){
+    return kind==="hint"
+      ? "Indice : une couleur mène à la même couleur. Après la sortie, je continue à tomber dans le même sens."
+      : "Nouvelle brique : le téléporteur. J'entre dans une couleur, je ressors par l'autre de la même couleur. Le plateau ne tourne pas.";
   }
   return kind==="hint"
     ? "Indice : pense en étapes : rotation, chute, arrêt, prochaine rotation."
@@ -1829,7 +2069,7 @@ document.getElementById("rotationDurationInput").oninput=()=>{writeGlobalSetting
 document.getElementById("sortDifficulty").onclick=sortByDifficulty;
 document.getElementById("resetProgress").onclick=()=>{localStorage.removeItem(PROGRESS_KEY);status.textContent="Progression joueur remise à zéro.";};
 document.getElementById("resetTutorial").onclick=()=>{
-  ["core","button","death","rotator"].forEach(s=>{
+  ["core","button","death","rotator","teleporter"].forEach(s=>{
     try{localStorage.removeItem(companionSeenKey(s))}catch(e){}
   });
   status.textContent="Tutoriel compagnon remis à zéro.";

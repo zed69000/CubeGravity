@@ -1,0 +1,238 @@
+{
+  "version": 1,
+  "name": "Gravity Cube Teleporter Vector Assets Patch",
+  "description": "Patch non destructif : ajoute seulement teleporter_1, teleporter_2, teleporter_3 dans un vector_assets.json source éditeur existant.",
+  "assets": {
+    "teleporter_1": {
+      "layers": [
+        {
+          "id": "shadow",
+          "shape": "circle",
+          "x": 20,
+          "y": 24,
+          "r": 15,
+          "fill": "rgba(0,0,0,0.28)",
+          "stroke": "none",
+          "scaleY": 0.38,
+          "pivotX": 20,
+          "pivotY": 24
+        },
+        {
+          "id": "back_plate",
+          "shape": "circle",
+          "x": 20,
+          "y": 20,
+          "r": 16,
+          "fill": "#073168",
+          "stroke": "#29e7ff",
+          "strokeWidth": 4,
+          "anim": {
+            "type": "pulse",
+            "amp": 0.035,
+            "speed": 0.004
+          }
+        },
+        {
+          "id": "outer_glow",
+          "shape": "circle",
+          "x": 20,
+          "y": 20,
+          "r": 12,
+          "fill": "rgba(255,255,255,0.04)",
+          "stroke": "#dffcff",
+          "strokeWidth": 2
+        },
+        {
+          "id": "inner_ring",
+          "shape": "circle",
+          "x": 20,
+          "y": 20,
+          "r": 7,
+          "fill": "rgba(255,255,255,0.08)",
+          "stroke": "#29e7ff",
+          "strokeWidth": 3,
+          "anim": {
+            "type": "spin",
+            "amp": 8,
+            "speed": 0.004
+          }
+        },
+        {
+          "id": "core",
+          "shape": "circle",
+          "x": 20,
+          "y": 20,
+          "r": 4,
+          "fill": "#29e7ff",
+          "stroke": "#dffcff",
+          "strokeWidth": 1
+        },
+        {
+          "id": "mark",
+          "shape": "text",
+          "x": 20,
+          "y": 34,
+          "text": "I",
+          "fontSize": 6,
+          "fill": "#dffcff",
+          "stroke": "none"
+        }
+      ],
+      "groups": []
+    },
+    "teleporter_2": {
+      "layers": [
+        {
+          "id": "shadow",
+          "shape": "circle",
+          "x": 20,
+          "y": 24,
+          "r": 15,
+          "fill": "rgba(0,0,0,0.28)",
+          "stroke": "none",
+          "scaleY": 0.38,
+          "pivotX": 20,
+          "pivotY": 24
+        },
+        {
+          "id": "back_plate",
+          "shape": "circle",
+          "x": 20,
+          "y": 20,
+          "r": 16,
+          "fill": "#5a1238",
+          "stroke": "#ff4f93",
+          "strokeWidth": 4,
+          "anim": {
+            "type": "pulse",
+            "amp": 0.035,
+            "speed": 0.004
+          }
+        },
+        {
+          "id": "outer_glow",
+          "shape": "circle",
+          "x": 20,
+          "y": 20,
+          "r": 12,
+          "fill": "rgba(255,255,255,0.04)",
+          "stroke": "#ffe0f0",
+          "strokeWidth": 2
+        },
+        {
+          "id": "inner_ring",
+          "shape": "circle",
+          "x": 20,
+          "y": 20,
+          "r": 7,
+          "fill": "rgba(255,255,255,0.08)",
+          "stroke": "#ff4f93",
+          "strokeWidth": 3,
+          "anim": {
+            "type": "spin",
+            "amp": 8,
+            "speed": 0.004
+          }
+        },
+        {
+          "id": "core",
+          "shape": "circle",
+          "x": 20,
+          "y": 20,
+          "r": 4,
+          "fill": "#ff4f93",
+          "stroke": "#ffe0f0",
+          "strokeWidth": 1
+        },
+        {
+          "id": "mark",
+          "shape": "text",
+          "x": 20,
+          "y": 34,
+          "text": "II",
+          "fontSize": 6,
+          "fill": "#ffe0f0",
+          "stroke": "none"
+        }
+      ],
+      "groups": []
+    },
+    "teleporter_3": {
+      "layers": [
+        {
+          "id": "shadow",
+          "shape": "circle",
+          "x": 20,
+          "y": 24,
+          "r": 15,
+          "fill": "rgba(0,0,0,0.28)",
+          "stroke": "none",
+          "scaleY": 0.38,
+          "pivotX": 20,
+          "pivotY": 24
+        },
+        {
+          "id": "back_plate",
+          "shape": "circle",
+          "x": 20,
+          "y": 20,
+          "r": 16,
+          "fill": "#063b24",
+          "stroke": "#52f28a",
+          "strokeWidth": 4,
+          "anim": {
+            "type": "pulse",
+            "amp": 0.035,
+            "speed": 0.004
+          }
+        },
+        {
+          "id": "outer_glow",
+          "shape": "circle",
+          "x": 20,
+          "y": 20,
+          "r": 12,
+          "fill": "rgba(255,255,255,0.04)",
+          "stroke": "#e1ffe9",
+          "strokeWidth": 2
+        },
+        {
+          "id": "inner_ring",
+          "shape": "circle",
+          "x": 20,
+          "y": 20,
+          "r": 7,
+          "fill": "rgba(255,255,255,0.08)",
+          "stroke": "#52f28a",
+          "strokeWidth": 3,
+          "anim": {
+            "type": "spin",
+            "amp": 8,
+            "speed": 0.004
+          }
+        },
+        {
+          "id": "core",
+          "shape": "circle",
+          "x": 20,
+          "y": 20,
+          "r": 4,
+          "fill": "#52f28a",
+          "stroke": "#e1ffe9",
+          "strokeWidth": 1
+        },
+        {
+          "id": "mark",
+          "shape": "text",
+          "x": 20,
+          "y": 34,
+          "text": "III",
+          "fontSize": 6,
+          "fill": "#e1ffe9",
+          "stroke": "none"
+        }
+      ],
+      "groups": []
+    }
+  }
+}
