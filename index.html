@@ -4,6 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
 <meta name="theme-color" content="#070a2a">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Date Gravity">
+<link rel="manifest" href="manifest.webmanifest">
 <title>Date Cube Gravity</title>
 <style>
 :root{
@@ -17,7 +22,9 @@ html,body{
   margin:0;
   width:100%;
   height:100%;
+  min-height:100dvh;
   overflow:hidden;
+  overscroll-behavior:none;
   background:
     radial-gradient(circle at 50% 12%,rgba(86,24,110,.65),transparent 35%),
     radial-gradient(circle at 15% 75%,rgba(0,210,255,.24),transparent 35%),
@@ -27,10 +34,15 @@ html,body{
   font-family:Inter,Arial,sans-serif;
 }
 body{
+  position:fixed;
+  inset:0;
+  width:100vw;
+  height:100dvh;
   display:flex;
   align-items:center;
   justify-content:center;
   user-select:none;
+  touch-action:manipulation;
 }
 body::before{
   content:"";
@@ -76,8 +88,8 @@ body::before{
 .mainMenu{
   position:relative;
   width:min(100vw,680px);
-  height:100svh;
-  min-height:620px;
+  height:100dvh;
+  min-height:0;
   display:flex;
   flex-direction:column;
   align-items:center;
@@ -617,9 +629,46 @@ body::before{
   .choiceLabel{font-size:clamp(16px,4.8vw,22px)}
 }
 
+
+/* ===== V43.48 MAIN MENU IPHONE FULLSCREEN ===== */
+#menuFullscreenBtn{
+  position:fixed;
+  top:calc(10px + env(safe-area-inset-top, 0px));
+  right:12px;
+  z-index:2147483000;
+  width:46px;
+  height:46px;
+  border-radius:16px;
+  border:2px solid rgba(41,231,255,.75);
+  background:rgba(7,12,42,.88);
+  color:#dffbff;
+  font-size:22px;
+  line-height:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-shadow:0 0 18px rgba(41,231,255,.28),0 10px 26px rgba(0,0,0,.35);
+  -webkit-backdrop-filter:blur(5px);
+  backdrop-filter:blur(5px);
+  cursor:pointer;
+  touch-action:manipulation;
+}
+#menuFullscreenBtn:active{transform:scale(.96)}
+@media (display-mode: fullscreen), (display-mode: standalone){
+  #menuFullscreenBtn{display:none!important}
+}
+body.menu-fullscreen-active #menuFullscreenBtn{display:none!important}
+@supports (height:100dvh){
+  html,body,.mainMenu{height:100dvh!important}
+}
+@media(max-width:700px){
+  #menuFullscreenBtn{width:42px;height:42px;border-radius:14px;font-size:20px}
+}
+
 </style>
 </head>
 <body>
+<button id="menuFullscreenBtn" aria-label="Plein écran" title="Plein écran">⛶</button>
 <div class="floatingHearts" aria-hidden="true">
   <span class="floatHeart" style="left:9%;--dur:9s;--delay:-1s;--scale:.8;--drift:38px">♥</span>
   <span class="floatHeart" style="left:22%;--dur:12s;--delay:-5s;--scale:1.15;--drift:-24px">♡</span>
@@ -659,7 +708,7 @@ body::before{
   <nav class="buttonStack" aria-label="Navigation principale">
     <a class="playBtn jsReactive" href="game.html"><span class="iconHeart">🤍</span><span>JOUER</span></a>
     <button class="optionBtn jsReactive" id="openOptions" type="button"><span class="iconGear">⚙</span><span>OPTIONS</span></button>
-    <div class="version">V43.28-mainmenu-da</div>
+    <div class="version">V43.48-mainmenu-fullscreen</div>
   </nav>
 </main>
 
@@ -677,6 +726,75 @@ body::before{
 </div>
 
 <script>
+
+/* ===== V43.48 MAIN MENU IPHONE FULLSCREEN ===== */
+(function(){
+  const btn=document.getElementById("menuFullscreenBtn");
+  const isIOS=()=>/iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
+  const isStandalone=()=>window.navigator.standalone===true ||
+    window.matchMedia("(display-mode: standalone)").matches ||
+    window.matchMedia("(display-mode: fullscreen)").matches;
+
+  function syncFullscreenUI(){
+    const active=!!document.fullscreenElement || !!document.webkitFullscreenElement || isStandalone();
+    document.body.classList.toggle("menu-fullscreen-active",active);
+    if(btn)btn.style.display=active?"none":"";
+  }
+
+  async function requestMenuFullscreen(showHelp=false){
+    if(isStandalone()){
+      syncFullscreenUI();
+      return true;
+    }
+    const target=document.documentElement;
+    try{
+      if(target.requestFullscreen){
+        await target.requestFullscreen({navigationUI:"hide"});
+        syncFullscreenUI();
+        return true;
+      }
+      if(target.webkitRequestFullscreen){
+        target.webkitRequestFullscreen();
+        syncFullscreenUI();
+        return true;
+      }
+    }catch(e){
+      console.warn("[MAINMENU FULLSCREEN] request failed",e);
+    }
+
+    if(showHelp && isIOS()){
+      const msg="Sur iPhone, pour le vrai plein écran sans barre Safari : Partager → Ajouter à l’écran d’accueil, puis lance Date Gravity depuis l’icône.";
+      if(window.confirm(msg+"\n\nContinuer vers le jeu ?")){
+        return false;
+      }
+    }
+    return false;
+  }
+
+  if(btn){
+    btn.addEventListener("click",()=>requestMenuFullscreen(true),{passive:true});
+  }
+
+  document.addEventListener("fullscreenchange",syncFullscreenUI);
+  document.addEventListener("webkitfullscreenchange",syncFullscreenUI);
+  window.addEventListener("pageshow",syncFullscreenUI);
+  window.addEventListener("resize",syncFullscreenUI);
+
+  // Sur les liens vers le jeu, on demande le fullscreen AVANT de changer de page.
+  // Sinon iOS/Safari considère que la nouvelle page n'a plus le geste utilisateur. Magnifique petit piège.
+  document.addEventListener("click",async(e)=>{
+    const link=e.target.closest && e.target.closest('a[href^="game.html"]');
+    if(!link || e.defaultPrevented)return;
+    e.preventDefault();
+    const href=link.getAttribute("href") || "game.html";
+    await requestMenuFullscreen(false);
+    setTimeout(()=>{ window.location.href=href; },60);
+  },true);
+
+  syncFullscreenUI();
+})();
+
 const overlay=document.getElementById("optionsOverlay");
 const soundToggle=document.getElementById("soundToggle");
 const soundHint=document.getElementById("soundHint");
