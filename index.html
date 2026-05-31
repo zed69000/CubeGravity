@@ -708,7 +708,7 @@ body.menu-fullscreen-active #menuFullscreenBtn{display:none!important}
   <nav class="buttonStack" aria-label="Navigation principale">
     <a class="playBtn jsReactive" href="game.html"><span class="iconHeart">🤍</span><span>JOUER</span></a>
     <button class="optionBtn jsReactive" id="openOptions" type="button"><span class="iconGear">⚙</span><span>OPTIONS</span></button>
-    <div class="version">V43.48-mainmenu-fullscreen</div>
+    <div class="version">V43.53-mainmenu-characters-download</div>
   </nav>
 </main>
 
@@ -720,6 +720,7 @@ body.menu-fullscreen-active #menuFullscreenBtn{display:none!important}
     <a class="jsReactive" href="game.html">Mode joueur</a>
     <a class="creator jsReactive" href="game.html?editor=1">Mode créateur</a>
     <a class="creator jsReactive" href="asset_svg_editor.html">Éditeur d’assets</a>
+    <button class="creator jsReactive" id="downloadProjectBtn" type="button">Télécharger projet PC</button>
     <button class="soundToggle jsReactive" id="soundToggle" type="button">♪ Musique menu : ON</button>
     <button class="close jsReactive" id="closeOptions" type="button">Fermer</button>
   </div>
@@ -798,6 +799,9 @@ body.menu-fullscreen-active #menuFullscreenBtn{display:none!important}
 const overlay=document.getElementById("optionsOverlay");
 const soundToggle=document.getElementById("soundToggle");
 const soundHint=document.getElementById("soundHint");
+const downloadProjectBtn=document.getElementById("downloadProjectBtn");
+const PROJECT_ZIP_NAME="date_gravity_project_pc.zip";
+const PROJECT_PASSWORD="Lulu69";
 
 let audioCtx=null;
 let menuMusicTimer=null;
@@ -915,6 +919,35 @@ document.querySelectorAll(".jsReactive").forEach(el=>{
     if(el.tagName==="A")playButtonSound();
   });
 });
+
+async function tryDownloadProject(){
+  const code=window.prompt("Code d’accès pour télécharger le projet PC :");
+  if(code===null)return;
+  if(code!==PROJECT_PASSWORD){
+    alert("Code incorrect.");
+    return;
+  }
+  try{
+    const res=await fetch(PROJECT_ZIP_NAME,{method:"HEAD",cache:"no-store"});
+    if(!res.ok)throw new Error("missing");
+    const a=document.createElement("a");
+    a.href=PROJECT_ZIP_NAME+"?t="+Date.now();
+    a.download=PROJECT_ZIP_NAME;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }catch(err){
+    alert("Fichier non disponible sur le site. Place un zip nommé '"+PROJECT_ZIP_NAME+"' à la racine du projet.");
+  }
+}
+
+if(downloadProjectBtn){
+  downloadProjectBtn.addEventListener("click",()=>{
+    if(menuMusicOn)startMenuMusic();
+    playButtonSound();
+    tryDownloadProject();
+  });
+}
 
 document.getElementById("openOptions").addEventListener("click",()=>{
   playOpenSound();
