@@ -349,6 +349,274 @@ body::before{
 .heroAssetWrap{opacity:0;transition:opacity .18s ease;}
 .heroAssetWrap.assetReady{opacity:1;}
 
+
+/* ===== V43.21 INCLUSIVE DATE CHOICE - SHARED CHARACTER ASSETS ===== */
+.thoughtTitle{
+  position:relative;
+  padding:clamp(18px,3svh,28px) clamp(20px,5vw,42px);
+  border-radius:42% 45% 40% 44% / 38% 42% 46% 40%;
+  background:rgba(255,255,255,.94);
+  color:#080b2a;
+  box-shadow:0 16px 32px rgba(0,0,0,.28), inset 0 -6px 0 rgba(41,231,255,.12);
+  border:4px solid rgba(255,255,255,.35);
+}
+.thoughtTitle::before,.thoughtTitle::after{
+  content:"";position:absolute;border-radius:50%;background:rgba(255,255,255,.94);box-shadow:0 7px 18px rgba(0,0,0,.18);
+}
+.thoughtTitle::before{width:18px;height:18px;left:28%;bottom:-18px}
+.thoughtTitle::after{width:11px;height:11px;right:31%;bottom:-28px}
+.thoughtTitle .date{font-size:clamp(42px,10vw,82px);text-shadow:none;color:var(--pink)}
+.thoughtTitle .cube,.thoughtTitle .gravity{font-size:clamp(34px,8.2vw,68px);text-shadow:none}
+.thoughtTitle .cube{color:#11162f}.thoughtTitle .gravity{color:#0787b4}
+.dateChoice{
+  width:min(92vw,520px);
+  display:grid;
+  grid-template-columns:1fr auto 1fr;
+  align-items:center;
+  gap:clamp(8px,3vw,22px);
+  margin:clamp(4px,1svh,12px) 0;
+}
+.choiceCard{
+  position:relative;
+  display:flex;flex-direction:column;align-items:center;gap:6px;
+  background:rgba(8,13,54,.52);
+  border:1px solid rgba(255,255,255,.14);
+  border-radius:24px;
+  padding:10px 8px 12px;
+  cursor:pointer;
+  color:#fff;
+  box-shadow:0 14px 26px rgba(0,0,0,.22), inset 0 0 0 1px rgba(41,231,255,.08);
+  transition:transform .12s ease, filter .12s ease, box-shadow .12s ease;
+}
+.choiceCard:active,.choiceCard.isPressed{transform:translateY(3px) scale(.985);filter:brightness(1.1)}
+.choiceLabel{font-weight:1000;font-size:clamp(16px,4.5vw,24px);letter-spacing:.02em;text-shadow:0 3px 0 rgba(0,0,0,.28)}
+.choiceHint{font-size:11px;font-weight:900;color:rgba(238,245,255,.62)}
+.choiceHead{width:min(32vw,148px);height:min(32vw,148px);min-width:112px;min-height:112px;position:relative;display:grid;place-items:center;filter:drop-shadow(0 18px 24px rgba(0,0,0,.35));}
+.choiceHead svg{width:100%;height:100%;overflow:visible}.choiceHeadFallback{width:100%;height:100%;border-radius:16px;background:#ffd640;border:6px solid #a56500}
+.choiceCard.me .choiceLabel{color:#29e7ff}.choiceCard.date .choiceLabel{color:#ff7dbd}
+.loveBridge{font-size:clamp(24px,7vw,38px);font-weight:1000;color:#fff;text-shadow:0 0 18px rgba(255,79,160,.55);animation:loveBeat 1.25s ease-in-out infinite}
+@keyframes loveBeat{0%,100%{transform:scale(.96)}50%{transform:scale(1.12)}}
+@media(max-height:720px){.thoughtTitle{padding:12px 24px}.dateChoice{width:min(92vw,430px)}.choiceHead{width:min(26vw,116px);height:min(26vw,116px);min-width:88px;min-height:88px}.choiceHint{display:none}}
+
+
+
+/* ===== V43.28 MAIN MENU DA ADAPTATION =====
+   Objectif : reprendre la DA très lisible du mockup généré, mais en gardant
+   le style vectoriel actuel du jeu. Pas de cadre autour des personnages, pas
+   de bulle de pensée, et retour d'une petite animation idle. */
+.mainMenu{
+  width:min(100vw,660px);
+  min-height:560px;
+  gap:clamp(10px,1.8svh,18px);
+  padding:clamp(14px,3svh,34px) 20px calc(16px + env(safe-area-inset-bottom));
+}
+.mainTitle{
+  position:relative;
+  margin-top:0;
+  display:grid;
+  justify-items:center;
+  line-height:.86;
+  filter:drop-shadow(0 16px 18px rgba(0,0,0,.34));
+  transform:rotate(-1.2deg);
+}
+.mainTitle::before{
+  content:"";
+  position:absolute;
+  left:6%;right:4%;top:48%;height:20px;
+  border-radius:999px;
+  background:linear-gradient(90deg,transparent,rgba(255,79,160,.62),rgba(41,231,255,.5),transparent);
+  filter:blur(8px);
+  transform:rotate(-4deg);
+  z-index:-1;
+}
+.mainTitle .date,
+.mainTitle .gravity{
+  display:block;
+  font-family:"Trebuchet MS","Arial Rounded MT Bold",Arial,sans-serif;
+  font-weight:1000;
+  letter-spacing:.015em;
+  -webkit-text-stroke:1.2px rgba(255,255,255,.28);
+  paint-order:stroke fill;
+}
+.mainTitle .date{
+  font-size:clamp(54px,15vw,106px);
+  color:#ff63c6;
+  text-shadow:
+    0 5px 0 #7d1d54,
+    0 0 14px rgba(255,99,198,.55),
+    0 0 28px rgba(255,99,198,.24);
+}
+.mainTitle .gravity{
+  margin-top:-2px;
+  font-size:clamp(48px,13.2vw,94px);
+  color:#3ddcff;
+  text-shadow:
+    0 5px 0 #06385d,
+    0 0 14px rgba(61,220,255,.55),
+    0 0 28px rgba(61,220,255,.22);
+}
+.mainTitle .gravity::before{
+  content:"♥";
+  display:inline-block;
+  margin-right:.05em;
+  font-size:.34em;
+  color:#ff7dbd;
+  vertical-align:middle;
+  transform:translateY(-.1em) rotate(-10deg);
+  text-shadow:0 0 12px rgba(255,79,160,.55);
+}
+.mainTitle .gravity::after{
+  content:"✦";
+  display:inline-block;
+  margin-left:.08em;
+  font-size:.26em;
+  color:#ffd640;
+  vertical-align:middle;
+  transform:translateY(-.18em) rotate(12deg);
+  text-shadow:0 0 12px rgba(255,214,64,.55);
+}
+.thoughtTitle,.thoughtTitle::before,.thoughtTitle::after{
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+}
+.dateChoice{
+  width:min(94vw,560px);
+  grid-template-columns:1fr minmax(38px,.34fr) 1fr;
+  gap:clamp(4px,2.4vw,18px);
+  margin:clamp(0px,.6svh,8px) 0 clamp(2px,1svh,10px);
+}
+.choiceCard{
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  padding:0!important;
+  border-radius:0!important;
+  overflow:visible;
+  min-width:0;
+  transform:translateZ(0);
+}
+.choiceCard::before,
+.choiceCard::after{
+  content:"";
+  position:absolute;
+  top:32%;
+  width:22px;
+  height:10px;
+  border-top:4px solid currentColor;
+  border-radius:50%;
+  opacity:.75;
+  filter:drop-shadow(0 0 8px currentColor);
+}
+.choiceCard.me::before{left:-4px;transform:rotate(24deg)}
+.choiceCard.me::after{left:10px;top:24%;transform:rotate(4deg);width:16px}
+.choiceCard.date::before{right:-4px;transform:rotate(-24deg)}
+.choiceCard.date::after{right:10px;top:24%;transform:rotate(-4deg);width:16px}
+.choiceCard:active,.choiceCard.isPressed{
+  transform:translateY(3px) scale(.985);
+  filter:brightness(1.12);
+}
+.choiceLabel{
+  position:relative;
+  z-index:2;
+  font-family:"Trebuchet MS","Arial Rounded MT Bold",Arial,sans-serif;
+  font-size:clamp(18px,4.9vw,26px);
+  line-height:1;
+  transform:rotate(-4deg);
+  text-transform:uppercase;
+  letter-spacing:.045em;
+  text-shadow:0 3px 0 rgba(0,0,0,.35),0 0 12px currentColor;
+}
+.choiceCard.date .choiceLabel{transform:rotate(4deg)}
+.choiceHint{display:none!important}
+.choiceHead{
+  width:min(35vw,162px);
+  height:min(35vw,162px);
+  min-width:112px;
+  min-height:112px;
+  margin-top:4px;
+  filter:
+    drop-shadow(0 18px 23px rgba(0,0,0,.36))
+    drop-shadow(0 0 12px rgba(255,79,160,.20));
+  transform-origin:50% 70%;
+  animation:choiceIdle 2.05s ease-in-out infinite;
+  will-change:transform;
+}
+.choiceCard.me .choiceHead{animation-name:choiceIdleMe}
+.choiceCard.date .choiceHead{animation-name:choiceIdleDate;animation-delay:-.35s}
+.choiceHead svg{width:100%;height:100%;overflow:visible}
+.choiceHead::after{
+  content:"";
+  position:absolute;
+  left:16%;right:16%;bottom:-8%;height:12%;
+  border-radius:50%;
+  background:radial-gradient(circle,rgba(0,0,0,.34),rgba(0,0,0,.08) 58%,transparent 72%);
+  filter:blur(3px);
+  transform:scaleX(1.05);
+  z-index:-1;
+}
+.loveBridge{
+  display:grid;
+  place-items:center;
+  min-width:38px;
+  font-size:clamp(28px,8vw,48px);
+  line-height:1;
+  color:#ff7dbd;
+  text-shadow:0 0 18px rgba(255,79,160,.72),0 3px 0 rgba(0,0,0,.22);
+}
+.loveBridge::before,.loveBridge::after{
+  content:"♥";
+  position:absolute;
+  font-size:.46em;
+  opacity:.8;
+  animation:miniHeartFloat 1.8s ease-in-out infinite;
+}
+.loveBridge::before{transform:translate(-22px,-28px) rotate(-12deg);animation-delay:-.5s}
+.loveBridge::after{transform:translate(20px,28px) rotate(14deg);animation-delay:-1s}
+.playBtn{
+  width:min(80vw,430px);
+  min-height:72px;
+  background:linear-gradient(180deg,#ffd84f 0%,#ff9f1a 58%,#eb6d12 100%);
+  box-shadow:
+    0 0 32px rgba(255,170,28,.34),
+    0 15px 30px rgba(0,0,0,.30),
+    inset 0 4px 0 rgba(255,255,255,.42),
+    inset 0 -7px 0 rgba(150,67,0,.24);
+}
+.optionBtn{
+  width:min(58vw,315px);
+  background:linear-gradient(180deg,#5a5bce 0%,#6a35d1 52%,#3b218b 100%);
+}
+.version{
+  color:rgba(255,255,255,.64);
+  text-shadow:0 0 10px rgba(255,79,160,.35);
+}
+@keyframes choiceIdleMe{
+  0%,100%{transform:translateY(0) rotate(-7deg) scale(1)}
+  50%{transform:translateY(-8px) rotate(-3deg) scale(1.025)}
+}
+@keyframes choiceIdleDate{
+  0%,100%{transform:translateY(0) rotate(7deg) scale(1)}
+  50%{transform:translateY(-8px) rotate(3deg) scale(1.025)}
+}
+@keyframes miniHeartFloat{
+  0%,100%{opacity:.45;filter:blur(0);}
+  50%{opacity:1;filter:blur(.2px);}
+}
+@media(max-height:720px){
+  .mainTitle .date{font-size:clamp(44px,12vw,78px)}
+  .mainTitle .gravity{font-size:clamp(40px,10.5vw,70px)}
+  .dateChoice{width:min(92vw,500px)}
+  .choiceHead{width:min(30vw,126px);height:min(30vw,126px);min-width:88px;min-height:88px}
+  .playBtn{min-height:60px}
+  .optionBtn{min-height:48px}
+}
+@media(max-width:420px){
+  .dateChoice{grid-template-columns:1fr 38px 1fr;gap:2px}
+  .choiceHead{width:min(36vw,136px);height:min(36vw,136px);min-width:96px;min-height:96px}
+  .choiceLabel{font-size:clamp(16px,4.8vw,22px)}
+}
+
 </style>
 </head>
 <body>
@@ -362,34 +630,36 @@ body::before{
 </div>
 
 <main class="mainMenu">
-  <section class="title" aria-label="Date Cube Gravity">
-    <span class="date">DATE</span>
-    <div class="line">
-      <span class="cube">CUBE</span>
-      <span class="gravity">GRAVITY</span>
-    </div>
+  <section class="title mainTitle" aria-label="Date Gravity">
+    <span class="date">Date</span>
+    <span class="gravity">Gravity</span>
   </section>
 
-  <div class="subtitle">À la recherche de son <span class="dateWord">Date</span> !</div>
 
-  <section class="hero" aria-hidden="true">
-    <div class="heroGlow"></div>
-    <div class="portal"></div>
-
-    <div class="heroAssetWrap">
-      <svg id="playerHeroSvg" class="assetHidden" viewBox="0 0 40 40" preserveAspectRatio="xMidYMid meet"></svg>
-      <div id="fallbackCube" class="fallbackCube assetHidden">
-        <div class="fallbackEye left"></div>
-        <div class="fallbackEye right"></div>
-        <div class="fallbackMouth"></div>
-      </div>
-    </div>
+  <section class="dateChoice" aria-label="Choix des personnages">
+    <button class="choiceCard me jsReactive" id="meChoice" type="button" aria-label="Changer mon personnage">
+      <span class="choiceLabel">ME</span>
+      <span class="choiceHead">
+        <svg id="meChoiceSvg" viewBox="0 0 40 40" preserveAspectRatio="xMidYMid meet"></svg>
+        <span id="meChoiceFallback" class="choiceHeadFallback assetHidden"></span>
+      </span>
+      <span class="choiceHint" id="meChoiceHint">garçon</span>
+    </button>
+    <div class="loveBridge" aria-hidden="true">♡</div>
+    <button class="choiceCard date jsReactive" id="dateChoice" type="button" aria-label="Changer le personnage date">
+      <span class="choiceLabel">MY DATE</span>
+      <span class="choiceHead">
+        <svg id="dateChoiceSvg" viewBox="0 0 40 40" preserveAspectRatio="xMidYMid meet"></svg>
+        <span id="dateChoiceFallback" class="choiceHeadFallback assetHidden"></span>
+      </span>
+      <span class="choiceHint" id="dateChoiceHint">fille</span>
+    </button>
   </section>
 
   <nav class="buttonStack" aria-label="Navigation principale">
     <a class="playBtn jsReactive" href="game.html"><span class="iconHeart">🤍</span><span>JOUER</span></a>
     <button class="optionBtn jsReactive" id="openOptions" type="button"><span class="iconGear">⚙</span><span>OPTIONS</span></button>
-    <div class="version">V43.27-mainmenu-polish-audio</div>
+    <div class="version">V43.28-mainmenu-da</div>
   </nav>
 </main>
 
@@ -665,52 +935,107 @@ function drawLayer(layer){
   return applyCommon(el,layer);
 }
 
-async function loadPlayerAsset(){
-  const svg=document.getElementById("playerHeroSvg");
-  const fallback=document.getElementById("fallbackCube");
-  const wrap=document.querySelector(".heroAssetWrap");
-  const candidates=[
-    "vector_assets_runtime.json",
-    "./vector_assets_runtime.json",
-    "vector_assets.json",
-    "./vector_assets.json",
-    "assets.json",
-    "./assets.json"
-  ];
 
+let menuVectorPack=null;
+const CHARACTER_KEYS={
+  me:{boy:"player_boy",girl:"player_girl",fallback:"player"},
+  date:{boy:"date_boy",girl:"date_girl",fallback:"destination"}
+};
+const CHARACTER_LABELS={boy:"garçon",girl:"fille"};
+
+function getStoredGender(key, fallback){
+  try{
+    const v=localStorage.getItem(key);
+    return (v==="boy"||v==="girl") ? v : fallback;
+  }catch(e){return fallback;}
+}
+function setStoredGender(key,value){
+  try{localStorage.setItem(key,value);}catch(e){}
+}
+function toggleGender(value){return value==="boy" ? "girl" : "boy";}
+
+let meGender=getStoredGender("dcg_me_gender","boy");
+let dateGender=getStoredGender("dcg_date_gender","girl");
+
+async function loadMenuVectorPack(){
+  const candidates=["vector_assets_runtime.json","./vector_assets_runtime.json","vector_assets.json","./vector_assets.json"];
   for(const path of candidates){
     try{
       const res=await fetch(path+"?v="+Date.now(),{cache:"no-store"});
       if(!res.ok)continue;
       const data=await res.json();
-      const player=data?.assets?.player || data?.player;
-      const layers=player?.layers;
-      if(!Array.isArray(layers) || !layers.length)continue;
-
-      svg.innerHTML="";
-      const root=svgEl("g",{});
-      layers.forEach(layer=>{
-        const el=drawLayer(layer);
-        if(el)root.appendChild(el);
-      });
-      svg.appendChild(root);
-
-      svg.classList.remove("assetHidden");
-      fallback.classList.add("assetHidden");
-      wrap && wrap.classList.add("assetReady");
-      console.log("[MAINMENU] player asset loaded from",path);
-      return;
-    }catch(err){
-      console.warn("[MAINMENU] player asset failed",path,err);
-    }
+      if(data?.assets){
+        menuVectorPack=data;
+        console.log("[MAINMENU] vector assets loaded from",path);
+        return data;
+      }
+    }catch(err){console.warn("[MAINMENU] vector asset failed",path,err);}
   }
-
-  fallback.classList.remove("assetHidden");
-  wrap && wrap.classList.add("assetReady");
-  console.warn("[MAINMENU] fallback cube used");
+  return null;
 }
 
-loadPlayerAsset();
+function menuAsset(role,gender){
+  const keys=CHARACTER_KEYS[role];
+  const wanted=keys?.[gender];
+  if(menuVectorPack?.assets?.[wanted])return wanted;
+  if(menuVectorPack?.assets?.[keys?.fallback])return keys.fallback;
+  return null;
+}
+
+function drawMenuAsset(svgId,fallbackId,assetName,flip=false){
+  const svg=document.getElementById(svgId);
+  const fallback=document.getElementById(fallbackId);
+  if(!svg || !fallback)return;
+  const asset=assetName ? menuVectorPack?.assets?.[assetName] : null;
+  const layers=asset?.layers;
+  svg.innerHTML="";
+  if(Array.isArray(layers) && layers.length){
+    const root=svgEl("g", flip?{transform:"translate(40 0) scale(-1 1)"}:{});
+    layers.forEach(layer=>{
+      const el=drawLayer(layer);
+      if(el)root.appendChild(el);
+    });
+    svg.appendChild(root);
+    svg.classList.remove("assetHidden");
+    fallback.classList.add("assetHidden");
+  }else{
+    svg.classList.add("assetHidden");
+    fallback.classList.remove("assetHidden");
+  }
+}
+
+function updateMenuCharacters(){
+  const meAsset=menuAsset("me",meGender);
+  const dateAsset=menuAsset("date",dateGender);
+  drawMenuAsset("meChoiceSvg","meChoiceFallback",meAsset,false);
+  drawMenuAsset("dateChoiceSvg","dateChoiceFallback",dateAsset,true);
+  const meHint=document.getElementById("meChoiceHint");
+  const dateHint=document.getElementById("dateChoiceHint");
+  if(meHint)meHint.textContent=CHARACTER_LABELS[meGender]||meGender;
+  if(dateHint)dateHint.textContent=CHARACTER_LABELS[dateGender]||dateGender;
+}
+
+async function initMenuCharacters(){
+  await loadMenuVectorPack();
+  updateMenuCharacters();
+}
+
+const meChoiceBtn=document.getElementById("meChoice");
+const dateChoiceBtn=document.getElementById("dateChoice");
+if(meChoiceBtn)meChoiceBtn.addEventListener("click",()=>{
+  meGender=toggleGender(meGender);
+  setStoredGender("dcg_me_gender",meGender);
+  playOpenSound();
+  updateMenuCharacters();
+});
+if(dateChoiceBtn)dateChoiceBtn.addEventListener("click",()=>{
+  dateGender=toggleGender(dateGender);
+  setStoredGender("dcg_date_gender",dateGender);
+  playOpenSound();
+  updateMenuCharacters();
+});
+
+initMenuCharacters();
 </script>
 </body>
 </html>

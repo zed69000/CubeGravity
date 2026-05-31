@@ -2180,7 +2180,7 @@ const editPanel=document.getElementById("editPanel"),levelNameInput=document.get
 const banner=document.getElementById("banner"),bannerTitle=document.getElementById("bannerTitle"),bannerText=document.getElementById("bannerText"),starsEl=document.getElementById("stars"),bannerAction=document.getElementById("bannerAction");
 
 let levels=[];
-const GAME_VERSION="V43.18-speed-trail";
+const GAME_VERSION="V43.21-inclusive-shared";
 setTimeout(()=>{const v=document.getElementById("gameVersionBadge"); if(v)v.textContent=GAME_VERSION;},0);
 let gameSettings={fallDelayMs:135,rotationDurationMs:320};
 let fallbackLevels=[]; // V57: aucun niveau de gameplay en dur. levels.json est obligatoire.
@@ -2626,6 +2626,23 @@ async function loadVectorAssets(){
   throw lastErr || new Error("vector_assets_runtime.json / vector_assets.json introuvables");
 }
 function vectorAsset(name){return vectorAssetPack&&vectorAssetPack.assets?vectorAssetPack.assets[name]:null}
+function vectorAssetExists(name){
+  const a=vectorAsset(name);
+  return !!(a && Array.isArray(a.layers));
+}
+function readCharacterGender(key,fallback){
+  try{
+    const v=localStorage.getItem(key);
+    return (v==="boy"||v==="girl") ? v : fallback;
+  }catch(e){return fallback;}
+}
+function selectedCharacterAsset(role){
+  const meGender=readCharacterGender("dcg_me_gender","boy");
+  const dateGender=readCharacterGender("dcg_date_gender","girl");
+  const candidate=role==="player" ? "player_"+meGender : "date_"+dateGender;
+  const fallback=role==="player" ? "player" : "destination";
+  return vectorAssetExists(candidate) ? candidate : fallback;
+}
 function applyVectorThemeToGame(){
   const th=vectorAssetPack?.themePreview||{};
   const root=document.documentElement;
@@ -2662,6 +2679,38 @@ function vectorAnimOpacity(l,t){
 }
 function appendVectorLayer(parent,l,t){
   let el; const shape=l.shape||"rect";
+
+  if(shape==="compound"){
+    const g=E("g",{});
+    (l.parts||[]).forEach(part=>{
+      const layer=part.layer||part;
+      const wrap=E("g",{});
+      if(part.groupTransform)wrap.setAttribute("transform",part.groupTransform);
+      appendVectorLayer(wrap,layer,t);
+      g.appendChild(wrap);
+    });
+    const trParts=[];
+    const hasScale=Number.isFinite(Number(l.scaleX))||Number.isFinite(Number(l.scaleY));
+    const hasRot=Number.isFinite(Number(l.rotation));
+    if(hasScale||hasRot){
+      const bb=layerBBox(l);
+      const cx=Number(l.pivotX ?? (bb.x+bb.w/2));
+      const cy=Number(l.pivotY ?? (bb.y+bb.h/2));
+      const sx=Number.isFinite(Number(l.scaleX))?Number(l.scaleX):1;
+      const sy=Number.isFinite(Number(l.scaleY))?Number(l.scaleY):1;
+      const rr=Number.isFinite(Number(l.rotation))?Number(l.rotation):0;
+      trParts.push(`translate(${cx} ${cy})`);
+      if(rr)trParts.push(`rotate(${rr})`);
+      if(sx!==1||sy!==1)trParts.push(`scale(${sx} ${sy})`);
+      trParts.push(`translate(${-cx} ${-cy})`);
+    }
+    const tr=vectorAnimTransform(l,t); if(tr)trParts.push(tr);
+    if(trParts.length)g.setAttribute("transform",trParts.join(" "));
+    g.setAttribute("pointer-events","none");
+    parent.appendChild(g);
+    return;
+  }
+
   if(shape==="circle"){
     el=E("circle",{cx:l.x??20,cy:l.y??20,r:l.r??8});
   }else if(shape==="polygon"){
@@ -2702,6 +2751,15 @@ function appendVectorLayer(parent,l,t){
 }
 function layerBBox(l){
   if(!l)return {x:0,y:0,w:0,h:0};
+
+  if(l.shape==="compound"){
+    const boxes=(l.parts||[]).map(part=>layerBBox(part.layer||part)).filter(Boolean);
+    if(!boxes.length)return {x:0,y:0,w:0,h:0};
+    const minX=Math.min(...boxes.map(b=>b.x)), minY=Math.min(...boxes.map(b=>b.y));
+    const maxX=Math.max(...boxes.map(b=>b.x+b.w)), maxY=Math.max(...boxes.map(b=>b.y+b.h));
+    return {x:minX,y:minY,w:maxX-minX,h:maxY-minY};
+  }
+
   if(l.shape==="circle"){const r=Number(l.r??0);return {x:Number(l.x??0)-r,y:Number(l.y??0)-r,w:r*2,h:r*2};}
   if(l.shape==="polygon" || l.shape==="path" || l.shape==="line"){
     const pts=(l.points||[]).map(p=>Array.isArray(p)?p:String(p).split(",")).map(p=>({x:Number(p[0]??0),y:Number(p[1]??0)}));
@@ -2998,12 +3056,12 @@ function draw(){
       }
     }
     if(c=="B"){
-      if(drawVectorAsset("destination",X,Y)){}else if(!drawPixelAsset("destination",X,Y)){
+      if(drawVectorAsset(selectedCharacterAsset("date"),X,Y)){}else if(!drawPixelAsset("destination",X,Y)){
         rect(X+4,Y+4,T-8,T-8,"#ff4f93","#8a1745");
       }
     }
     if(c=="A"&&edit){
-      if(drawVectorAsset("player",X,Y)){}else if(!drawPixelAsset("player",X,Y)){
+      if(drawVectorAsset(selectedCharacterAsset("player"),X,Y)){}else if(!drawPixelAsset("player",X,Y)){
         rect(X+4,Y+4,T-8,T-8,"#ffd640","#a56500");
         text(X+HALF,Y+34,"A","#111",12);
       }
@@ -3058,7 +3116,7 @@ function draw(){
     let sx=1+squash*.22, sy=1-squash*.18;
     let inv=-visualOri*90;
     let grp=E("g",{transform:`translate(${X+HALF} ${Y+HALF+idle}) rotate(${inv}) scale(${sx} ${sy}) translate(${-HALF} ${-HALF})`,"pointer-events":"none"});
-    if(drawVectorAsset("player",0,0,grp)){}else if(!drawPixelAsset("player",0,0,grp)){
+    if(drawVectorAsset(selectedCharacterAsset("player"),0,0,grp)){}else if(!drawPixelAsset("player",0,0,grp)){
       grp.appendChild(E("rect",{x:4,y:4,width:T-8,height:T-8,rx:2,ry:2,fill:"#ffd640",stroke:"#a56500","stroke-width":4}));
     }
     grid.appendChild(grp);

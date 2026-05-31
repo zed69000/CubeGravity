@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Gravity Cube - SVG Asset Studio V43.15 External Vector Loader</title>
+<title>Gravity Cube - SVG Asset Studio V43.44 Stable Group Order Compound Merge</title>
 <style>
 :root{
   --bg:#050720;--panel:#0b1030;--panel2:#121845;--cyan:#29e7ff;--pink:#ff4f93;--yellow:#ffd640;--green:#52f28a;--bad:#ff6b7a;
@@ -154,11 +154,24 @@ body.hide-transform-box [data-transform-box] {
 .transformToolsBox{border:1px solid rgba(41,231,255,.18);background:rgba(41,231,255,.045);border-radius:12px;padding:8px;margin:8px 0}
 .transformToolsBox .row button{font-size:12px;padding:7px 8px}
 
+
+/* ===== V43.31 CONTEXTUAL PROPERTIES / MULTI-SELECTION UI ===== */
+.contextHidden{display:none!important}
+.multiEditHint{font-size:11px;color:#ffd640;line-height:1.3;margin-top:6px}
+.layerAnimBox.multiActive{border-color:rgba(255,214,64,.38)!important;background:rgba(255,214,64,.055)!important}
+
+
+/* ===== V43.38 SAFE LAYER LOCK / ROLLBACK ===== */
+.layerLockBtn{width:28px;min-width:28px;padding:3px 4px!important;border-radius:8px!important;font-size:13px!important;background:#26305f!important;color:#ffd640!important;border:1px solid rgba(255,214,64,.35)!important}
+.item.lockedLayer{opacity:.58!important;filter:saturate(.7);}
+.item.lockedLayer .name small::after{content:" · LOCK";color:#ffd640;font-weight:900;}
+.item.lockedLayer.active{outline:1px solid rgba(255,214,64,.35)!important;}
+
 </style>
 </head>
 <body>
 <header>
-  <h1><span class="a">GRAVITY</span> <span class="b">CUBE</span> SVG Asset Studio <small>V43.16 anim parity</small></h1>
+  <h1><span class="a">GRAVITY</span> <span class="b">CUBE</span> SVG Asset Studio <small>V43.44 group order / faithful merge</small></h1>
   <div class="row">
     <button id="toggleTransformBtn" title="Ctrl+T">Cadre transform</button><button id="undoBtn">Undo</button><button id="redoBtn">Redo</button><button id="copyJson">Copier JSON</button><button id="downloadJson" class="primary">Télécharger source éditeur</button><button id="downloadRuntimeJson" class="green">Télécharger runtime baked</button>
   </div>
@@ -520,7 +533,7 @@ function layerCenter(l){const b=layerBBox(l);return{x:(b.minX+b.maxX)/2,y:(b.min
 function groupCenter(g){const b=bboxOfLayersByIds(g?.children||[]);return{x:b.cx,y:b.cy}}
 function drawPivotMarker(x,y,label){if(!showPivots)return;const g=E('g',{class:'pivotMarker'});g.appendChild(E('line',{x1:x-1.5,y1:y,x2:x+1.5,y2:y,stroke:'#ff4f93','stroke-width':.35}));g.appendChild(E('line',{x1:x,y1:y-1.5,x2:x,y2:y+1.5,stroke:'#ff4f93','stroke-width':.35}));g.appendChild(E('circle',{cx:x,cy:y,r:.55,fill:'none',stroke:'#ffd640','stroke-width':.25}));svg.appendChild(g)}
 function renderSvg(){
-  const t=animClock;
+  const t=animPlaying ? animClock : 0;
   svg.innerHTML='<rect width="40" height="40" fill="#071235"/>';
   const childToGroup=new Map();
   groups().forEach(g=>(g.children||[]).forEach(id=>childToGroup.set(id,g)));
@@ -1009,10 +1022,355 @@ deleteGroup = function(){
   if(__v37_originalDeleteGroup) return __v37_originalDeleteGroup();
 };
 
+
+/* ===== V43.29 BEZIER / POINT EDITOR REPAIR =====
+   Objectif : rendre le mode tracé utilisable au lieu de faire semblant.
+   - Les courbes Bézier manuelles utilisent maintenant de vraies tangentes CUBIC.
+   - Les poignées de tangente sont visibles et déplaçables.
+   - Suppr / Backspace supprime le point actif.
+   - Alt-clic ou Shift-clic sur une courbe sélectionnée ajoute un point.
+   - En mode Points, cliquer-glisser dans la forme déplace encore l’asset complet.
+*/
+let bezierActiveHandle=null;
+let bezierLastPointer=null;
+
+function roundPoint2(v){return Number(Number(v||0).toFixed(2));}
+function normalizeBezierHandles(l){
+  if(!l || l.shape!=='path' || !Array.isArray(l.points))return;
+  if(l.curveMode!=='manual')return;
+  if(!Array.isArray(l.handles))l.handles=[];
+  const pts=l.points;
+  for(let i=0;i<pts.length;i++){
+    const p=pts[i];
+    const prev=pts[(i-1+pts.length)%pts.length]||p;
+    const next=pts[(i+1)%pts.length]||p;
+    if(!l.handles[i]){
+      l.handles[i]={
+        in:[roundPoint2(Number(p[0])-(Number(next[0])-Number(prev[0]))*0.16),roundPoint2(Number(p[1])-(Number(next[1])-Number(prev[1]))*0.16)],
+        out:[roundPoint2(Number(p[0])+(Number(next[0])-Number(prev[0]))*0.16),roundPoint2(Number(p[1])+(Number(next[1])-Number(prev[1]))*0.16)]
+      };
+    }
+    if(!Array.isArray(l.handles[i].in))l.handles[i].in=[roundPoint2(p[0]),roundPoint2(p[1])];
+    if(!Array.isArray(l.handles[i].out))l.handles[i].out=[roundPoint2(p[0]),roundPoint2(p[1])];
+  }
+  l.handles.length=pts.length;
+}
+function updatePathD(l){
+  if(!l || l.shape!=='path')return;
+  if(l.curveMode==='manual')normalizeBezierHandles(l);
+  l.d=pointsToPath(l.points||[],l.curveMode||$('curveMode')?.value||'linear',l);
+}
+
+// Remplace l'ancien faux Bézier quadratique. En manuel, on génère de vraies courbes C.
+pointsToPath = function(pts,mode='linear',layer=null){
+  if(!pts || !pts.length)return '';
+  if(mode==='linear')return 'M '+pts.map(p=>p.join(' ')).join(' L ')+' Z';
+  if(mode==='manual' && layer){
+    normalizeBezierHandles(layer);
+    let d=`M ${pts[0][0]} ${pts[0][1]}`;
+    for(let i=1;i<pts.length;i++){
+      const h0=layer.handles?.[i-1]?.out || pts[i-1];
+      const h1=layer.handles?.[i]?.in || pts[i];
+      const p=pts[i];
+      d+=` C ${h0[0]} ${h0[1]} ${h1[0]} ${h1[1]} ${p[0]} ${p[1]}`;
+    }
+    if(pts.length>2){
+      const last=pts.length-1;
+      const h0=layer.handles?.[last]?.out || pts[last];
+      const h1=layer.handles?.[0]?.in || pts[0];
+      d+=` C ${h0[0]} ${h0[1]} ${h1[0]} ${h1[1]} ${pts[0][0]} ${pts[0][1]} Z`;
+    }
+    return d;
+  }
+  // Mode auto : courbe douce, sans exposer de tangentes.
+  let d=`M ${pts[0][0]} ${pts[0][1]}`;
+  for(let i=1;i<pts.length;i++){
+    const p0=pts[i-1], p=pts[i];
+    const mx=(Number(p0[0])+Number(p[0]))/2;
+    const my=(Number(p0[1])+Number(p[1]))/2;
+    d+=` Q ${p0[0]} ${p0[1]} ${mx} ${my}`;
+  }
+  return d+' Z';
+};
+
+// Déplace aussi les tangentes, sinon les courbes restent plantées pendant que les points partent vivre ailleurs.
+const __v4329_moveLayerData = moveLayerData;
+moveLayerData = function(l,dx,dy){
+  __v4329_moveLayerData(l,dx,dy);
+  if(Array.isArray(l?.handles)){
+    l.handles=l.handles.map(h=>({
+      in:Array.isArray(h?.in)?[roundPoint2(Number(h.in[0])+dx),roundPoint2(Number(h.in[1])+dy)]:h?.in,
+      out:Array.isArray(h?.out)?[roundPoint2(Number(h.out[0])+dx),roundPoint2(Number(h.out[1])+dy)]:h?.out
+    }));
+  }
+  updatePathD(l);
+};
+
+const __v4329_scaleLayerAround = scaleLayerAround;
+scaleLayerAround = function(l,sc,cx,cy){
+  __v4329_scaleLayerAround(l,sc,cx,cy);
+  if(Array.isArray(l?.handles)){
+    l.handles=l.handles.map(h=>({
+      in:Array.isArray(h?.in)?[roundPoint2(cx+(Number(h.in[0])-cx)*sc),roundPoint2(cy+(Number(h.in[1])-cy)*sc)]:h?.in,
+      out:Array.isArray(h?.out)?[roundPoint2(cx+(Number(h.out[0])-cx)*sc),roundPoint2(cy+(Number(h.out[1])-cy)*sc)]:h?.out
+    }));
+  }
+  updatePathD(l);
+};
+
+function distToSegment(px,py,ax,ay,bx,by){
+  const vx=bx-ax,vy=by-ay,wx=px-ax,wy=py-ay;
+  const c1=vx*wx+vy*wy, c2=vx*vx+vy*vy;
+  const t=c2?Math.max(0,Math.min(1,c1/c2)):0;
+  const x=ax+t*vx,y=ay+t*vy;
+  return {d:Math.hypot(px-x,py-y),t,x,y};
+}
+function nearestSegmentOnLayer(l,p){
+  if(!l || !Array.isArray(l.points) || l.points.length<2)return null;
+  let best=null;
+  const closed=l.points.length>2;
+  const max=closed?l.points.length:l.points.length-1;
+  for(let i=0;i<max;i++){
+    const a=l.points[i],b=l.points[(i+1)%l.points.length];
+    const r=distToSegment(p.x,p.y,Number(a[0]),Number(a[1]),Number(b[0]),Number(b[1]));
+    if(!best || r.d<best.d)best={...r,index:i,next:(i+1)%l.points.length};
+  }
+  return best;
+}
+function hitLayerIndex(p){
+  for(let i=layers().length-1;i>=0;i--){
+    const l=layers()[i]; if(!l || l.visible===false)continue;
+    const b=layerBBox(l); const pad=1.4;
+    if(p.x>=b.minX-pad && p.x<=b.maxX+pad && p.y>=b.minY-pad && p.y<=b.maxY+pad)return i;
+  }
+  return -1;
+}
+function addPointToLayerAt(l,p){
+  if(!l || !Array.isArray(l.points))return false;
+  const near=nearestSegmentOnLayer(l,p);
+  const insertAt=near?near.next:l.points.length;
+  l.points.splice(insertAt,0,[roundPoint2(p.x),roundPoint2(p.y)]);
+  if(l.shape==='polygon' && ($('curveMode')?.value||l.curveMode)==='manual'){
+    l.shape='path';
+    l.curveMode='manual';
+  }
+  if(l.shape==='path'){
+    normalizeBezierHandles(l);
+    const h=l.handles[insertAt];
+    h.in=[roundPoint2(p.x-2),roundPoint2(p.y)];
+    h.out=[roundPoint2(p.x+2),roundPoint2(p.y)];
+    updatePathD(l);
+  }
+  return insertAt;
+}
+function deleteActivePoint(){
+  if(!$('pointEdit')?.checked || activePointIndex<0)return false;
+  const idx=selectedIndices()[0] ?? activeLayerIndex;
+  const l=layers()[idx];
+  if(!l || !Array.isArray(l.points))return false;
+  if(l.points.length<=2){setStatus('Impossible : il faut garder au moins 2 points.');return true;}
+  pushHistory();
+  l.points.splice(activePointIndex,1);
+  if(Array.isArray(l.handles))l.handles.splice(activePointIndex,1);
+  activePointIndex=Math.min(activePointIndex,l.points.length-1);
+  updatePathD(l);
+  renderAll();
+  setStatus('Point supprimé. Le monde continue malgré cette perte tragique.');
+  return true;
+}
+
+// Dessine points + tangentes. Les tangentes n'apparaissent que pour un path en mode manuel.
+drawPointHandles = function(){
+  if(!$('pointEdit')?.checked)return;
+  const ids=selectedIndices();
+  ids.forEach(i=>{
+    const l=layers()[i];
+    if(!Array.isArray(l.points))return;
+    if(l.shape==='path' && l.curveMode==='manual')normalizeBezierHandles(l);
+    if(l.shape==='path' && l.curveMode==='manual'){
+      l.points.forEach((p,pi)=>{
+        const h=l.handles?.[pi]; if(!h)return;
+        [['in',h.in],['out',h.out]].forEach(([kind,hp])=>{
+          if(!Array.isArray(hp))return;
+          svg.appendChild(E('line',{class:'bezierTangentLine',x1:p[0],y1:p[1],x2:hp[0],y2:hp[1],stroke:kind==='in'?'#ff8fdc':'#52f28a','stroke-width':.22,'stroke-dasharray':'.65 .45','pointer-events':'none'}));
+          const c=E('circle',{class:'bezierHandle '+kind,cx:hp[0],cy:hp[1],r:.55,fill:kind==='in'?'#ff8fdc':'#52f28a',stroke:'#050720','stroke-width':.18,'data-layer':i,'data-point':pi,'data-handle':kind});
+          svg.appendChild(c);
+        });
+      });
+    }
+    l.points.forEach((p,pi)=>{
+      const c=E('circle',{class:'pointHandle'+(pi===activePointIndex?' active':''),cx:p[0],cy:p[1],r:.75,'data-layer':i,'data-point':pi});
+      svg.appendChild(c);
+    });
+  });
+};
+
+startDraw = function(e){
+  ensureSelectionStablePivot();
+  const target=e.target;
+  const p=svgPoint(e);
+  const isHandle=target?.classList?.contains('bezierHandle');
+  const isPoint=target?.classList?.contains('pointHandle');
+
+  if($('pointEdit')?.checked && isHandle){
+    pushHistory();
+    drag={type:'bezierHandle',layer:Number(target.dataset.layer),point:Number(target.dataset.point),handle:String(target.dataset.handle)};
+    bezierActiveHandle=drag;
+    activePointIndex=drag.point;
+    e.preventDefault();return;
+  }
+  if($('pointEdit')?.checked && isPoint){
+    pushHistory();
+    drag={type:'point',layer:Number(target.dataset.layer),point:Number(target.dataset.point)};
+    activePointIndex=drag.point;
+    e.preventDefault();return;
+  }
+
+  // Alt/Shift clic : ajout contrôlé d'un point sur la forme active.
+  if($('pointEdit')?.checked && (e.altKey||e.shiftKey)){
+    const idx=selectedIndices()[0] ?? activeLayerIndex;
+    const l=layers()[idx];
+    if(l && Array.isArray(l.points)){
+      pushHistory();
+      activePointIndex=addPointToLayerAt(l,p);
+      selected=new Set([idx]);activeLayerIndex=idx;
+      renderAll();
+      setStatus('Point ajouté. Alt/Shift-clic = insertion, Suppr = suppression. Parce que les points doivent obéir.');
+      e.preventDefault();return;
+    }
+  }
+
+  if(tool==='select'){
+    activePointIndex=-1;
+    const hit=hitLayerIndex(p);
+    if(hit>=0){
+      if(!selected.has(hit)){
+        if(!e.shiftKey&&!e.ctrlKey&&!e.metaKey)selected.clear();
+        selected.add(hit);activeLayerIndex=hit;
+      }
+      pushHistory();
+      drag={type:'moveSelection',start:p,last:p};
+      renderAll();
+      e.preventDefault();return;
+    }
+    if(!e.shiftKey&&!e.ctrlKey&&!e.metaKey){selected.clear();renderAll();}
+    e.preventDefault();return;
+  }
+
+  if(tool==='text'){
+    const txt=prompt('Texte à insérer','TEXT');
+    if(txt){addLayer({id:'text_'+Date.now().toString(36),shape:'text',x:Number(p.x.toFixed(1)),y:Number(p.y.toFixed(1)),text:txt,fontSize:6,fill:currentFill()==='none'?'#eef4ff':currentFill(),stroke:currentStroke(),strokeWidth:currentStrokeWidth()});}
+    e.preventDefault();return;
+  }
+  if(tool==='line'){
+    if(e.detail>=2){finishLineShape();e.preventDefault();return}
+    linePoints.push([Number(p.x.toFixed(1)),Number(p.y.toFixed(1))]);renderSvg();e.preventDefault();return;
+  }
+  drag={start:p,last:p,points:[p]};
+  e.preventDefault();
+};
+
+moveDraw = function(e){
+  if(!drag)return;
+  const p=svgPoint(e);
+  if(drag.type==='bezierHandle'){
+    const l=layers()[drag.layer];
+    normalizeBezierHandles(l);
+    if(l?.handles?.[drag.point]?.[drag.handle]){
+      l.handles[drag.point][drag.handle]=[Number(p.x.toFixed(1)),Number(p.y.toFixed(1))];
+      // Alt maintient la poignée opposée symétrique. Petit luxe, pour une fois.
+      if(e.altKey){
+        const anchor=l.points[drag.point];
+        const other=drag.handle==='in'?'out':'in';
+        l.handles[drag.point][other]=[roundPoint2(Number(anchor[0])-(p.x-Number(anchor[0]))),roundPoint2(Number(anchor[1])-(p.y-Number(anchor[1])))];
+      }
+      updatePathD(l);renderAll();
+    }
+    e.preventDefault();return;
+  }
+  if(drag.type==='point'){
+    const l=layers()[drag.layer];
+    if(l?.points?.[drag.point]){
+      const old=l.points[drag.point];
+      const dx=p.x-Number(old[0]),dy=p.y-Number(old[1]);
+      l.points[drag.point]=[Number(p.x.toFixed(1)),Number(p.y.toFixed(1))];
+      if(Array.isArray(l.handles?.[drag.point])){}
+      if(l.handles?.[drag.point]){
+        ['in','out'].forEach(k=>{const h=l.handles[drag.point][k];if(Array.isArray(h))l.handles[drag.point][k]=[roundPoint2(Number(h[0])+dx),roundPoint2(Number(h[1])+dy)]});
+      }
+      updatePathD(l);renderAll();
+    }
+    e.preventDefault();return;
+  }
+  if(drag.type==='moveSelection'){
+    const dx=p.x-drag.last.x,dy=p.y-drag.last.y;
+    selectedIndices().forEach(i=>moveLayerData(layers()[i],dx,dy));
+    drag.last=p;renderAll();e.preventDefault();return;
+  }
+  drag.last=p;if(tool==='free')drag.points.push(p);renderSvg();e.preventDefault();
+};
+
+endDraw = function(e){
+  if(!drag || ['point','bezierHandle','moveSelection'].includes(drag.type)){drag=null;bezierActiveHandle=null;return;}
+  const id='layer_'+Date.now().toString(36);const curveMode=$('curveMode').value;
+  if(tool==='rect'){
+    const x=Math.min(drag.start.x,drag.last.x),y=Math.min(drag.start.y,drag.last.y);
+    addLayer({id,shape:'rect',x:Number(x.toFixed(1)),y:Number(y.toFixed(1)),w:Number(Math.abs(drag.last.x-drag.start.x).toFixed(1)),h:Number(Math.abs(drag.last.y-drag.start.y).toFixed(1)),rx:v43CurrentCornerRadius(),fill:currentFill(),stroke:currentStroke(),strokeWidth:currentStrokeWidth()});
+  }else if(tool==='circle'){
+    addLayer({id,shape:'circle',x:Number(drag.start.x.toFixed(1)),y:Number(drag.start.y.toFixed(1)),r:Number(Math.hypot(drag.last.x-drag.start.x,drag.last.y-drag.start.y).toFixed(1)),fill:currentFill(),stroke:currentStroke(),strokeWidth:currentStrokeWidth()});
+  }else if(tool==='free'){
+    const pts=simplifyPoints(drag.points,.7).map(q=>[Number(q.x.toFixed(1)),Number(q.y.toFixed(1))]);
+    if(pts.length>2){
+      if(curveMode==='linear')addLayer({id,shape:'polygon',points:pts,fill:currentFill(),stroke:currentStroke(),strokeWidth:currentStrokeWidth()});
+      else{const l={id,shape:'path',points:pts,curveMode,fill:currentFill(),stroke:currentStroke(),strokeWidth:currentStrokeWidth()};if(curveMode==='manual')normalizeBezierHandles(l);l.d=pointsToPath(pts,curveMode,l);addLayer(l);}
+    }
+  }
+  drag=null;renderAll();e.preventDefault();
+};
+
+finishLineShape = function(){
+  if(linePoints.length<2)return setStatus('Ajoute au moins deux points.');
+  const id='line_'+Date.now().toString(36),curveMode=$('curveMode').value;
+  const pts=linePoints.slice();linePoints=[];
+  if(curveMode==='linear')addLayer({id,shape:'polygon',points:pts,fill:currentFill(),stroke:currentStroke(),strokeWidth:currentStrokeWidth()});
+  else{const l={id,shape:'path',points:pts,curveMode,fill:currentFill(),stroke:currentStroke(),strokeWidth:currentStrokeWidth()};if(curveMode==='manual')normalizeBezierHandles(l);l.d=pointsToPath(pts,curveMode,l);addLayer(l);}
+  setStatus('Forme créée. Mode manuel : tangentes vertes/roses, Alt-drag = symétrie.');
+};
+
+// Formulaire JSON/points : quand on recalcule un path, on garde le bon moteur Bézier.
+const __v4329_writeFormToActive = writeFormToActive;
+writeFormToActive = function(){
+  __v4329_writeFormToActive();
+  const l=activeLayer();
+  if(l?.shape==='path')updatePathD(l);
+};
+
+// Raccourcis dédiés points. Suppr supprime le point actif en mode Points, pas tout le layer par accident.
+document.addEventListener('keydown',e=>{
+  if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement.tagName))return;
+  if((e.key==='Delete'||e.key==='Backspace') && $('pointEdit')?.checked && activePointIndex>=0){
+    if(deleteActivePoint())e.preventDefault();
+  }
+});
+
+// Petit texte d'aide injecté dans le panneau, parce que deviner les raccourcis est un métier à part entière.
+setTimeout(()=>{
+  const pe=$('pointEdit');
+  if(pe && !document.getElementById('bezierPointHelp')){
+    const h=document.createElement('div');
+    h.id='bezierPointHelp';
+    h.className='floatingHint';
+    h.style.cssText='grid-column:1/-1;color:#ffd640;margin-top:4px;line-height:1.25';
+    h.textContent='Points : glisse les points. Bézier manuel : poignées vert/rose. Alt/Shift-clic ajoute un point. Suppr enlève le point actif. Alt-glisse une tangente = poignée opposée symétrique.';
+    pe.closest('.checkRow')?.insertAdjacentElement('afterend',h);
+  }
+},0);
+
+
 bindTabs();
 svg.addEventListener("pointerdown",startDraw);svg.addEventListener("pointermove",moveDraw);svg.addEventListener("pointerup",endDraw);svg.addEventListener("pointercancel",()=>drag=null);["Select","Rect","Circle","Line","Free","Text"].forEach(n=>{$("tool"+n).onclick=()=>setTool(n.toLowerCase());const rb=$("railTool"+n);if(rb)rb.onclick=()=>setTool(n.toLowerCase())});["layerId","x","y","rx","w","h","r","textValue"].forEach(id=>$(id).addEventListener("change",writeFormToActive));assetSelect.onchange=()=>{currentAsset=assetSelect.value;selected.clear();activeLayerIndex=0;activeGroupId="";renderAll()};$("selectAll").onclick=()=>{selected=new Set(layers().map((_,i)=>i));activeLayerIndex=0;renderAll()};$("clearSelection").onclick=()=>{selected.clear();renderAll()};$("deleteSelected").onclick=deleteSelected;$("duplicateSelected").onclick=duplicateSelected;$("moveUp").onclick=()=>moveLayer(activeLayerIndex,-1);$("moveDown").onclick=()=>moveLayer(activeLayerIndex,1);$("copySelected").onclick=copySelected;$("copyAll").onclick=copyAll;$("pasteLayers").onclick=pasteLayers;$("createGroup").onclick=createGroup;$("addSelectedToGroup").onclick=addSelectedToGroup;$("removeSelectedFromGroup").onclick=removeSelectedFromGroup;$("selectGroupFromDock").onclick=selectGroupChildren;if($("applyGroupAnimDock"))$("applyGroupAnimDock").onclick=applyGroup;$("activeGroupSelect").onchange=syncActiveGroupSelect;$("selectGroupChildren").onclick=selectGroupChildren;$("deleteGroup").onclick=deleteGroup;$("applyGroup").onclick=applyGroup;$("clearGroupAnim").onclick=clearGroupAnim;$("applyFillToSelection").onclick=()=>recolorSelected({fill:true});$("applyStrokeToSelection").onclick=()=>recolorSelected({stroke:true});$("applyColorsToSelection").onclick=()=>recolorSelected({fill:true,stroke:true});["fillEnabled","fillColor","fillAlpha"].forEach(id=>$(id).addEventListener("change",()=>{if(selected.size){v37RememberPaintBeforeDisable();recolorSelected({fill:true});}else renderAll()}));["strokeEnabled","strokeColor","strokeAlpha","strokeWidth"].forEach(id=>$(id).addEventListener("change",()=>{if(selected.size){v37RememberPaintBeforeDisable();recolorSelected({stroke:true});}else renderAll()}));$("pointEdit").addEventListener("change",renderAll);$("curveMode").addEventListener("change",()=>{const ids=selectedIndices();if(!ids.length)return;pushHistory();ids.forEach(i=>{const l=layers()[i];if(Array.isArray(l.points)){if($("curveMode").value==="linear"){l.shape="polygon";delete l.d;delete l.curveMode}else{l.shape="path";l.curveMode=$("curveMode").value;l.d=pointsToPath(l.points,l.curveMode)}}});renderAll()});$("scaleSelectedHalf").onclick=()=>scaleSelected(.5);$("scaleSelectedUp").onclick=()=>scaleSelected(1.2);$("scaleSelectedDouble").onclick=()=>scaleSelected(2);$("resetAsset").onclick=()=>{selected.clear();setStatus("Reset manuel non destructif : recharge le fichier si besoin.")};$("undoBtn").onclick=undo;$("redoBtn").onclick=redo;$("downloadJson").onclick=download;if($("downloadRuntimeJson"))$("downloadRuntimeJson").onclick=downloadRuntime;$("copyJson").onclick=async()=>{await navigator.clipboard.writeText(JSON.stringify(pack,null,2));alert("JSON copié.")};$("applyJson").onclick=async()=>{try{pack=JSON.parse(jsonView.value);assertEditableVectorPack(pack,"JSON texte");selectFirstUsefulAsset();const added=await mergeTeleporterPatchFromDisk({silent:true});renderAll();setStatus("JSON appliqué"+(added?" · téléporteurs fusionnés : "+added:"."))}catch(e){alert("JSON invalide : "+e.message)}};$("fileInput").onchange=async e=>{const f=e.target.files[0];if(!f)return;pack=JSON.parse(await f.text());assertEditableVectorPack(pack,f.name);selectFirstUsefulAsset();const added=await mergeTeleporterPatchFromDisk({silent:true});renderAll();setStatus("Fichier importé : "+f.name+(added?" · téléporteurs fusionnés : "+added:"."))};if($("mergeTeleporters"))$("mergeTeleporters").onclick=mergeTeleportersNow;$("applyTheme").onclick=applyTheme;$("resetTheme").onclick=resetTheme;["previewDevice","previewMode","previewLevel","replaceTarget","realSize"].forEach(id=>$(id).addEventListener("change",renderAll));$("testReadability").onclick=()=>{$("previewMode").value="level";renderAll();setStatus("Preview lisibilité en contexte réel activée.")};document.querySelectorAll("[data-set-preview]").forEach(b=>b.onclick=()=>{$("previewMode").value=b.dataset.setPreview;renderAll()});document.querySelectorAll("[data-set-device]").forEach(b=>b.onclick=()=>{$("previewDevice").value=b.dataset.setDevice;renderAll()});document.querySelectorAll('#rightTabs button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#rightTabs button').forEach(x=>x.classList.remove('active'));document.querySelectorAll('[data-right-panel]').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelector(`[data-right-panel="${b.dataset.right}"]`)?.classList.add('active')});if($('applyLayerAnim'))$('applyLayerAnim').onclick=applyLayerAnim;if($('clearLayerAnim'))$('clearLayerAnim').onclick=clearLayerAnim;
 if($('toggleTransformBtn'))$('toggleTransformBtn').onclick=toggleTransformBox;
-if($('animPlayPause'))$('animPlayPause').onclick=()=>{animPlaying=!animPlaying;$('animPlayPause').textContent=animPlaying?'⏸ Pause preview anims':'▶ Play preview anims';setStatus(animPlaying?'Animations preview relancées.':'Animations preview stoppées pour éditer proprement.');};
+if($('animPlayPause'))$('animPlayPause').onclick=()=>{animPlaying=!animPlaying;if(!animPlaying)animClock=0;$('animPlayPause').textContent=animPlaying?'⏸ Pause preview anims':'▶ Play preview anims';setStatus(animPlaying?'Animations preview relancées.':'Animations preview stoppées : retour à la pose de base.');renderAll();};
 if($('showPivotBtn'))$('showPivotBtn').onclick=()=>{showPivots=!showPivots;$('showPivotBtn').textContent=showPivots?'Masquer pivots':'Afficher pivots';renderAll();};
 if($('groupPivotAuto'))$('groupPivotAuto').onclick=()=>{const g=currentGroup();if(!g)return;const c=groupCenter(g);$('groupPivotX').value=c.x.toFixed(1);$('groupPivotY').value=c.y.toFixed(1);};
 if($('layerPivotAuto'))$('layerPivotAuto').onclick=()=>{const l=activeLayer();if(!l)return;const c=layerCenter(l);$('layerPivotX').value=c.x.toFixed(1);$('layerPivotY').value=c.y.toFixed(1);};
@@ -1020,7 +1378,7 @@ document.addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLower
 
 // Figma-like shortcuts: Ctrl/Cmd+G group, Ctrl/Cmd+Shift+G ungroup selected layers.
 document.querySelectorAll('#rightTabs button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#rightTabs button').forEach(x=>x.classList.remove('active'));document.querySelectorAll('[data-right-panel]').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelector(`[data-right-panel="${b.dataset.right}"]`)?.classList.add('active')});if($('applyLayerAnim'))$('applyLayerAnim').onclick=applyLayerAnim;if($('clearLayerAnim'))$('clearLayerAnim').onclick=clearLayerAnim;
-if($('animPlayPause'))$('animPlayPause').onclick=()=>{animPlaying=!animPlaying;$('animPlayPause').textContent=animPlaying?'⏸ Pause preview anims':'▶ Play preview anims';setStatus(animPlaying?'Animations preview relancées.':'Animations preview stoppées pour éditer proprement.');};
+if($('animPlayPause'))$('animPlayPause').onclick=()=>{animPlaying=!animPlaying;if(!animPlaying)animClock=0;$('animPlayPause').textContent=animPlaying?'⏸ Pause preview anims':'▶ Play preview anims';setStatus(animPlaying?'Animations preview relancées.':'Animations preview stoppées : retour à la pose de base.');renderAll();};
 if($('showPivotBtn'))$('showPivotBtn').onclick=()=>{showPivots=!showPivots;$('showPivotBtn').textContent=showPivots?'Masquer pivots':'Afficher pivots';renderAll();};
 if($('groupPivotAuto'))$('groupPivotAuto').onclick=()=>{const g=currentGroup();if(!g)return;const c=groupCenter(g);$('groupPivotX').value=c.x.toFixed(1);$('groupPivotY').value=c.y.toFixed(1);};
 if($('layerPivotAuto'))$('layerPivotAuto').onclick=()=>{const l=activeLayer();if(!l)return;const c=layerCenter(l);$('layerPivotX').value=c.x.toFixed(1);$('layerPivotY').value=c.y.toFixed(1);};
@@ -1814,6 +2172,2636 @@ document.addEventListener("drop", e=>{
   setTimeout(syncV4317Panel,0);
 })();
 
+
+/* ===== V43.30 COPY / PASTE FIDÈLE + MULTI-COLOR SELECTION =====
+   Objectif : copier/coller un asset ou une sélection sans perdre les positions,
+   les arrondis, les pivots, les groupes, les courbes Bézier et leurs tangentes.
+   Avant, le collage décalait les points sans décaler les handles : idéal pour fabriquer
+   des courbes ivres, nettement moins pour un éditeur sérieux.
+*/
+(function(){
+  function el(id){ return document.getElementById(id); }
+  function deepClone(v){ return JSON.parse(JSON.stringify(v)); }
+  function num(v,f=0){ v=Number(v); return Number.isFinite(v)?v:f; }
+  function r2(v){ return Math.round(num(v)*100)/100; }
+  function isLayerIndex(i){ return Number.isInteger(i) && i>=0 && i<layers().length; }
+  function ensureId(l, i){
+    if(!l.id) l.id = uniqueLayerId('layer_'+i);
+    return l.id;
+  }
+
+  function copyLayerWithStableData(l){
+    const c=deepClone(l);
+    // Rect : certains anciens layers utilisent rx seul, d'autres rx/ry.
+    // On conserve les deux pour que l'arrondi survive au voyage. Quelle folie, préserver les données.
+    if(c.shape==='rect'){
+      if(c.rx!==undefined && c.ry===undefined) c.ry=c.rx;
+      if(c.ry!==undefined && c.rx===undefined) c.rx=c.ry;
+    }
+    // Path : on recalcule d depuis les points/handles si possible, mais on ne jette jamais les handles.
+    if(c.shape==='path' && Array.isArray(c.points)){
+      if(typeof normalizeBezierHandles==='function') normalizeBezierHandles(c);
+      if(typeof updatePathD==='function') updatePathD(c);
+    }
+    return c;
+  }
+
+  function groupsForCopiedLayerIds(ids){
+    const idSet=new Set(ids);
+    return groups()
+      .filter(g => (g.children||[]).some(id => idSet.has(id)))
+      .map(g => {
+        const c=deepClone(g);
+        c.children=(c.children||[]).filter(id => idSet.has(id));
+        return c.children.length ? c : null;
+      })
+      .filter(Boolean);
+  }
+
+  function makeClipboardFromIndices(indices, fullAsset=false){
+    indices=[...new Set(indices.filter(isLayerIndex))].sort((a,b)=>a-b);
+    const copiedLayers=indices.map(i=>copyLayerWithStableData(layers()[i]));
+    const copiedIds=copiedLayers.map((l,i)=>l.id || ensureId(layers()[indices[i]], indices[i])).filter(Boolean);
+    return {
+      type:'assetBundle',
+      sourceAsset:currentAsset,
+      fullAsset:!!fullAsset,
+      layers:copiedLayers,
+      groups:groupsForCopiedLayerIds(copiedIds),
+      createdAt:Date.now()
+    };
+  }
+
+  function selectCopiedStatus(prefix, count, groupCount){
+    setStatus(prefix+' : '+count+' layer(s), '+groupCount+' groupe(s). Collage fidèle, sans décalage ni mutilation de tangentes.');
+  }
+
+  window.copySelected = copySelected = function(){
+    let ids=selectedIndices();
+    if(!ids.length && activeGroupId){
+      const g=groups().find(x=>x.id===activeGroupId);
+      ids=(g?.children||[]).map(id=>layers().findIndex(l=>l.id===id)).filter(isLayerIndex);
+    }
+    if(!ids.length && activeLayer()) ids=[activeLayerIndex];
+    if(!ids.length) return setStatus('Aucun layer à copier. Le néant reste difficile à coller.');
+    clipboard=makeClipboardFromIndices(ids,false);
+    selectCopiedStatus('Sélection copiée', clipboard.layers.length, clipboard.groups.length);
+  };
+
+  window.copyAll = copyAll = function(){
+    if(!layers().length) return setStatus('Asset vide : rien à copier.');
+    // On force les ids avant copie pour que les groupes ne pointent pas vers le vide.
+    layers().forEach((l,i)=>ensureId(l,i));
+    clipboard={
+      type:'assetBundle',
+      sourceAsset:currentAsset,
+      fullAsset:true,
+      layers:layers().map(copyLayerWithStableData),
+      groups:groups().map(g=>deepClone(g)),
+      themePreview: asset().themePreview ? deepClone(asset().themePreview) : undefined,
+      createdAt:Date.now()
+    };
+    selectCopiedStatus('Asset complet copié', clipboard.layers.length, clipboard.groups.length);
+  };
+
+  function remapCopiedBundle(bundle){
+    const idMap=new Map();
+    const added=[];
+    const sourceLayers=(Array.isArray(bundle)?bundle:(bundle.layers||[]));
+    sourceLayers.forEach((src,idx)=>{
+      const c=copyLayerWithStableData(src);
+      const oldId=c.id || ('copied_layer_'+idx);
+      c.id=uniqueLayerId(oldId+'_paste');
+      idMap.set(oldId,c.id);
+      // Pas de moveLayerData ici : le collage doit être fidèle. Si l'utilisateur veut déplacer,
+      // il sélectionne et glisse. Oui, c'est audacieux de ne pas casser les coordonnées tout seul.
+      layers().push(c);
+      added.push(layers().length-1);
+    });
+    const sourceGroups=Array.isArray(bundle)?[]:(bundle.groups||[]);
+    sourceGroups.forEach(g=>{
+      const mapped=(g.children||[]).map(id=>idMap.get(id)).filter(Boolean);
+      if(!mapped.length) return;
+      const cg=deepClone(g);
+      cg.id=(typeof uniqueGroupId==='function') ? uniqueGroupId((cg.id||'group')+'_paste') : (cg.id||'group')+'_paste_'+Date.now().toString(36);
+      cg.children=mapped;
+      groups().push(cg);
+    });
+    return added;
+  }
+
+  window.pasteLayers = pasteLayers = function(){
+    const bundle=clipboard;
+    const hasOldArray=Array.isArray(bundle) && bundle.length;
+    const hasBundle=bundle && bundle.type==='assetBundle' && Array.isArray(bundle.layers) && bundle.layers.length;
+    if(!hasOldArray && !hasBundle) return setStatus('Rien à coller. Le presse-papier est aussi vide qu’une promesse de refactor sans tests.');
+    pushHistory();
+    const added=remapCopiedBundle(bundle);
+    selected=new Set(added);
+    activeLayerIndex=added[0]??0;
+    activeGroupId='';
+    renderAll();
+    setStatus(added.length+' layer(s) collé(s) fidèlement. Groupes et Béziers conservés.');
+  };
+
+  // Déplacement corrigé : points, tangentes, pivots et d suivent ensemble.
+  const previousMoveLayerData = window.moveLayerData || moveLayerData;
+  window.moveLayerData = moveLayerData = function(l,dx,dy){
+    dx=num(dx); dy=num(dy);
+    if(!l) return;
+    if('x' in l) l.x=r2(num(l.x)+dx);
+    if('y' in l) l.y=r2(num(l.y)+dy);
+    if('pivotX' in l) l.pivotX=r2(num(l.pivotX)+dx);
+    if('pivotY' in l) l.pivotY=r2(num(l.pivotY)+dy);
+    if(l.anim && 'pivotX' in l.anim) l.anim.pivotX=r2(num(l.anim.pivotX)+dx);
+    if(l.anim && 'pivotY' in l.anim) l.anim.pivotY=r2(num(l.anim.pivotY)+dy);
+    if(Array.isArray(l.points)){
+      l.points=l.points.map(p=>[r2(num(p[0])+dx), r2(num(p[1])+dy)]);
+    }
+    if(Array.isArray(l.handles)){
+      l.handles=l.handles.map(h=>{
+        if(!h) return h;
+        const out=deepClone(h);
+        ['in','out'].forEach(k=>{
+          if(Array.isArray(out[k])) out[k]=[r2(num(out[k][0])+dx), r2(num(out[k][1])+dy)];
+        });
+        return out;
+      });
+    }
+    if(l.shape==='path' && Array.isArray(l.points) && typeof updatePathD==='function') updatePathD(l);
+  };
+
+  // Scale corrigé aussi : les handles Bézier et les pivots suivent. Sinon les courbes partent refaire leur vie.
+  const previousScaleLayerAround = window.scaleLayerAround || scaleLayerAround;
+  window.scaleLayerAround = scaleLayerAround = function(l,sc,cx,cy){
+    sc=num(sc,1); cx=num(cx,20); cy=num(cy,20);
+    if(!l) return;
+    const scalePoint=(p)=>[r2(cx+(num(p[0])-cx)*sc), r2(cy+(num(p[1])-cy)*sc)];
+    if('x' in l) l.x=r2(cx+(num(l.x)-cx)*sc);
+    if('y' in l) l.y=r2(cy+(num(l.y)-cy)*sc);
+    if('w' in l) l.w=Math.max(.1,r2(num(l.w,1)*sc));
+    if('h' in l) l.h=Math.max(.1,r2(num(l.h,1)*sc));
+    if('r' in l) l.r=Math.max(.1,r2(num(l.r,1)*sc));
+    if('rx' in l) l.rx=Math.max(0,r2(num(l.rx,0)*sc));
+    if('ry' in l) l.ry=Math.max(0,r2(num(l.ry,0)*sc));
+    if('fontSize' in l) l.fontSize=Math.max(1,r2(num(l.fontSize,12)*sc));
+    if('pivotX' in l) l.pivotX=r2(cx+(num(l.pivotX)-cx)*sc);
+    if('pivotY' in l) l.pivotY=r2(cy+(num(l.pivotY)-cy)*sc);
+    if(l.anim && 'pivotX' in l.anim) l.anim.pivotX=r2(cx+(num(l.anim.pivotX)-cx)*sc);
+    if(l.anim && 'pivotY' in l.anim) l.anim.pivotY=r2(cy+(num(l.anim.pivotY)-cy)*sc);
+    if(Array.isArray(l.points)) l.points=l.points.map(scalePoint);
+    if(Array.isArray(l.handles)){
+      l.handles=l.handles.map(h=>{
+        if(!h) return h;
+        const out=deepClone(h);
+        ['in','out'].forEach(k=>{ if(Array.isArray(out[k])) out[k]=scalePoint(out[k]); });
+        return out;
+      });
+    }
+    if(l.shape==='path' && Array.isArray(l.points) && typeof updatePathD==='function') updatePathD(l);
+  };
+
+  // Rendu rect corrigé : ry n'est plus écrasé par rx.
+  const previousMakeLayerElV4330 = window.makeLayerEl || makeLayerEl;
+  window.makeLayerEl = makeLayerEl = function(l,t){
+    if(!l || l.shape!=='rect') return previousMakeLayerElV4330(l,t);
+    if(l.visible===false) return E('g',{display:'none'});
+    const node=E('rect',{
+      x:l.x??0,
+      y:l.y??0,
+      width:l.w??10,
+      height:l.h??10,
+      rx:l.rx??0,
+      ry:l.ry??l.rx??0
+    });
+    node.setAttribute('fill',l.fill===undefined?'none':l.fill);
+    node.setAttribute('stroke',l.stroke===undefined?'none':l.stroke);
+    node.setAttribute('stroke-width',(l.stroke==='none')?0:(l.strokeWidth??0));
+    node.setAttribute('opacity',animOpacity(l,t));
+    const trParts=[];
+    const st=staticTransform(l); if(st) trParts.push(st);
+    const tr=animTransform(l,t); if(tr) trParts.push(tr);
+    if(trParts.length) node.setAttribute('transform',trParts.join(' '));
+    return node;
+  };
+
+  function applyPaintToTargets(opts){
+    let ids=selectedIndices();
+    if(!ids.length && activeLayer()) ids=[activeLayerIndex];
+    ids=ids.filter(isLayerIndex);
+    if(!ids.length) return setStatus('Aucun layer sélectionné.');
+    pushHistory();
+    ids.forEach(i=>{
+      const l=layers()[i]; if(!l) return;
+      if(opts.fill){ l.fill=currentFill(); if(typeof v38RememberLayerPaint==='function') v38RememberLayerPaint(l); }
+      if(opts.stroke){ l.stroke=currentStroke(); l.strokeWidth=currentStrokeWidth(); if(typeof v38RememberLayerPaint==='function') v38RememberLayerPaint(l); }
+      if(l.shape==='rect' && l.rx!==undefined && l.ry===undefined) l.ry=l.rx;
+    });
+    renderAll();
+    setStatus('Couleurs appliquées à '+ids.length+' layer(s). Sélection multiple enfin utile, quelle idée radicale.');
+  }
+
+  window.recolorSelected = recolorSelected = applyPaintToTargets;
+
+  function bindFinalButtons(){
+    if(el('copySelected')) el('copySelected').onclick=copySelected;
+    if(el('copyAll')) el('copyAll').onclick=copyAll;
+    if(el('pasteLayers')) el('pasteLayers').onclick=pasteLayers;
+    if(el('applyFillToSelection')) el('applyFillToSelection').onclick=()=>applyPaintToTargets({fill:true});
+    if(el('applyStrokeToSelection')) el('applyStrokeToSelection').onclick=()=>applyPaintToTargets({stroke:true});
+    if(el('applyColorsToSelection')) el('applyColorsToSelection').onclick=()=>applyPaintToTargets({fill:true,stroke:true});
+    if(el('copyAll')) el('copyAll').textContent='Copier asset complet';
+    if(el('pasteLayers')) el('pasteLayers').textContent='Coller fidèle';
+  }
+
+  // Shift/Ctrl clic dans le canvas : sélection multiple directe, pas seulement via la liste de layers.
+  if(window.svg){
+    svg.addEventListener('pointerdown', function(e){
+      if(tool!=='select') return;
+      if(!(e.shiftKey||e.ctrlKey||e.metaKey)) return;
+      const p=svgPoint(e);
+      const hit=hitLayerIndex(p);
+      if(hit<0) return;
+      e.preventDefault(); e.stopImmediatePropagation();
+      if(selected.has(hit) && (e.ctrlKey||e.metaKey)) selected.delete(hit);
+      else selected.add(hit);
+      activeLayerIndex=hit;
+      activeGroupId='';
+      renderAll();
+      setStatus(selected.size+' layer(s) sélectionné(s). Les couleurs s’appliqueront au lot.');
+    }, true);
+  }
+
+  // Aide discrète dans le panneau de copie/couleur.
+  setTimeout(()=>{
+    bindFinalButtons();
+    const btn=el('pasteLayers');
+    if(btn && !el('v4330CopyHint')){
+      const h=document.createElement('div');
+      h.id='v4330CopyHint';
+      h.className='floatingHint';
+      h.style.cssText='grid-column:1/-1;color:#ffd640;margin-top:6px;line-height:1.25';
+      h.textContent='Copie : conserve groupes, pivots, rx/ry et tangentes Bézier. Multi-sélection : cases, Ctrl/Shift-clic canvas, puis Fill/Stroke.';
+      btn.closest('.row')?.insertAdjacentElement('afterend',h);
+    }
+  },0);
+})();
+
+
+/* ===== V43.31 MULTI-SELECTION MOVE / ANIMATION / CONTEXTUAL PROPERTIES =====
+   - Une sélection multiple se déplace comme un vrai bloc, même si on clique directement dans une forme.
+   - Les réglages d'animation s'appliquent clairement à plusieurs layers.
+   - L'animation de groupe peut être créée depuis la sélection courante.
+   - Le panneau texte n'apparaît que quand l'outil texte est actif ou quand un texte est sélectionné.
+*/
+(function(){
+  function el(id){ return document.getElementById(id); }
+  function n(v,f=0){ v=Number(v); return Number.isFinite(v)?v:f; }
+  function layerIdsFromIndices(indices){ return indices.map(i=>layers()[i]).filter(Boolean).map((l,i)=>{ if(!l.id) l.id=uniqueLayerId('layer_'+i); return l.id; }); }
+  function currentSelectedIndices(){
+    const ids=(typeof selectedIndices==='function') ? selectedIndices() : [...(selected||[])];
+    return [...new Set(ids.filter(i=>Number.isInteger(i) && i>=0 && i<layers().length))];
+  }
+  function targetLayerIndices(){
+    let ids=currentSelectedIndices();
+    if(!ids.length && typeof activeLayerIndex==='number' && activeLayerIndex>=0 && activeLayerIndex<layers().length) ids=[activeLayerIndex];
+    return [...new Set(ids)];
+  }
+  function layerIsText(i){ const l=layers()[i]; return !!l && l.shape==='text'; }
+  function selectedHasText(){ return targetLayerIndices().some(layerIsText); }
+  function syncContextualPanels(){
+    const textPanel=document.querySelector('.textToolsBox');
+    const transformPanel=document.querySelector('.transformToolsBox');
+    const layerAnimPanel=document.querySelector('.layerAnimBox.layerAnim');
+    const textActive = (tool === 'text') || selectedHasText();
+    if(textPanel) textPanel.classList.toggle('contextHidden', !textActive);
+    if(transformPanel) transformPanel.classList.toggle('contextHidden', targetLayerIndices().length===0);
+    if(layerAnimPanel){
+      const count=targetLayerIndices().length;
+      layerAnimPanel.classList.toggle('multiActive', count>1);
+      const h=layerAnimPanel.querySelector('h3');
+      if(h) h.textContent = count>1 ? ('Animation de '+count+' layers sélectionnés') : 'Animation du layer actif';
+      const b=el('applyLayerAnim');
+      if(b) b.textContent = count>1 ? 'Appliquer aux layers sélectionnés' : 'Appliquer au layer';
+    }
+  }
+
+  // On recâble renderAll/renderForm/setTool pour remettre les panneaux dans le bon état après chaque action.
+  const prevRenderAll = window.renderAll || renderAll;
+  window.renderAll = renderAll = function(){
+    const r=prevRenderAll.apply(this,arguments);
+    setTimeout(syncContextualPanels,0);
+    return r;
+  };
+  const prevRenderForm = window.renderForm || renderForm;
+  window.renderForm = renderForm = function(){
+    const r=prevRenderForm.apply(this,arguments);
+    setTimeout(syncContextualPanels,0);
+    return r;
+  };
+  const prevSetTool = window.setTool || setTool;
+  window.setTool = setTool = function(t){
+    const r=prevSetTool.apply(this,arguments);
+    setTimeout(syncContextualPanels,0);
+    return r;
+  };
+
+  // Déplacement robuste de la sélection multiple en cliquant dans n'importe quelle forme sélectionnée.
+  let multiMoveDrag=null;
+  function beginMultiMove(e){
+    if(tool !== 'select') return false;
+    if(e.target?.closest?.('.transformHandle,.transformBox,.pointHandle,.bezierHandle')) return false;
+    const p=svgPoint(e);
+    const hit=(typeof hitLayerIndex==='function') ? hitLayerIndex(p) : -1;
+    const ids=currentSelectedIndices();
+    if(hit<0) return false;
+
+    // Ctrl/Shift gère déjà la sélection multiple ailleurs. Ici on ne fait que le drag propre.
+    if(e.shiftKey || e.ctrlKey || e.metaKey) return false;
+
+    let finalIds=ids;
+    if(!finalIds.includes(hit)){
+      selected.clear();
+      selected.add(hit);
+      activeLayerIndex=hit;
+      finalIds=[hit];
+    }else{
+      activeLayerIndex=hit;
+    }
+    if(!finalIds.length) return false;
+    pushHistory();
+    multiMoveDrag={start:p,last:p,indices:[...finalIds],original:finalIds.map(i=>clone(layers()[i]))};
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    setStatus(finalIds.length>1 ? 'Déplacement de la sélection multiple.' : 'Déplacement du layer sélectionné.');
+    return true;
+  }
+  function moveMulti(e){
+    if(!multiMoveDrag) return;
+    const p=svgPoint(e), dx=p.x-multiMoveDrag.start.x, dy=p.y-multiMoveDrag.start.y;
+    multiMoveDrag.indices.forEach((idx,k)=>{
+      const l=layers()[idx];
+      if(!l) return;
+      Object.keys(l).forEach(key=>delete l[key]);
+      Object.assign(l, clone(multiMoveDrag.original[k]));
+      moveLayerData(l,dx,dy);
+    });
+    e.preventDefault();
+    e.stopImmediatePropagation();
+    renderAll();
+  }
+  function endMulti(e){
+    if(!multiMoveDrag) return;
+    multiMoveDrag=null;
+    e?.preventDefault?.();
+    e?.stopImmediatePropagation?.();
+    renderAll();
+    setStatus('Déplacement appliqué à la sélection. Les courbes, pivots et arrondis suivent, enfin.');
+  }
+  svg.addEventListener('pointerdown', beginMultiMove, true);
+  window.addEventListener('pointermove', moveMulti, true);
+  window.addEventListener('pointerup', endMulti, true);
+  window.addEventListener('pointercancel', endMulti, true);
+
+  // Animation layer : force l'application sur toute la sélection si elle existe.
+  window.applyLayerAnim = applyLayerAnim = function(){
+    const ids=targetLayerIndices();
+    if(!ids.length) return setStatus('Aucun layer sélectionné. Même la magie a besoin d’une cible.');
+    pushHistory();
+    const type=el('layerAnim')?.value || '';
+    ids.forEach(i=>{
+      const l=layers()[i]; if(!l) return;
+      if(type){
+        const c=(typeof layerCenter==='function') ? layerCenter(l) : {x:20,y:20};
+        l.anim={
+          type,
+          amp:n(el('layerAnimAmp')?.value,1),
+          ampX:n(el('layerAnimAmpX')?.value,2),
+          speed:n(el('layerAnimSpeed')?.value,.004),
+          pivotX:n(el('layerPivotX')?.value,c.x),
+          pivotY:n(el('layerPivotY')?.value,c.y)
+        };
+      }else delete l.anim;
+    });
+    renderAll();
+    setStatus('Animation appliquée à '+ids.length+' layer(s).');
+  };
+  window.clearLayerAnim = clearLayerAnim = function(){
+    const ids=targetLayerIndices();
+    if(!ids.length) return;
+    pushHistory();
+    ids.forEach(i=>{ if(layers()[i]) delete layers()[i].anim; });
+    renderAll();
+    setStatus('Animation supprimée sur '+ids.length+' layer(s).');
+  };
+
+  // Animation de groupe depuis la sélection : crée un groupe temporaire propre si aucun groupe n'est actif.
+  function groupBBoxFromLayerIds(ids){
+    const boxes=ids.map(id=>layers().find(l=>l.id===id)).filter(Boolean).map(l=>layerBBox(l));
+    if(!boxes.length) return {cx:20,cy:20};
+    const minX=Math.min(...boxes.map(b=>b.minX)), minY=Math.min(...boxes.map(b=>b.minY));
+    const maxX=Math.max(...boxes.map(b=>b.maxX)), maxY=Math.max(...boxes.map(b=>b.maxY));
+    return {cx:(minX+maxX)/2, cy:(minY+maxY)/2};
+  }
+  function applyGroupAnimToSelection(){
+    const idxs=currentSelectedIndices();
+    let g=(typeof currentGroup==='function') ? currentGroup() : null;
+    if(!g){
+      if(idxs.length<2) return setStatus('Sélectionne au moins 2 layers pour créer une animation de groupe.');
+      pushHistory();
+      const ids=layerIdsFromIndices(idxs);
+      groups().forEach(old=>old.children=(old.children||[]).filter(id=>!ids.includes(id)));
+      const bb=groupBBoxFromLayerIds(ids);
+      const base='group_selection';
+      const id=(typeof uniqueGroupId==='function') ? uniqueGroupId(base) : base+'_'+Date.now().toString(36);
+      g={id,type:'group',children:ids,collapsed:false,pivotX:bb.cx,pivotY:bb.cy};
+      groups().push(g);
+      activeGroupId=g.id;
+      if(el('activeGroupSelect')) el('activeGroupSelect').value=g.id;
+      if(el('groupId')) el('groupId').value=g.id;
+      if(el('groupPivotX')) el('groupPivotX').value=bb.cx.toFixed(1);
+      if(el('groupPivotY')) el('groupPivotY').value=bb.cy.toFixed(1);
+    }else{
+      pushHistory();
+    }
+    const type=el('groupAnim')?.value || '';
+    const cx=n(el('groupPivotX')?.value, n(g.pivotX,20));
+    const cy=n(el('groupPivotY')?.value, n(g.pivotY,20));
+    g.pivotX=cx; g.pivotY=cy;
+    if(type){
+      g.anim={type,amp:n(el('groupAnimAmp')?.value,1),ampX:n(el('groupAnimAmpX')?.value,2),speed:n(el('groupAnimSpeed')?.value,.004),pivotX:cx,pivotY:cy};
+    }else delete g.anim;
+    renderAll();
+    setStatus('Animation de groupe appliquée à '+(g.children||[]).length+' layer(s).');
+  }
+
+  function injectMultiButtons(){
+    const apply=el('applyLayerAnim');
+    if(apply) apply.onclick=window.applyLayerAnim;
+    const clear=el('clearLayerAnim');
+    if(clear) clear.onclick=window.clearLayerAnim;
+    const groupApply=el('applyGroup');
+    if(groupApply && !el('applyGroupToSelection')){
+      const b=document.createElement('button');
+      b.id='applyGroupToSelection';
+      b.className='green';
+      b.textContent='Groupe depuis sélection';
+      b.title='Crée ou utilise un groupe pour animer toute la sélection ensemble.';
+      b.onclick=applyGroupAnimToSelection;
+      groupApply.closest('.row')?.appendChild(b);
+    }
+    const layerPanel=document.querySelector('.layerAnimBox.layerAnim');
+    if(layerPanel && !el('v4331AnimHint')){
+      const h=document.createElement('div');
+      h.id='v4331AnimHint';
+      h.className='multiEditHint';
+      h.textContent='Multi-sélection : sélectionne plusieurs layers puis applique une même anim ici. Pour une animation commune de bloc, crée un groupe depuis la sélection.';
+      layerPanel.appendChild(h);
+    }
+  }
+
+  setTimeout(()=>{injectMultiButtons();syncContextualPanels();},0);
+})();
+
+
+
+/* ===== V43.32 REAL MULTI EDIT / COPY / CONTEXT PATCH =====
+   Cette passe remplace le patch V43.31 trop fragile.
+   Objectif : une sélection multiple doit se comporter comme un seul objet éditable :
+   - sélection via cases, Ctrl/Shift clic, ou rectangle de sélection ;
+   - déplacement fiable de tout le lot, y compris points, tangentes, pivots et chemins SVG ;
+   - application commune des couleurs, transforms et animations ;
+   - copie/collage fidèle des layers ET des groupes liés ;
+   - panneaux contextuels masqués quand ils ne concernent pas l'outil actif.
+*/
+(function(){
+  const V='V43.32';
+  const el=id=>document.getElementById(id);
+  const num=(v,f=0)=>{v=Number(v);return Number.isFinite(v)?v:f};
+  const rnd=v=>Number(num(v).toFixed(3));
+  const ids=()=>[...new Set(((typeof selectedIndices==='function')?selectedIndices():[...selected]).filter(i=>Number.isInteger(i)&&i>=0&&i<layers().length))];
+  const targetIds=()=>{let a=ids(); if(!a.length&&Number.isInteger(activeLayerIndex)&&layers()[activeLayerIndex])a=[activeLayerIndex]; return a;};
+
+  function ensureLayerId(l,i){ if(!l.id) l.id=(typeof uniqueLayerId==='function')?uniqueLayerId('layer_'+i):('layer_'+Date.now().toString(36)+'_'+i); return l.id; }
+  function deepClone(o){ return JSON.parse(JSON.stringify(o)); }
+
+  // Move complet : l'ancien move oubliait certains pivots/transforms et pouvait désynchroniser les paths.
+  const prevMoveLayerData = moveLayerData;
+  moveLayerData = function(l,dx,dy){
+    dx=num(dx); dy=num(dy); if(!l || (!dx&&!dy)) return;
+    // Coordonnées simples.
+    if('x' in l) l.x=rnd(num(l.x)+dx);
+    if('y' in l) l.y=rnd(num(l.y)+dy);
+    // Pivots / transforms statiques / anims.
+    ['pivotX','pivotY'].forEach(k=>{ if(k in l) l[k]=rnd(num(l[k])+(k==='pivotX'?dx:dy)); });
+    if(l.anim){ if('pivotX' in l.anim) l.anim.pivotX=rnd(num(l.anim.pivotX)+dx); if('pivotY' in l.anim) l.anim.pivotY=rnd(num(l.anim.pivotY)+dy); }
+    // Points et tangentes.
+    if(Array.isArray(l.points)) l.points=l.points.map(p=>[rnd(num(p[0])+dx),rnd(num(p[1])+dy)]);
+    if(Array.isArray(l.handles)) l.handles=l.handles.map(h=>({
+      in:Array.isArray(h?.in)?[rnd(num(h.in[0])+dx),rnd(num(h.in[1])+dy)]:h?.in,
+      out:Array.isArray(h?.out)?[rnd(num(h.out[0])+dx),rnd(num(h.out[1])+dy)]:h?.out
+    }));
+    if(typeof updatePathD==='function') updatePathD(l);
+  };
+
+  function moveSelectionBy(dx,dy,selection=targetIds()){
+    if(!selection.length) return false;
+    selection.forEach(i=>{ const l=layers()[i]; if(l) moveLayerData(l,dx,dy); });
+    return true;
+  }
+
+  function bboxForIndices(selection=targetIds()){
+    const bs=selection.map(i=>layers()[i]).filter(Boolean).map(l=>layerBBox(l));
+    if(!bs.length) return null;
+    const minX=Math.min(...bs.map(b=>b.minX)), minY=Math.min(...bs.map(b=>b.minY));
+    const maxX=Math.max(...bs.map(b=>b.maxX)), maxY=Math.max(...bs.map(b=>b.maxY));
+    return {minX,minY,maxX,maxY,w:maxX-minX,h:maxY-minY,cx:(minX+maxX)/2,cy:(minY+maxY)/2};
+  }
+
+  function pointInBox(p,b,pad=0){return b && p.x>=b.minX-pad && p.x<=b.maxX+pad && p.y>=b.minY-pad && p.y<=b.maxY+pad;}
+  function robustHitLayerIndex(p){
+    // On garde la logique simple bbox, mais on prend la plus petite bbox touchée pour éviter de sélectionner un gros layer derrière.
+    let best=-1, bestArea=Infinity;
+    for(let i=0;i<layers().length;i++){
+      const l=layers()[i]; if(!l || l.visible===false) continue;
+      const b=layerBBox(l); const pad=1.2;
+      if(pointInBox(p,b,pad)){
+        const area=Math.max(.001,(b.maxX-b.minX)*(b.maxY-b.minY));
+        if(area<bestArea){best=i;bestArea=area;}
+      }
+    }
+    return best;
+  }
+
+  function drawMultiOverlay(){
+    if(!svg || tool!=='select') return;
+    const selection=ids();
+    if(!selection.length) return;
+    const b=bboxForIndices(selection); if(!b) return;
+    const g=E('g',{'data-v4332-overlay':'1'});
+    const rect=E('rect',{class:'v4332MultiBox',x:b.minX-.45,y:b.minY-.45,width:b.w+.9,height:b.h+.9,fill:'rgba(82,242,138,.035)',stroke:selection.length>1?'#52f28a':'#ffd640','stroke-width':.22,'stroke-dasharray':selection.length>1?'1 .75':'','pointer-events':'all'});
+    rect.dataset.role='moveSelection';
+    g.appendChild(rect);
+    if(selection.length>1){
+      const label=E('text',{x:b.minX,y:b.minY-1.2,fill:'#52f28a','font-size':'1.6','font-weight':'900','font-family':'monospace','pointer-events':'none'});
+      label.textContent=selection.length+' layers';
+      g.appendChild(label);
+    }
+    svg.appendChild(g);
+  }
+
+  const prevRenderSvg = renderSvg;
+  renderSvg=function(){ const r=prevRenderSvg.apply(this,arguments); drawMultiOverlay(); return r; };
+
+  let dragPack=null;
+  function startDragPack(e){
+    if(tool!=='select') return false;
+    if(e.button!==undefined && e.button!==0) return false;
+    if(e.target?.closest?.('.pointHandle,.bezierHandle,.transformHandle,.rotate,.scaleHandle')) return false;
+    if(e.ctrlKey||e.metaKey||e.shiftKey) return false;
+    const p=svgPoint(e);
+    let selection=ids();
+    const hit=robustHitLayerIndex(p);
+    const overlayHit=e.target?.classList?.contains('v4332MultiBox') || e.target?.dataset?.role==='moveSelection';
+    if(!overlayHit && hit<0) return false;
+    if(!overlayHit && !selection.includes(hit)){
+      selected.clear(); selected.add(hit); activeLayerIndex=hit; activeGroupId=''; selection=[hit];
+    }
+    if(!selection.length) return false;
+    pushHistory();
+    dragPack={start:p,indices:[...selection],original:selection.map(i=>deepClone(layers()[i]))};
+    e.preventDefault(); e.stopImmediatePropagation();
+    setStatus(selection.length>1?'Déplacement du lot sélectionné.':'Déplacement du layer.');
+    renderAll();
+    return true;
+  }
+  function moveDragPack(e){
+    if(!dragPack) return;
+    const p=svgPoint(e), dx=p.x-dragPack.start.x, dy=p.y-dragPack.start.y;
+    dragPack.indices.forEach((idx,k)=>{ const l=layers()[idx]; if(!l) return; Object.keys(l).forEach(key=>delete l[key]); Object.assign(l,deepClone(dragPack.original[k])); moveLayerData(l,dx,dy); });
+    e.preventDefault(); e.stopImmediatePropagation(); renderAll();
+  }
+  function endDragPack(e){ if(!dragPack) return; dragPack=null; e?.preventDefault?.(); e?.stopImmediatePropagation?.(); renderAll(); setStatus('Déplacement multi-sélection validé.'); }
+  svg.addEventListener('pointerdown',startDragPack,true);
+  window.addEventListener('pointermove',moveDragPack,true);
+  window.addEventListener('pointerup',endDragPack,true);
+  window.addEventListener('pointercancel',endDragPack,true);
+
+  // Rectangle de sélection : clic-glisse dans le vide.
+  let marquee=null;
+  function startMarquee(e){
+    if(tool!=='select' || e.shiftKey || e.ctrlKey || e.metaKey || dragPack) return;
+    const p=svgPoint(e);
+    if(robustHitLayerIndex(p)>=0) return;
+    marquee={start:p,end:p};
+    if(!e.altKey) selected.clear();
+    e.preventDefault();
+  }
+  function moveMarquee(e){ if(!marquee) return; marquee.end=svgPoint(e); e.preventDefault(); renderAll(); drawMarquee(); }
+  function endMarquee(e){
+    if(!marquee) return;
+    const a=marquee.start,b=marquee.end;
+    const box={minX:Math.min(a.x,b.x),minY:Math.min(a.y,b.y),maxX:Math.max(a.x,b.x),maxY:Math.max(a.y,b.y)};
+    const picked=[];
+    layers().forEach((l,i)=>{ const lb=layerBBox(l); if(lb.maxX>=box.minX&&lb.minX<=box.maxX&&lb.maxY>=box.minY&&lb.minY<=box.maxY) picked.push(i); });
+    selected=new Set(picked); activeLayerIndex=picked[0]??0; marquee=null; e?.preventDefault?.(); renderAll(); setStatus(picked.length+' layer(s) sélectionné(s) au rectangle.');
+  }
+  function drawMarquee(){
+    if(!marquee) return;
+    const a=marquee.start,b=marquee.end;
+    svg.appendChild(E('rect',{x:Math.min(a.x,b.x),y:Math.min(a.y,b.y),width:Math.abs(a.x-b.x),height:Math.abs(a.y-b.y),fill:'rgba(41,231,255,.08)',stroke:'#29e7ff','stroke-width':.22,'stroke-dasharray':'1 .65','pointer-events':'none'}));
+  }
+  const prevRenderSvg2=renderSvg;
+  renderSvg=function(){const r=prevRenderSvg2.apply(this,arguments);drawMarquee();return r;};
+  svg.addEventListener('pointerdown',startMarquee,false);
+  window.addEventListener('pointermove',moveMarquee,false);
+  window.addEventListener('pointerup',endMarquee,false);
+
+  // Couleurs multi : garde fill/stroke opacity + strokeWidth cohérent sur toute sélection.
+  recolorSelected=function(opts){
+    const selection=targetIds(); if(!selection.length) return setStatus('Aucune sélection.');
+    pushHistory();
+    selection.forEach(i=>{const l=layers()[i]; if(!l) return; if(opts.fill){l.fill=currentFill(); l.opacity=num(el('fillAlpha')?.value,1);} if(opts.stroke){l.stroke=currentStroke(); l.strokeWidth=currentStrokeWidth();}});
+    renderAll(); setStatus('Couleurs appliquées à '+selection.length+' layer(s).');
+  };
+
+  // Transform numérique multi : rotation/scale/pivot communs sans masquer les autres layers.
+  function applyTransformToSelection(){
+    const selection=targetIds(); if(!selection.length) return setStatus('Aucune sélection pour transform.');
+    const b=bboxForIndices(selection) || {cx:20,cy:20};
+    const rot=num(el('transformRotationInput')?.value,0), sx=num(el('transformScaleXInput')?.value,1), sy=num(el('transformScaleYInput')?.value,1);
+    const px=num(el('transformPivotXInput')?.value,b.cx), py=num(el('transformPivotYInput')?.value,b.cy);
+    pushHistory();
+    selection.forEach(i=>{const l=layers()[i]; if(!l) return; l.rotation=rot; l.scaleX=sx; l.scaleY=sy; l.pivotX=px; l.pivotY=py;});
+    renderAll(); setStatus('Transform appliquée à '+selection.length+' layer(s).');
+  }
+  function resetTransformSelection(){ const selection=targetIds(); if(!selection.length) return; pushHistory(); selection.forEach(i=>{const l=layers()[i]; ['rotation','scaleX','scaleY','pivotX','pivotY','tx','ty'].forEach(k=>delete l[k]);}); renderAll(); setStatus('Transform reset sur '+selection.length+' layer(s).'); }
+  if(el('applyTransformEdit')) el('applyTransformEdit').onclick=applyTransformToSelection;
+  if(el('resetTransformEdit')) el('resetTransformEdit').onclick=resetTransformSelection;
+  if(el('autoPivotTransform')) el('autoPivotTransform').onclick=()=>{const b=bboxForIndices(); if(!b)return; el('transformPivotXInput').value=b.cx.toFixed(1); el('transformPivotYInput').value=b.cy.toFixed(1); setStatus('Pivot auto calculé sur la sélection.');};
+
+  // Animation layer multi.
+  applyLayerAnim=function(){
+    const selection=targetIds(); if(!selection.length) return setStatus('Aucune sélection pour animation.');
+    pushHistory(); const type=el('layerAnim')?.value||'';
+    selection.forEach(i=>{const l=layers()[i]; if(!l) return; const c=layerCenter(l); if(type) l.anim={type,amp:num(el('layerAnimAmp')?.value,1),ampX:num(el('layerAnimAmpX')?.value,2),speed:num(el('layerAnimSpeed')?.value,.004),pivotX:num(el('layerPivotX')?.value,c.x),pivotY:num(el('layerPivotY')?.value,c.y)}; else delete l.anim;});
+    renderAll(); setStatus('Animation appliquée à '+selection.length+' layer(s).');
+  };
+  clearLayerAnim=function(){const selection=targetIds(); if(!selection.length)return; pushHistory(); selection.forEach(i=>{if(layers()[i]) delete layers()[i].anim;}); renderAll(); setStatus('Animation supprimée sur '+selection.length+' layer(s).');};
+
+  function groupFromSelectionAndApplyAnim(){
+    const selection=targetIds(); if(selection.length<2) return setStatus('Sélectionne au moins 2 layers pour animer un groupe.');
+    pushHistory();
+    const childIds=selection.map(i=>ensureLayerId(layers()[i],i));
+    groups().forEach(g=>g.children=(g.children||[]).filter(id=>!childIds.includes(id)));
+    const b=bboxForIndices(selection)||{cx:20,cy:20};
+    const gid=(typeof uniqueGroupId==='function')?uniqueGroupId('group_selection'):'group_selection_'+Date.now().toString(36);
+    const type=el('groupAnim')?.value||'';
+    const g={id:gid,type:'group',children:childIds,collapsed:false,pivotX:b.cx,pivotY:b.cy};
+    if(type) g.anim={type,amp:num(el('groupAnimAmp')?.value,1),ampX:num(el('groupAnimAmpX')?.value,2),speed:num(el('groupAnimSpeed')?.value,.004),pivotX:num(el('groupPivotX')?.value,b.cx),pivotY:num(el('groupPivotY')?.value,b.cy)};
+    groups().push(g); activeGroupId=gid;
+    renderAll(); setStatus('Groupe créé depuis sélection : '+childIds.length+' layers.');
+  }
+
+  // Copie fidèle : on copie aussi les groupes qui concernent la sélection. Pas de décalage automatique idiot.
+  copySelected=function(){
+    const selection=targetIds(); if(!selection.length) return setStatus('Aucun layer à copier.');
+    const layerClones=selection.map(i=>deepClone(layers()[i]));
+    const layerIdSet=new Set(layerClones.map((l,i)=>ensureLayerId(layers()[selection[i]],selection[i])));
+    const groupClones=groups().filter(g=>(g.children||[]).some(id=>layerIdSet.has(id))).map(g=>deepClone(g));
+    clipboard={kind:'v43.32',layers:layerClones,groups:groupClones,mode:'selection'};
+    setStatus(layerClones.length+' layer(s) copiés avec '+groupClones.length+' groupe(s).');
+  };
+  copyAll=function(){ clipboard={kind:'v43.32',layers:layers().map(deepClone),groups:groups().map(deepClone),mode:'asset'}; setStatus('Asset complet copié avec ses groupes.'); };
+  pasteLayers=function(){
+    const clip=Array.isArray(clipboard)?{layers:clipboard,groups:[]}:(clipboard||{});
+    if(!clip.layers?.length) return setStatus('Rien à coller.');
+    pushHistory();
+    const oldToNew=new Map(); const added=[];
+    clip.layers.forEach((src)=>{const c=deepClone(src); const old=c.id||''; c.id=uniqueLayerId((old||c.shape||'layer')+'_paste'); oldToNew.set(old,c.id); layers().push(c); added.push(layers().length-1);});
+    (clip.groups||[]).forEach(g=>{
+      const children=(g.children||[]).map(id=>oldToNew.get(id)).filter(Boolean);
+      if(!children.length) return;
+      const ng=deepClone(g); ng.id=uniqueGroupId((g.id||'group')+'_paste'); ng.children=children; groups().push(ng);
+    });
+    selected=new Set(added); activeLayerIndex=added[0]??0; renderAll(); setStatus(added.length+' layer(s) collés fidèlement.');
+  };
+
+  function syncPanels(){
+    const selection=targetIds();
+    const textPanel=document.querySelector('.textToolsBox');
+    const transformPanel=document.querySelector('.transformToolsBox');
+    const textActive=(tool==='text') || selection.some(i=>layers()[i]?.shape==='text');
+    if(textPanel) textPanel.classList.toggle('contextHidden',!textActive);
+    if(transformPanel) transformPanel.classList.toggle('contextHidden',!selection.length);
+    const layerPanel=document.querySelector('.layerAnimBox.layerAnim');
+    if(layerPanel){
+      const h=layerPanel.querySelector('h3'); if(h) h.textContent=selection.length>1?'Animation de '+selection.length+' layers':'Animation du layer actif';
+      layerPanel.classList.toggle('multiActive',selection.length>1);
+    }
+  }
+  const oldRenderAll=renderAll; renderAll=function(){const r=oldRenderAll.apply(this,arguments); setTimeout(syncPanels,0); return r;};
+  const oldSetTool=setTool; setTool=function(t){const r=oldSetTool.apply(this,arguments); setTimeout(syncPanels,0); return r;};
+
+  function bindV4332(){
+    if(el('copySelected')) el('copySelected').onclick=copySelected;
+    if(el('copyAll')) el('copyAll').onclick=copyAll;
+    if(el('pasteLayers')) el('pasteLayers').onclick=pasteLayers;
+    if(el('applyLayerAnim')) el('applyLayerAnim').onclick=applyLayerAnim;
+    if(el('clearLayerAnim')) el('clearLayerAnim').onclick=clearLayerAnim;
+    if(el('applyFillToSelection')) el('applyFillToSelection').onclick=()=>recolorSelected({fill:true});
+    if(el('applyStrokeToSelection')) el('applyStrokeToSelection').onclick=()=>recolorSelected({stroke:true});
+    if(el('applyColorsToSelection')) el('applyColorsToSelection').onclick=()=>recolorSelected({fill:true,stroke:true});
+    const row=el('applyGroup')?.closest('.row');
+    if(row && !el('v4332GroupSelection')){const b=document.createElement('button'); b.id='v4332GroupSelection'; b.className='green'; b.textContent='Groupe + anim sélection'; b.onclick=groupFromSelectionAndApplyAnim; row.appendChild(b);}
+    if(!el('v4332MultiHelp')){const h=document.createElement('div'); h.id='v4332MultiHelp'; h.className='multiEditHint'; h.textContent='V43.32 : Ctrl/Shift-clic ou rectangle vide = multi-sélection. Glisse le cadre vert pour déplacer le lot. Couleurs, transform et anim s’appliquent au lot.'; document.querySelector('.layersDock')?.prepend(h);}
+    syncPanels();
+  }
+  setTimeout(bindV4332,0);
+
+  // Raccourcis flèches corrigés : bouge toute la sélection.
+  document.addEventListener('keydown',e=>{
+    if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName||'')) return;
+    if(['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key) && targetIds().length){
+      const step=e.shiftKey?5:1, dx=e.key==='ArrowLeft'?-step:e.key==='ArrowRight'?step:0, dy=e.key==='ArrowUp'?-step:e.key==='ArrowDown'?step:0;
+      pushHistory(); moveSelectionBy(dx,dy); renderAll(); e.preventDefault();
+    }
+  },true);
+})();
+
+
+
+/* ===== V43.33 GROUP-SAFE MULTI EDIT / PAUSE BASE STATE =====
+   Objectif : corriger les dégâts du multi-edit précédent sans toucher au gameplay.
+   - Pause animation = retour exact à l'état de base, pas freeze à mi-sinus.
+   - Sélection d'un groupe = seul le groupe est actif, aucun layer externe ne reste sélectionné.
+   - Déplacement d'un groupe = ses enfants suivent ensemble, avec pivots/tangentes/d recalculés.
+   - Multi-sélection visible = contour jaune sur chaque layer sélectionné + cadre vert global.
+*/
+(function(){
+  const $id=(id)=>document.getElementById(id);
+  const round=(v)=>Math.round(Number(v||0)*100)/100;
+  const clone=(v)=>JSON.parse(JSON.stringify(v));
+
+  function layerById(id){return layers().find(l=>l && l.id===id)||null;}
+  function layerIndexById(id){return layers().findIndex(l=>l && l.id===id);}
+  function groupById(id){return groups().find(g=>g && g.id===id)||null;}
+  function currentGroupSafe(){return activeGroupId ? groupById(activeGroupId) : null;}
+  function groupLayerIndices(g){return (g?.children||[]).map(layerIndexById).filter(i=>i>=0);}
+  function activeGroupIndices(){return groupLayerIndices(currentGroupSafe());}
+  function activeTargetIndices(){
+    const g=currentGroupSafe();
+    if(g) return groupLayerIndices(g);
+    const ids=[...(selected||[])].filter(i=>Number.isInteger(i)&&i>=0&&i<layers().length);
+    if(ids.length) return ids;
+    return Number.isInteger(activeLayerIndex)&&layers()[activeLayerIndex] ? [activeLayerIndex] : [];
+  }
+  function bboxForIndicesV4333(indices){
+    const bs=(indices||[]).map(i=>layers()[i]).filter(Boolean).map(layerBBox);
+    if(!bs.length)return null;
+    const minX=Math.min(...bs.map(b=>b.minX)), minY=Math.min(...bs.map(b=>b.minY));
+    const maxX=Math.max(...bs.map(b=>b.maxX)), maxY=Math.max(...bs.map(b=>b.maxY));
+    return {minX,minY,maxX,maxY,w:maxX-minX,h:maxY-minY,cx:(minX+maxX)/2,cy:(minY+maxY)/2};
+  }
+  function pointInBBox(p,b,pad=0){return !!b && p.x>=b.minX-pad && p.x<=b.maxX+pad && p.y>=b.minY-pad && p.y<=b.maxY+pad;}
+  function groupBBox(g){return bboxForIndicesV4333(groupLayerIndices(g));}
+  function groupAtPoint(p){
+    let best=null, bestArea=Infinity;
+    for(const g of groups()){
+      const b=groupBBox(g); if(!b) continue;
+      if(pointInBBox(p,b,1.25)){
+        const a=Math.max(.001,b.w*b.h);
+        if(a<bestArea){best=g;bestArea=a;}
+      }
+    }
+    return best;
+  }
+  function hitLayerAtPointV4333(p){
+    let best=-1, bestArea=Infinity;
+    for(let i=0;i<layers().length;i++){
+      const l=layers()[i]; if(!l || l.visible===false) continue;
+      const b=layerBBox(l);
+      if(pointInBBox(p,b,1.1)){
+        const a=Math.max(.001,(b.maxX-b.minX)*(b.maxY-b.minY));
+        if(a<bestArea){best=i;bestArea=a;}
+      }
+    }
+    return best;
+  }
+  function moveGroupMeta(g,dx,dy){
+    if(!g)return;
+    if('pivotX' in g)g.pivotX=round(Number(g.pivotX)+dx);
+    if('pivotY' in g)g.pivotY=round(Number(g.pivotY)+dy);
+    if(g.anim){
+      if('pivotX' in g.anim)g.anim.pivotX=round(Number(g.anim.pivotX)+dx);
+      if('pivotY' in g.anim)g.anim.pivotY=round(Number(g.anim.pivotY)+dy);
+    }
+  }
+  function moveIndices(indices,dx,dy){
+    [...new Set(indices||[])].forEach(i=>{const l=layers()[i]; if(l) moveLayerData(l,dx,dy);});
+  }
+  function selectGroupOnly(g){
+    if(!g)return;
+    selected.clear();
+    activeGroupId=g.id;
+    const first=groupLayerIndices(g)[0];
+    if(first!==undefined)activeLayerIndex=first;
+    renderAll();
+    setStatus('Groupe sélectionné : '+g.id+' ('+(g.children||[]).length+' enfant(s)).');
+  }
+  function selectLayerOnly(i){
+    activeGroupId=''; selected.clear();
+    if(i>=0){selected.add(i); activeLayerIndex=i;}
+    renderAll();
+  }
+
+  // 1) Pause propre : on revient à t=0. Le vieux freeze à mi-animation donnait une position bâtarde.
+  function setAnimPausedBase(paused){
+    animPlaying=!paused;
+    if(paused) animClock=0;
+    const btn=$id('animPlayPause');
+    if(btn) btn.textContent=animPlaying?'⏸ Pause preview anims':'▶ Play preview anims';
+    renderSvg();
+    if(typeof renderLevelPreview==='function' && previewMode==='level')renderLevelPreview();
+    setStatus(paused?'Animations en pause : état de base restauré.':'Animations preview relancées.');
+  }
+  function bindPauseButton(){
+    const btn=$id('animPlayPause');
+    if(btn)btn.onclick=()=>setAnimPausedBase(animPlaying);
+  }
+  setTimeout(bindPauseButton,0);
+
+  // 2) Sélection de groupe dans la liste : stoppe l'ancien comportement qui gardait des layers externes sélectionnés.
+  document.addEventListener('click',function(e){
+    const head=e.target.closest?.('.item.groupHead');
+    if(!head || !layersEl?.contains(head))return;
+    const name=head.querySelector('.name .folder')?.textContent?.trim();
+    const g=name ? groupById(name) : null;
+    if(!g)return;
+    const action=e.target.closest('button')?.dataset?.a;
+    e.preventDefault(); e.stopImmediatePropagation();
+    if(action==='trash'){
+      pushHistory();
+      asset().groups=groups().filter(x=>x.id!==g.id);
+      activeGroupId=''; selected.clear();
+      renderAll(); setStatus('Groupe supprimé : '+g.id+'.');
+      return;
+    }
+    selectGroupOnly(g);
+  },true);
+
+  // 3) Drag propre : avant les listeners SVG cassés, on intercepte au niveau window capture.
+  let dragV4333=null;
+  function startDragV4333(e){
+    if(tool!=='select')return;
+    if(e.button!==undefined && e.button!==0)return;
+
+    // En édition de points/Bézier, on laisse passer le vrai moteur point/tangente.
+    // Sinon le groupe avale les clics et l'utilisateur contemple son écran avec haine, assez logiquement.
+    if($id('pointEdit')?.checked){
+      if(e.altKey||e.shiftKey||e.target?.closest?.('.pointHandle,.bezierHandle')) return;
+    }
+    if(e.target?.closest?.('.pointHandle,.bezierHandle,.transformHandle,.rotate,.scaleHandle'))return;
+
+    const p=svgPoint(e);
+    const modifier=e.ctrlKey||e.metaKey||e.shiftKey;
+
+    // Ctrl/Shift-clic garde la logique de multi-sélection layer, pas de groupe implicite.
+    if(modifier)return;
+
+    const selectedIds=[...(selected||[])].filter(i=>Number.isInteger(i));
+    const selectedBox=bboxForIndicesV4333(selectedIds);
+    const overlayHit=e.target?.classList?.contains('v4332MultiBox') || e.target?.classList?.contains('v4333GroupBox') || e.target?.dataset?.role==='moveSelection' || e.target?.dataset?.role==='moveGroup';
+    const lHit=hitLayerAtPointV4333(p);
+    const activeG=currentGroupSafe();
+    const activeGBox=activeG?groupBBox(activeG):null;
+    const gHit=(overlayHit && activeG) ? activeG : ((lHit<0 && activeG && pointInBBox(p,activeGBox,1.25)) ? activeG : (lHit<0 ? groupAtPoint(p) : null));
+
+    // Priorité absolue au layer réel sous le curseur : cliquer un enfant de groupe sélectionne l'enfant,
+    // pas le dossier parent. Le groupe ne reprend la main que sur son cadre vert ou une zone vide.
+    if(lHit>=0 && !overlayHit){
+      if(selectedIds.length && selected.has(lHit)){
+        activeGroupId='';
+        pushHistory();
+        dragV4333={kind:'layers',start:p,indices:selectedIds,originalLayers:selectedIds.map(i=>clone(layers()[i]))};
+      }else{
+        selectLayerOnly(lHit);
+        pushHistory();
+        dragV4333={kind:'layers',start:p,indices:[lHit],originalLayers:[clone(layers()[lHit])]};
+      }
+      e.preventDefault(); e.stopImmediatePropagation();
+      return;
+    }
+
+    if(gHit){
+      selectGroupOnly(gHit);
+      const idx=groupLayerIndices(gHit);
+      if(!idx.length)return;
+      pushHistory();
+      dragV4333={kind:'group',groupId:gHit.id,start:p,indices:idx,originalLayers:idx.map(i=>clone(layers()[i])),originalGroup:clone(gHit)};
+      e.preventDefault(); e.stopImmediatePropagation();
+      return;
+    }
+
+    if(selectedIds.length && (overlayHit || pointInBBox(p,selectedBox,1.25))){
+      activeGroupId='';
+      pushHistory();
+      dragV4333={kind:'layers',start:p,indices:selectedIds,originalLayers:selectedIds.map(i=>clone(layers()[i]))};
+      e.preventDefault(); e.stopImmediatePropagation();
+      return;
+    }
+  }
+  function moveDragV4333(e){
+    if(!dragV4333)return;
+    const p=svgPoint(e), dx=p.x-dragV4333.start.x, dy=p.y-dragV4333.start.y;
+    dragV4333.indices.forEach((idx,k)=>{const l=layers()[idx]; if(!l)return; Object.keys(l).forEach(key=>delete l[key]); Object.assign(l,clone(dragV4333.originalLayers[k])); moveLayerData(l,dx,dy);});
+    if(dragV4333.kind==='group'){
+      const g=groupById(dragV4333.groupId);
+      if(g && dragV4333.originalGroup){Object.keys(g).forEach(key=>delete g[key]); Object.assign(g,clone(dragV4333.originalGroup)); moveGroupMeta(g,dx,dy); activeGroupId=g.id; selected.clear();}
+    }
+    e.preventDefault(); e.stopImmediatePropagation();
+    renderAll();
+  }
+  function endDragV4333(e){
+    if(!dragV4333)return;
+    const kind=dragV4333.kind;
+    dragV4333=null;
+    e?.preventDefault?.(); e?.stopImmediatePropagation?.();
+    renderAll(); setStatus(kind==='group'?'Groupe déplacé avec ses enfants.':'Sélection déplacée.');
+  }
+  window.addEventListener('pointerdown',startDragV4333,true);
+  window.addEventListener('pointermove',moveDragV4333,true);
+  window.addEventListener('pointerup',endDragV4333,true);
+  window.addEventListener('pointercancel',endDragV4333,true);
+
+  // 4) Visibilité : contour jaune par layer + cadre vert global ou groupe.
+  function drawSelectionOutlinesV4333(){
+    if(!svg || tool!=='select')return;
+    const selectedLayerSet=new Set([...(selected||[])]);
+    const g=currentGroupSafe();
+    if(g) groupLayerIndices(g).forEach(i=>selectedLayerSet.add(i));
+
+    selectedLayerSet.forEach(i=>{
+      const l=layers()[i]; if(!l)return;
+      const b=layerBBox(l);
+      svg.appendChild(E('rect',{class:'v4333LayerOutline',x:b.minX-.32,y:b.minY-.32,width:(b.maxX-b.minX)+.64,height:(b.maxY-b.minY)+.64,fill:'none',stroke:'#ffd640','stroke-width':.22,'stroke-dasharray':'.65 .45','pointer-events':'none'}));
+    });
+
+    if(g){
+      const b=groupBBox(g); if(!b)return;
+      const box=E('rect',{class:'v4333GroupBox',x:b.minX-.6,y:b.minY-.6,width:b.w+1.2,height:b.h+1.2,fill:'rgba(82,242,138,.045)',stroke:'#52f28a','stroke-width':.28,'stroke-dasharray':'1 .65','pointer-events':'all'});
+      box.dataset.role='moveGroup';
+      svg.appendChild(box);
+      const label=E('text',{x:b.minX,y:b.minY-1.4,fill:'#52f28a','font-size':'1.65','font-weight':'900','font-family':'monospace','pointer-events':'none'});
+      label.textContent='GROUP '+g.id;
+      svg.appendChild(label);
+    }
+  }
+  const prevRenderSvgV4333=renderSvg;
+  renderSvg=function(){const r=prevRenderSvgV4333.apply(this,arguments); drawSelectionOutlinesV4333(); return r;};
+
+  // 5) Actions multi/groupe : elles ciblent le groupe actif si un groupe est sélectionné.
+  function targetIndicesV4333(){return activeTargetIndices();}
+  function recolorTargets(opts){
+    const idx=targetIndicesV4333(); if(!idx.length)return setStatus('Aucune sélection.');
+    pushHistory();
+    idx.forEach(i=>{const l=layers()[i]; if(!l)return; if(opts.fill){l.fill=currentFill(); l.opacity=Number($id('fillAlpha')?.value??1);} if(opts.stroke){l.stroke=currentStroke(); l.strokeWidth=currentStrokeWidth();}});
+    renderAll(); setStatus('Couleurs appliquées à '+idx.length+' layer(s).');
+  }
+  recolorSelected=function(opts){recolorTargets(opts||{});};
+  function applyLayerAnimTargets(){
+    const idx=targetIndicesV4333(); if(!idx.length)return setStatus('Aucune sélection pour animation.');
+    pushHistory(); const type=$id('layerAnim')?.value||'';
+    idx.forEach(i=>{const l=layers()[i]; if(!l)return; const c=layerCenter(l); if(type){l.anim={type,amp:Number($id('layerAnimAmp')?.value??1),ampX:Number($id('layerAnimAmpX')?.value??2),speed:Number($id('layerAnimSpeed')?.value??.004),pivotX:Number($id('layerPivotX')?.value??c.x),pivotY:Number($id('layerPivotY')?.value??c.y)};}else delete l.anim;});
+    renderAll(); setStatus('Animation appliquée à '+idx.length+' layer(s).');
+  }
+  applyLayerAnim=applyLayerAnimTargets;
+  clearLayerAnim=function(){const idx=targetIndicesV4333(); if(!idx.length)return; pushHistory(); idx.forEach(i=>{if(layers()[i])delete layers()[i].anim;}); renderAll(); setStatus('Animation supprimée sur '+idx.length+' layer(s).');};
+
+  function copyTargetsV4333(){
+    const idx=targetIndicesV4333(); if(!idx.length)return setStatus('Aucun layer à copier.');
+    const layerClones=idx.map(i=>clone(layers()[i]));
+    const idSet=new Set(idx.map(i=>layers()[i]?.id).filter(Boolean));
+    const groupClones=groups().filter(g=>(g.children||[]).some(id=>idSet.has(id))).map(g=>clone(g));
+    clipboard={kind:'v43.33',layers:layerClones,groups:groupClones};
+    setStatus(layerClones.length+' layer(s) copiés avec '+groupClones.length+' groupe(s).');
+  }
+  copySelected=copyTargetsV4333;
+
+  function applyTransformTargetsV4333(){
+    const idx=targetIndicesV4333(); if(!idx.length)return setStatus('Aucune sélection pour transform.');
+    const b=bboxForIndicesV4333(idx)||{cx:20,cy:20};
+    const rot=Number($id('transformRotationInput')?.value??0), sx=Number($id('transformScaleXInput')?.value??1), sy=Number($id('transformScaleYInput')?.value??1);
+    const px=Number($id('transformPivotXInput')?.value??b.cx), py=Number($id('transformPivotYInput')?.value??b.cy);
+    pushHistory(); idx.forEach(i=>{const l=layers()[i]; if(!l)return; l.rotation=rot; l.scaleX=sx; l.scaleY=sy; l.pivotX=px; l.pivotY=py;});
+    const g=currentGroupSafe(); if(g){g.pivotX=px; g.pivotY=py;}
+    renderAll(); setStatus('Transform appliquée à '+idx.length+' layer(s).');
+  }
+
+  function rebindV4333(){
+    bindPauseButton();
+    if($id('applyFillToSelection'))$id('applyFillToSelection').onclick=()=>recolorTargets({fill:true});
+    if($id('applyStrokeToSelection'))$id('applyStrokeToSelection').onclick=()=>recolorTargets({stroke:true});
+    if($id('applyColorsToSelection'))$id('applyColorsToSelection').onclick=()=>recolorTargets({fill:true,stroke:true});
+    if($id('applyLayerAnim'))$id('applyLayerAnim').onclick=applyLayerAnimTargets;
+    if($id('clearLayerAnim'))$id('clearLayerAnim').onclick=clearLayerAnim;
+    if($id('copySelected'))$id('copySelected').onclick=copyTargetsV4333;
+    if($id('applyTransformEdit'))$id('applyTransformEdit').onclick=applyTransformTargetsV4333;
+    if(!$id('v4333GroupSafeHint')){
+      const h=document.createElement('div');
+      h.id='v4333GroupSafeHint'; h.className='multiEditHint';
+      h.textContent='V43.33 : cliquer un groupe sélectionne uniquement le groupe. Le cadre vert déplace le groupe entier ; les contours jaunes montrent les layers réellement affectés.';
+      document.querySelector('.layersDock')?.prepend(h);
+    }
+  }
+  setTimeout(rebindV4333,0);
+  const oldRenderAllV4333=renderAll;
+  renderAll=function(){const r=oldRenderAllV4333.apply(this,arguments); setTimeout(rebindV4333,0); return r;};
+
+  // 6) Flèches : groupe actif prioritaire, donc aucun layer parasite ne bouge.
+  document.addEventListener('keydown',function(e){
+    if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName||''))return;
+    if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(e.key))return;
+    const g=currentGroupSafe();
+    if(!g)return;
+    const step=e.shiftKey?5:1, dx=e.key==='ArrowLeft'?-step:e.key==='ArrowRight'?step:0, dy=e.key==='ArrowUp'?-step:e.key==='ArrowDown'?step:0;
+    pushHistory(); moveIndices(groupLayerIndices(g),dx,dy); moveGroupMeta(g,dx,dy); renderAll();
+    e.preventDefault(); e.stopImmediatePropagation();
+  },true);
+})();
+
+
+/* ===== V43.34 GROUP CHILD SELECTION / BEZIER INSERT / CLEAN OUTLINES =====
+   Correctifs ciblés :
+   - cliquer un enfant dans un groupe sélectionne/déplace l'enfant, pas le groupe ;
+   - les bounding boxes jaunes/vertes utilisent la position réellement affichée, y compris tx/ty/scale/rotation de groupe ;
+   - drag & drop d'un layer externe vers un groupe rendu plus robuste ;
+   - Alt/Shift-clic ajoute un point sur une forme Bézier même quand un patch multi-edit existe au-dessus ;
+   - pause anim = pose de base, pas arrêt sur une frame tordue.
+*/
+(function(){
+  const $id=id=>document.getElementById(id);
+  const n=(v,f=0)=>{v=Number(v);return Number.isFinite(v)?v:f};
+  const r=v=>Number(n(v).toFixed(3));
+
+  function layerById(id){return layers().find(l=>l && l.id===id)||null;}
+  function groupForLayerId(id){return groups().find(g=>(g.children||[]).includes(id))||null;}
+  function cornerBBoxFromPoints(pts){
+    if(!pts.length)return {minX:0,minY:0,maxX:0,maxY:0,w:0,h:0,cx:0,cy:0};
+    const xs=pts.map(p=>n(p[0])), ys=pts.map(p=>n(p[1]));
+    const minX=Math.min(...xs), minY=Math.min(...ys), maxX=Math.max(...xs), maxY=Math.max(...ys);
+    return {minX,minY,maxX,maxY,w:maxX-minX,h:maxY-minY,cx:(minX+maxX)/2,cy:(minY+maxY)/2};
+  }
+  function applyLayerStatic(l,x,y){
+    const sx=Number.isFinite(Number(l.scaleX))?Number(l.scaleX):1;
+    const sy=Number.isFinite(Number(l.scaleY))?Number(l.scaleY):1;
+    const px=Number.isFinite(Number(l.pivotX))?Number(l.pivotX):x;
+    const py=Number.isFinite(Number(l.pivotY))?Number(l.pivotY):y;
+    let nx=px+(x-px)*sx, ny=py+(y-py)*sy;
+    const rot=(Number.isFinite(Number(l.rotation))?Number(l.rotation):0)*Math.PI/180;
+    if(rot){const dx=nx-px,dy=ny-py,co=Math.cos(rot),si=Math.sin(rot);nx=px+dx*co-dy*si;ny=py+dx*si+dy*co;}
+    return [nx,ny];
+  }
+  function rawLayerCorners(l){
+    if(!l)return [[0,0]];
+    if(l.shape==='circle'){
+      const x=n(l.x,20),y=n(l.y,20),rr=n(l.r,0);return [[x-rr,y-rr],[x+rr,y-rr],[x+rr,y+rr],[x-rr,y+rr]];
+    }
+    if((l.shape==='path'||l.shape==='polygon')&&Array.isArray(l.points)&&l.points.length){
+      let pts=l.points.map(p=>[n(p[0]),n(p[1])]);
+      if(Array.isArray(l.handles)) l.handles.forEach(h=>['in','out'].forEach(k=>{if(Array.isArray(h?.[k]))pts.push([n(h[k][0]),n(h[k][1])]);}));
+      const b=cornerBBoxFromPoints(pts);return [[b.minX,b.minY],[b.maxX,b.minY],[b.maxX,b.maxY],[b.minX,b.maxY]];
+    }
+    if(l.shape==='text'){
+      const fs=n(l.fontSize,12), txt=String(l.text||'');
+      const lines=txt.split(/\n/); const w=Math.max(1,...lines.map(x=>x.length))*fs*.62; const h=Math.max(1,lines.length)*fs*1.18;
+      const x=n(l.x,20)-w/2, y=n(l.y,20)-fs; return [[x,y],[x+w,y],[x+w,y+h],[x,y+h]];
+    }
+    const x=n(l.x,0),y=n(l.y,0),w=n(l.w,0),h=n(l.h,0);return [[x,y],[x+w,y],[x+w,y+h],[x,y+h]];
+  }
+  function displayedCornersForLayerIndex(i){
+    const l=layers()[i]; if(!l)return [];
+    let pts=rawLayerCorners(l).map(p=>applyLayerStatic(l,p[0],p[1]));
+    const g=groupForLayerId(l.id);
+    if(g && typeof transformPointInGroup==='function') pts=pts.map(p=>transformPointInGroup(g,p[0],p[1]));
+    return pts;
+  }
+  function displayedBBoxForLayerIndex(i){return cornerBBoxFromPoints(displayedCornersForLayerIndex(i));}
+  function displayedBBoxForGroup(g){
+    const pts=[];(g?.children||[]).forEach(id=>{const i=layers().findIndex(l=>l.id===id); if(i>=0)pts.push(...displayedCornersForLayerIndex(i));});
+    return pts.length?cornerBBoxFromPoints(pts):null;
+  }
+  function containsBBox(p,b,pad=0){return b&&p.x>=b.minX-pad&&p.x<=b.maxX+pad&&p.y>=b.minY-pad&&p.y<=b.maxY+pad;}
+
+  // Remplace les hit-tests approximatifs par des tests sur position affichée.
+  window.hitLayerAtPointV4333 = hitLayerAtPointV4333 = function(p){
+    for(let i=layers().length-1;i>=0;i--){const l=layers()[i]; if(!l||l.visible===false)continue; if(containsBBox(p,displayedBBoxForLayerIndex(i),.65))return i;}
+    return -1;
+  };
+  window.groupBBox = groupBBox = function(g){return displayedBBoxForGroup(g)||{minX:0,minY:0,maxX:0,maxY:0,w:0,h:0,cx:0,cy:0};};
+  window.groupAtPoint = groupAtPoint = function(p){
+    for(let i=groups().length-1;i>=0;i--){const g=groups()[i], b=displayedBBoxForGroup(g); if(containsBBox(p,b,.9))return g;}
+    return null;
+  };
+  window.bboxForIndicesV4333 = bboxForIndicesV4333 = function(indices){
+    const pts=[];(indices||[]).forEach(i=>pts.push(...displayedCornersForLayerIndex(i)));
+    return pts.length?cornerBBoxFromPoints(pts):null;
+  };
+
+  // Re-rendu des contours : jaune pour chaque layer affecté, vert pour le groupe/lot.
+  function drawLayerOutline(i,kind='selected'){
+    const b=displayedBBoxForLayerIndex(i); if(!b||!Number.isFinite(b.minX))return;
+    svg.appendChild(E('rect',{class:'v4334LayerOutline '+kind,x:b.minX-.22,y:b.minY-.22,width:b.w+.44,height:b.h+.44,fill:'none',stroke:'#ffd640','stroke-width':.2,'stroke-dasharray':'.55 .36','pointer-events':'none'}));
+  }
+  function drawCleanOutlines(){
+    if(!svg||tool!=='select')return;
+    const g=(typeof currentGroupSafe==='function')?currentGroupSafe():null;
+    const idx=new Set([...(selected||[])]);
+    if(g)(g.children||[]).forEach(id=>{const i=layers().findIndex(l=>l.id===id); if(i>=0)idx.add(i);});
+    idx.forEach(i=>drawLayerOutline(i,g?'groupChild':'selected'));
+    const b=g?displayedBBoxForGroup(g):bboxForIndicesV4333([...idx]);
+    if(b&&idx.size>1){
+      const box=E('rect',{class:g?'v4333GroupBox':'v4332MultiBox',x:b.minX-.55,y:b.minY-.55,width:b.w+1.1,height:b.h+1.1,fill:g?'rgba(82,242,138,.045)':'rgba(41,231,255,.035)',stroke:g?'#52f28a':'#29e7ff','stroke-width':.28,'stroke-dasharray':'1 .65','pointer-events':'all'});
+      box.dataset.role=g?'moveGroup':'moveSelection'; svg.appendChild(box);
+      const label=E('text',{x:b.minX,y:b.minY-1.25,fill:g?'#52f28a':'#29e7ff','font-size':'1.55','font-weight':'900','font-family':'monospace','pointer-events':'none'});
+      label.textContent=g?('GROUP '+g.id):(idx.size+' layers'); svg.appendChild(label);
+    }
+  }
+  const oldRenderSvgV4334=renderSvg;
+  renderSvg=function(){
+    const r=oldRenderSvgV4334.apply(this,arguments);
+    // Nettoyage des anciens cadres mal placés, puis nouveaux cadres calculés sur la position affichée.
+    svg.querySelectorAll('.v4333LayerOutline,.v4333GroupBox,.v4332MultiBox').forEach(x=>x.remove());
+    drawCleanOutlines();
+    return r;
+  };
+
+  // Sélection d'un layer enfant : ne plus laisser le groupe parent reprendre la main au premier déplacement.
+  // On écrase selectLayerOnly pour être très explicite : layer seul = aucun groupe actif.
+  const oldSelectLayerOnly=window.selectLayerOnly||function(i){selected.clear();selected.add(i);activeLayerIndex=i;activeGroupId='';renderAll();};
+  window.selectLayerOnly=selectLayerOnly=function(i){selected.clear(); if(Number.isInteger(i)&&layers()[i])selected.add(i); activeLayerIndex=i; activeGroupId=''; renderForm?.(); renderAll();};
+
+  // Ajout de point Bézier fiable : en mode Points, Alt/Shift-clic sur le canvas ajoute sur le path sélectionné.
+  window.addEventListener('pointerdown',function(e){
+    if(!$id('pointEdit')?.checked)return;
+    if(!(e.altKey||e.shiftKey))return;
+    if(e.target?.closest?.('.pointHandle,.bezierHandle'))return;
+    const idx=[...(selected||[])].find(i=>layers()[i]&&Array.isArray(layers()[i].points));
+    const useIdx=Number.isInteger(idx)?idx:((layers()[activeLayerIndex]&&Array.isArray(layers()[activeLayerIndex].points))?activeLayerIndex:-1);
+    if(useIdx<0)return;
+    const l=layers()[useIdx]; if(!l)return;
+    pushHistory();
+    if(l.shape==='polygon' && ($id('curveMode')?.value==='manual'||l.curveMode==='manual')){l.shape='path';l.curveMode='manual';}
+    if(l.shape==='path' && !l.curveMode)l.curveMode=$id('curveMode')?.value||'manual';
+    const p=svgPoint(e);
+    activePointIndex=addPointToLayerAt(l,p);
+    selected.clear();selected.add(useIdx);activeLayerIndex=useIdx;activeGroupId='';
+    if(typeof updatePathD==='function')updatePathD(l);
+    renderAll();
+    setStatus('Point ajouté sur la forme. Alt/Shift-clic fonctionne même avec les groupes, incroyable ce que “fonctionner” veut dire.');
+    e.preventDefault();e.stopImmediatePropagation();
+  },true);
+
+  // Drag & drop fiable vers un groupe, même depuis un layer racine ou un enfant d'un autre groupe.
+  function labelRowsForDnD(){
+    document.querySelectorAll('#layers .item').forEach(row=>{
+      const name=row.querySelector('.name')?.textContent||'';
+      const groupMatch=name.match(/📁\s*([^\n\s]+)/);
+      if(row.classList.contains('groupHead')&&groupMatch) row.dataset.groupId=groupMatch[1];
+      const layerMatch=name.match(/^(?:↳\s*)?(\d+)\.\s*([^\n]+)/);
+      if(!row.classList.contains('groupHead')&&layerMatch){
+        const idx=Number(layerMatch[1])-1; const l=layers()[idx]; if(l?.id)row.dataset.layerId=l.id;
+      }
+    });
+  }
+  const oldRenderAllV4334=renderAll;
+  renderAll=function(){const out=oldRenderAllV4334.apply(this,arguments); setTimeout(labelRowsForDnD,0); return out;};
+  setTimeout(labelRowsForDnD,0);
+  document.addEventListener('dragstart',function(e){
+    const row=e.target.closest?.('#layers .item[data-layer-id]'); if(!row)return;
+    e.dataTransfer.setData('text/layer-id',row.dataset.layerId); e.dataTransfer.effectAllowed='move';
+  },true);
+  document.addEventListener('dragover',function(e){
+    const head=e.target.closest?.('#layers .groupHead[data-group-id]'); if(!head)return;
+    e.preventDefault(); head.classList.add('dropInto');
+  },true);
+  document.addEventListener('dragleave',function(e){e.target.closest?.('#layers .groupHead')?.classList.remove('dropInto');},true);
+  document.addEventListener('drop',function(e){
+    const head=e.target.closest?.('#layers .groupHead[data-group-id]'); if(!head)return;
+    const lid=e.dataTransfer.getData('text/layer-id'); if(!lid)return;
+    const g=groups().find(x=>x.id===head.dataset.groupId); if(!g)return;
+    pushHistory(); groups().forEach(x=>x.children=(x.children||[]).filter(id=>id!==lid));
+    g.children=[...(g.children||[]).filter(id=>id!==lid),lid]; g.collapsed=false;
+    activeGroupId=g.id; selected.clear(); const i=layers().findIndex(l=>l.id===lid); if(i>=0)activeLayerIndex=i;
+    head.classList.remove('dropInto'); renderAll(); setStatus('Layer ajouté au groupe '+g.id+'.');
+    e.preventDefault(); e.stopImmediatePropagation();
+  },true);
+
+  // Panneau de layers : meilleur feedback visuel jaune pour les layers réellement sélectionnés.
+  const style=document.createElement('style');
+  style.textContent=`
+    #layers .item.multiSelected{outline:2px solid #ffd640!important;background:rgba(255,214,64,.12)!important;box-shadow:inset 0 0 0 1px rgba(255,214,64,.35)!important;}
+    #layers .item.groupHead.active{outline:2px solid #52f28a!important;background:rgba(82,242,138,.12)!important;}
+    .v4334LayerOutline{filter:drop-shadow(0 0 .7px rgba(255,214,64,.75));}
+  `;
+  document.head.appendChild(style);
+  function paintLayerPanelSelection(){
+    document.querySelectorAll('#layers .item').forEach(row=>{
+      const lid=row.dataset.layerId; const i=lid?layers().findIndex(l=>l.id===lid):-1;
+      row.classList.toggle('multiSelected',i>=0 && selected.has(i));
+    });
+  }
+  const oldRebuildLayersV4334=rebuildLayers;
+  rebuildLayers=function(){const r=oldRebuildLayersV4334.apply(this,arguments); labelRowsForDnD(); paintLayerPanelSelection(); return r;};
+  const oldRenderFormV4334=renderForm;
+  renderForm=function(){const r=oldRenderFormV4334.apply(this,arguments); setTimeout(paintLayerPanelSelection,0); return r;};
+
+  // Pause : retour visuel immédiat à l'état de base.
+  const pauseBtn=$id('animPlayPause');
+  if(pauseBtn){
+    pauseBtn.onclick=()=>{animPlaying=!animPlaying;if(!animPlaying)animClock=0;pauseBtn.textContent=animPlaying?'⏸ Pause preview anims':'▶ Play preview anims';renderAll();setStatus(animPlaying?'Animations relancées.':'Animations stoppées : position, rotation et scale de base.');};
+  }
+
+  setTimeout(()=>{renderAll();setStatus('V43.34 : groupes, enfants, contours et points Bézier corrigés.');},0);
+})();
+
+
+
+/* ===== V43.35 BEZIER INSERT SAFE / DELETE FIX / DEBUG LOGS =====
+   Correctifs ciblés après les retours terrain :
+   - ajouter un point Bézier n'écrase plus les tangentes des autres points ;
+   - le bouton Delete/Suppr supprime vraiment les layers sélectionnés ;
+   - les logs JS sont gardés en mémoire et exportables en fichier ;
+   - pause animation = pose neutre : aucune transform animée résiduelle.
+*/
+(function(){
+  const $id = id => document.getElementById(id);
+  const num = (v,f=0)=>{ v=Number(v); return Number.isFinite(v)?v:f; };
+  const round = v => Number(num(v).toFixed(3));
+
+  // ---------- Logs exportables ----------
+  const LOG_KEY='CG_SVG_EDITOR_DEBUG_LOGS_V43_35';
+  function now(){ return new Date().toISOString(); }
+  function readLogs(){ try{return JSON.parse(localStorage.getItem(LOG_KEY)||'[]')}catch(e){return []} }
+  function writeLogs(a){ try{localStorage.setItem(LOG_KEY,JSON.stringify(a.slice(-600)))}catch(e){} }
+  window.cgEditorLog = function(type,msg,data){
+    const row={time:now(),type:String(type||'info'),message:String(msg||''),data:data===undefined?null:data};
+    const arr=readLogs(); arr.push(row); writeLogs(arr);
+    try{ console[type==='error'?'error':type==='warn'?'warn':'log']('[CG_EDITOR]',row.message,row.data||''); }catch(e){}
+  };
+  window.addEventListener('error',e=>cgEditorLog('error',e.message,{file:e.filename,line:e.lineno,col:e.colno,stack:e.error?.stack||null}));
+  window.addEventListener('unhandledrejection',e=>cgEditorLog('error','Unhandled promise rejection',{reason:String(e.reason),stack:e.reason?.stack||null}));
+  function downloadEditorLogs(){
+    const logs=readLogs();
+    const body=logs.map(x=>`[${x.time}] ${x.type.toUpperCase()} ${x.message}\n${x.data?JSON.stringify(x.data,null,2):''}`).join('\n\n');
+    const blob=new Blob([body||'Aucun log enregistré.'],{type:'text/plain;charset=utf-8'});
+    const a=document.createElement('a'); a.href=URL.createObjectURL(blob); a.download='cg_svg_editor_debug.log'; a.click();
+    setTimeout(()=>URL.revokeObjectURL(a.href),500);
+  }
+  function installLogButton(){
+    if($id('downloadEditorLogs'))return;
+    const host=document.querySelector('header .row')||document.querySelector('header')||document.body;
+    const b=document.createElement('button'); b.id='downloadEditorLogs'; b.textContent='Télécharger logs'; b.title='Export cg_svg_editor_debug.log'; b.onclick=downloadEditorLogs;
+    host.appendChild(b);
+  }
+  installLogButton();
+  cgEditorLog('info','V43.35 editor patch loaded');
+
+  // ---------- Helpers Bézier stables ----------
+  function ensureHandles(layer){
+    if(!layer || !Array.isArray(layer.points))return;
+    if(layer.shape==='polygon')return;
+    if(layer.curveMode!=='manual')return;
+    const pts=layer.points;
+    if(!Array.isArray(layer.handles))layer.handles=[];
+    for(let i=0;i<pts.length;i++){
+      const p=pts[i]||[20,20];
+      const prev=pts[(i-1+pts.length)%pts.length]||p;
+      const next=pts[(i+1)%pts.length]||p;
+      if(!layer.handles[i]){
+        layer.handles[i]={
+          in:[round(num(p[0])-(num(next[0])-num(prev[0]))*.16),round(num(p[1])-(num(next[1])-num(prev[1]))*.16)],
+          out:[round(num(p[0])+(num(next[0])-num(prev[0]))*.16),round(num(p[1])+(num(next[1])-num(prev[1]))*.16)]
+        };
+      }
+      if(!Array.isArray(layer.handles[i].in))layer.handles[i].in=[round(p[0]),round(p[1])];
+      if(!Array.isArray(layer.handles[i].out))layer.handles[i].out=[round(p[0]),round(p[1])];
+    }
+    layer.handles.length=pts.length;
+  }
+  window.normalizeBezierHandles = normalizeBezierHandles = ensureHandles;
+
+  window.pointsToPath = pointsToPath = function(pts,mode='linear',layer=null){
+    if(!Array.isArray(pts)||!pts.length)return '';
+    if(mode==='linear')return 'M '+pts.map(p=>`${round(p[0])} ${round(p[1])}`).join(' L ')+' Z';
+    if(mode==='manual' && layer){
+      ensureHandles(layer);
+      let d=`M ${round(pts[0][0])} ${round(pts[0][1])}`;
+      for(let i=1;i<pts.length;i++){
+        const h0=layer.handles?.[i-1]?.out || pts[i-1];
+        const h1=layer.handles?.[i]?.in || pts[i];
+        d+=` C ${round(h0[0])} ${round(h0[1])} ${round(h1[0])} ${round(h1[1])} ${round(pts[i][0])} ${round(pts[i][1])}`;
+      }
+      if(pts.length>2){
+        const last=pts.length-1;
+        const h0=layer.handles?.[last]?.out || pts[last];
+        const h1=layer.handles?.[0]?.in || pts[0];
+        d+=` C ${round(h0[0])} ${round(h0[1])} ${round(h1[0])} ${round(h1[1])} ${round(pts[0][0])} ${round(pts[0][1])} Z`;
+      }
+      return d;
+    }
+    let d=`M ${round(pts[0][0])} ${round(pts[0][1])}`;
+    for(let i=1;i<pts.length;i++){
+      const p0=pts[i-1],p=pts[i];
+      const mx=(num(p0[0])+num(p[0]))/2,my=(num(p0[1])+num(p[1]))/2;
+      d+=` Q ${round(p0[0])} ${round(p0[1])} ${round(mx)} ${round(my)}`;
+    }
+    return d+' Z';
+  };
+  window.updatePathD = updatePathD = function(layer){
+    if(!layer || layer.shape!=='path')return;
+    if(layer.curveMode==='manual')ensureHandles(layer);
+    layer.d=pointsToPath(layer.points||[],layer.curveMode||'manual',layer);
+  };
+  function distToSeg(px,py,ax,ay,bx,by){
+    const vx=bx-ax,vy=by-ay,wx=px-ax,wy=py-ay,c2=vx*vx+vy*vy;
+    const t=c2?Math.max(0,Math.min(1,(vx*wx+vy*wy)/c2)):0;
+    const x=ax+t*vx,y=ay+t*vy; return {d:Math.hypot(px-x,py-y),t,x,y};
+  }
+  function nearestSeg(layer,p){
+    const pts=layer.points||[]; if(pts.length<2)return null;
+    const closed=pts.length>2; const max=closed?pts.length:pts.length-1; let best=null;
+    for(let i=0;i<max;i++){
+      const a=pts[i],b=pts[(i+1)%pts.length];
+      const r=distToSeg(p.x,p.y,num(a[0]),num(a[1]),num(b[0]),num(b[1]));
+      if(!best||r.d<best.d)best={...r,index:i,next:(i+1)%pts.length};
+    }
+    return best;
+  }
+  window.addPointToLayerAt = addPointToLayerAt = function(layer,p){
+    if(!layer || !Array.isArray(layer.points))return -1;
+    if(layer.shape==='polygon' && (($id('curveMode')?.value||layer.curveMode)==='manual')){layer.shape='path';layer.curveMode='manual';}
+    if(layer.shape==='path'){
+      layer.curveMode=layer.curveMode||'manual';
+      if(layer.curveMode==='manual')ensureHandles(layer);
+    }
+    const near=nearestSeg(layer,p); const insertAt=near?near.next:layer.points.length;
+    const np=[round(p.x),round(p.y)];
+    const oldHandles=Array.isArray(layer.handles)?layer.handles.slice():null;
+    layer.points.splice(insertAt,0,np);
+    if(layer.shape==='path' && layer.curveMode==='manual'){
+      const prevIndex=(insertAt-1+layer.points.length)%layer.points.length;
+      const nextIndex=(insertAt+1)%layer.points.length;
+      const prev=layer.points[prevIndex]||np, next=layer.points[nextIndex]||np;
+      const dx=num(next[0])-num(prev[0]), dy=num(next[1])-num(prev[1]);
+      const newHandle={in:[round(np[0]-dx*.14),round(np[1]-dy*.14)],out:[round(np[0]+dx*.14),round(np[1]+dy*.14)]};
+      layer.handles=oldHandles||[];
+      layer.handles.splice(insertAt,0,newHandle);
+      ensureHandles(layer);
+      updatePathD(layer);
+    }else if(layer.shape==='path') updatePathD(layer);
+    cgEditorLog('info','Bezier point inserted',{layer:layer.id,insertAt,points:layer.points.length});
+    return insertAt;
+  };
+
+  // ---------- Suppression fiable ----------
+  function selectedLayerIndexes(){
+    const arr=[...(selected||[])].filter(i=>Number.isInteger(i)&&layers()[i]);
+    if(!arr.length && Number.isInteger(activeLayerIndex) && layers()[activeLayerIndex]) arr.push(activeLayerIndex);
+    return [...new Set(arr)].sort((a,b)=>a-b);
+  }
+  function removeLayerIdFromGroups(id){groups().forEach(g=>g.children=(g.children||[]).filter(x=>x!==id));}
+  window.deleteSelected = deleteSelected = function(){
+    const idxs=selectedLayerIndexes();
+    if(!idxs.length && activeGroupId){
+      const gid=activeGroupId; pushHistory(); asset().groups=(asset().groups||[]).filter(g=>g.id!==gid); activeGroupId=''; selected.clear(); renderAll(); setStatus('Groupe supprimé, layers conservés.'); return;
+    }
+    if(!idxs.length){setStatus('Aucun layer sélectionné à supprimer.'); return;}
+    pushHistory();
+    const removed=idxs.map(i=>layers()[i]?.id).filter(Boolean);
+    for(let k=idxs.length-1;k>=0;k--) layers().splice(idxs[k],1);
+    removed.forEach(removeLayerIdFromGroups);
+    selected.clear(); activeGroupId=''; activeLayerIndex=Math.max(0,Math.min(layers().length-1,idxs[0]||0));
+    renderAll(); setStatus(removed.length+' layer(s) supprimé(s).'); cgEditorLog('info','Layers deleted',{removed});
+  };
+  const delBtn=$id('deleteSelected'); if(delBtn) delBtn.onclick=deleteSelected;
+  document.addEventListener('keydown',function(e){
+    if(['INPUT','TEXTAREA','SELECT'].includes(document.activeElement?.tagName))return;
+    if(e.key==='Delete'||e.key==='Backspace'){
+      if($id('pointEdit')?.checked && typeof deleteActivePoint==='function' && activePointIndex>=0){e.preventDefault(); deleteActivePoint(); return;}
+      e.preventDefault(); deleteSelected();
+    }
+  },true);
+
+  // ---------- Ajout point capture, priorité haute ----------
+  window.addEventListener('pointerdown',function(e){
+    if(!$id('pointEdit')?.checked || !(e.altKey||e.shiftKey))return;
+    if(e.target?.closest?.('.pointHandle,.bezierHandle,.transformHandle,.transformBox'))return;
+    const candidates=[...(selected||[])].filter(i=>layers()[i]&&Array.isArray(layers()[i].points));
+    const idx=candidates.length?candidates[0]:((layers()[activeLayerIndex]&&Array.isArray(layers()[activeLayerIndex].points))?activeLayerIndex:-1);
+    if(idx<0)return;
+    const layer=layers()[idx];
+    try{
+      pushHistory(); activePointIndex=addPointToLayerAt(layer,svgPoint(e)); selected.clear(); selected.add(idx); activeLayerIndex=idx; activeGroupId=''; renderAll(); setStatus('Point ajouté sans casser les tangentes existantes. Étonnant, mais appréciable.');
+    }catch(err){cgEditorLog('error','Failed to add bezier point',{error:String(err),stack:err.stack}); setStatus('Erreur ajout point : logs téléchargeables.');}
+    e.preventDefault(); e.stopImmediatePropagation();
+  },true);
+
+  // ---------- Pause neutre des animations ----------
+  const oldTransformFromAnim=transformFromAnim;
+  window.transformFromAnim = transformFromAnim = function(a,t,host={}){ if(!animPlaying)return ''; return oldTransformFromAnim(a,t,host); };
+  const pauseBtn=$id('animPlayPause');
+  if(pauseBtn){
+    pauseBtn.onclick=function(){
+      animPlaying=!animPlaying; if(!animPlaying)animClock=0;
+      pauseBtn.textContent=animPlaying?'⏸ Pause preview anims':'▶ Play preview anims';
+      renderAll(); setStatus(animPlaying?'Animations relancées.':'Animations stoppées : pose de base sans rotation/scale animée.');
+    };
+  }
+
+  setTimeout(()=>{try{renderAll();setStatus('V43.35 : Bézier, suppression et logs corrigés.')}catch(e){cgEditorLog('error','Initial render failed',{error:String(e),stack:e.stack})}},0);
+})();
+
+
+/* ===== V43.36 GROUP PIVOT RESET / APPLY FIX =====
+   Le problème : plusieurs anciens handlers ne faisaient que remplir les champs
+   pivot X/Y du groupe sans écrire dans le groupe réel. Résultat : l'UI disait
+   "pivot reset", mais l'animation continuait à utiliser l'ancien pivot.
+   Ici on centralise : toute action pivot groupe modifie g.pivotX/g.pivotY ET
+   g.anim.pivotX/g.anim.pivotY quand une animation existe.
+*/
+(function(){
+  function el(id){ return document.getElementById(id); }
+  function n(v,fallback){ v=Number(v); return Number.isFinite(v) ? v : fallback; }
+  function r(v){ return Math.round(n(v,0)*100)/100; }
+  function log(msg, data){
+    try{
+      if(typeof cgLog === 'function') cgLog('[V43.36 GROUP PIVOT] '+msg, data || '');
+      else console.log('[V43.36 GROUP PIVOT]', msg, data || '');
+    }catch(e){}
+  }
+  function groupById(id){
+    try{ return (typeof groups === 'function' ? groups() : []).find(g=>g && g.id===id); }
+    catch(e){ return null; }
+  }
+  function activeGroup(){
+    try{
+      const selectId = el('activeGroupSelect')?.value || '';
+      const id = activeGroupId || selectId;
+      return (typeof currentGroup === 'function' ? currentGroup() : null) || groupById(id);
+    }catch(e){ return null; }
+  }
+  function groupBBox(g){
+    if(!g) return {cx:20,cy:20,x:0,y:0,w:40,h:40};
+    try{
+      if(typeof bboxOfLayersByIds === 'function') return bboxOfLayersByIds(g.children || []);
+    }catch(e){}
+    try{
+      if(typeof groupCenter === 'function'){
+        const c=groupCenter(g); return {cx:n(c.x,20),cy:n(c.y,20),x:n(c.x,20),y:n(c.y,20),w:0,h:0};
+      }
+    }catch(e){}
+    return {cx:20,cy:20,x:0,y:0,w:40,h:40};
+  }
+  function writeGroupPivotInputs(x,y){
+    if(el('groupPivotX')) el('groupPivotX').value = r(x).toFixed(1);
+    if(el('groupPivotY')) el('groupPivotY').value = r(y).toFixed(1);
+  }
+  function applyPivotToGroup(g,x,y,reason){
+    if(!g) return false;
+    const px=r(x), py=r(y);
+    g.pivotX = px;
+    g.pivotY = py;
+    // Important : l'anim a son propre pivot. Si on ne le met pas à jour,
+    // pulse/spin/rot90 utilisent encore l'ancien centre. Petite joie cachée.
+    if(g.anim && typeof g.anim === 'object'){
+      g.anim.pivotX = px;
+      g.anim.pivotY = py;
+    }
+    writeGroupPivotInputs(px,py);
+    log(reason || 'pivot appliqué', {group:g.id,pivotX:px,pivotY:py,hasAnim:!!g.anim});
+    return true;
+  }
+  function resetActiveGroupPivotToCenter(){
+    const g=activeGroup();
+    if(!g) return setStatus?.('Sélectionne un groupe avant de reset son pivot.');
+    const b=groupBBox(g);
+    if(typeof pushHistory === 'function') pushHistory();
+    applyPivotToGroup(g,b.cx,b.cy,'reset pivot au centre bbox');
+    if(typeof renderAll === 'function') renderAll();
+    setStatus?.('Pivot du groupe reset au centre : '+g.id+' ('+r(b.cx)+', '+r(b.cy)+').');
+  }
+  function applyActiveGroupPivotFromFields(){
+    const g=activeGroup();
+    if(!g) return;
+    const b=groupBBox(g);
+    if(typeof pushHistory === 'function') pushHistory();
+    applyPivotToGroup(g,n(el('groupPivotX')?.value,b.cx),n(el('groupPivotY')?.value,b.cy),'pivot champs appliqué');
+    if(typeof renderAll === 'function') renderAll();
+    setStatus?.('Pivot appliqué au groupe : '+g.id+'.');
+  }
+  function resetActiveGroupTransformAndPivot(){
+    const g=activeGroup();
+    if(!g) return false;
+    const b=groupBBox(g);
+    if(typeof pushHistory === 'function') pushHistory();
+    ['tx','ty','scaleX','scaleY','rotation'].forEach(k=>delete g[k]);
+    applyPivotToGroup(g,b.cx,b.cy,'reset transform + pivot groupe');
+    if(typeof renderAll === 'function') renderAll();
+    setStatus?.('Transform + pivot reset sur le groupe : '+g.id+'.');
+    return true;
+  }
+
+  // Remplace les anciens handlers "Auto" qui ne remplissaient parfois que les inputs.
+  const auto=el('groupPivotAuto');
+  if(auto){
+    auto.textContent='Auto + appliquer';
+    auto.title='Recalcule le pivot du groupe au centre réel et l’applique au groupe + à son animation.';
+    auto.onclick=function(e){ e?.preventDefault?.(); e?.stopPropagation?.(); resetActiveGroupPivotToCenter(); };
+  }
+
+  // Ajoute un vrai bouton de reset pivot à côté du bouton Auto.
+  if(auto && !el('groupPivotReset')){
+    const btn=document.createElement('button');
+    btn.id='groupPivotReset';
+    btn.type='button';
+    btn.textContent='Reset pivot';
+    btn.title='Reset le pivot du groupe actif au centre de ses enfants, animation comprise.';
+    btn.onclick=function(e){ e?.preventDefault?.(); e?.stopPropagation?.(); resetActiveGroupPivotToCenter(); };
+    auto.parentElement?.appendChild(btn);
+  }
+
+  // Les changements manuels de champs appliquent maintenant vraiment le pivot.
+  ['groupPivotX','groupPivotY'].forEach(id=>{
+    const input=el(id);
+    if(input){
+      input.addEventListener('change', function(){ applyActiveGroupPivotFromFields(); }, true);
+    }
+  });
+
+  // Patch applyGroup : conserve sa logique, puis garantit que le pivot écrit dans les champs
+  // est recopié dans g.pivot ET g.anim.pivot.
+  const previousApplyGroup = window.applyGroup || (typeof applyGroup === 'function' ? applyGroup : null);
+  if(previousApplyGroup){
+    window.applyGroup = applyGroup = function(){
+      const before = activeGroup();
+      const result = previousApplyGroup.apply(this, arguments);
+      const g = activeGroup() || before;
+      if(g){
+        const b=groupBBox(g);
+        applyPivotToGroup(g,n(el('groupPivotX')?.value,b.cx),n(el('groupPivotY')?.value,b.cy),'post applyGroup pivot sync');
+        if(typeof renderAll === 'function') renderAll();
+      }
+      return result;
+    };
+    const applyBtn=el('applyGroup');
+    if(applyBtn) applyBtn.onclick=window.applyGroup;
+  }
+
+  // Patch des resets existants : si un groupe seul est actif, on reset aussi ses pivots.
+  const resetTransformEditBtn=el('resetTransformEdit');
+  if(resetTransformEditBtn){
+    const old=resetTransformEditBtn.onclick;
+    resetTransformEditBtn.onclick=function(e){
+      const hasLayerSelection = (typeof selectedIndices === 'function' ? selectedIndices().length : 0) > 0;
+      if(activeGroup() && !hasLayerSelection){ e?.preventDefault?.(); e?.stopPropagation?.(); return resetActiveGroupTransformAndPivot(); }
+      return old ? old.call(this,e) : undefined;
+    };
+  }
+  const resetStaticBtn=el('resetStaticTransform');
+  if(resetStaticBtn){
+    const old=resetStaticBtn.onclick;
+    resetStaticBtn.onclick=function(e){
+      const hasLayerSelection = (typeof selectedIndices === 'function' ? selectedIndices().length : 0) > 0;
+      if(activeGroup() && !hasLayerSelection){ e?.preventDefault?.(); e?.stopPropagation?.(); return resetActiveGroupTransformAndPivot(); }
+      return old ? old.call(this,e) : undefined;
+    };
+  }
+
+  // Expose pour debug console, parce qu'on en a assez de deviner dans le noir.
+  window.cgResetActiveGroupPivot = resetActiveGroupPivotToCenter;
+  window.cgApplyActiveGroupPivotFromFields = applyActiveGroupPivotFromFields;
+  window.cgResetActiveGroupTransformAndPivot = resetActiveGroupTransformAndPivot;
+})();
+
 </script>
+
+<script>
+/* ===== V43.38 SAFE LAYER LOCK / ASSET TAB SOLO =====
+   Retour arrière propre par rapport à V43.37 :
+   - le lock n'ajoute plus aucun cadre SVG dans le canvas ;
+   - le lock ne modifie pas les groupes, les pivots, les courbes ou les transforms ;
+   - un layer verrouillé est seulement ignoré à la sélection et aux opérations de lot ;
+   - l'onglet Asset creation revient toujours en preview Asset seul.
+*/
+(function(){
+  function byId(id){return document.getElementById(id);}
+  function safeLayers(){try{return layers();}catch(e){return [];}}
+  function isLockedIndex(i){const l=safeLayers()[i];return !!(l && l.locked===true);}
+  function purgeLockedSelection(){
+    try{
+      [...selected].forEach(i=>{if(isLockedIndex(i))selected.delete(i);});
+      if(isLockedIndex(activeLayerIndex)){
+        const first=safeLayers().findIndex((l,i)=>l && !isLockedIndex(i));
+        activeLayerIndex=first>=0?first:0;
+      }
+    }catch(e){}
+  }
+  window.cgLayerIsLocked=function(i){return isLockedIndex(i);};
+
+  // Asset creation doit toujours montrer l'asset seul.
+  function forceAssetSolo(){
+    const pm=byId('previewMode');
+    if(pm) pm.value='editor';
+    try{previewMode='editor';}catch(e){}
+    try{renderAll();}catch(e){}
+  }
+  document.addEventListener('click',function(e){
+    const tab=e.target.closest && e.target.closest('[data-tab="asset"]');
+    if(tab) setTimeout(forceAssetSolo,0);
+  },true);
+
+  // Rebuild liste layers : reprise de la V43.36 stable, ajout du bouton lock seulement dans la liste.
+  const oldRebuild = (typeof rebuildLayers==='function') ? rebuildLayers : null;
+  if(oldRebuild){
+    rebuildLayers=function(){
+      const layersEl=byId('layers');
+      if(!layersEl){return oldRebuild();}
+      layersEl.innerHTML='';
+      const childToGroup=new Map();
+      groups().forEach(g=>(g.children||[]).forEach(id=>childToGroup.set(id,g)));
+      const renderedGroups=new Set(); const drawn=new Set();
+      function ensureId(l,i){if(typeof _v17EnsureLayerId==='function')return _v17EnsureLayerId(l,i); if(!l.id)l.id='layer_'+i; return l.id;}
+      function findIdx(id){if(typeof _v17FindLayerIndexById==='function')return _v17FindLayerIndexById(id); return safeLayers().findIndex(l=>l&&l.id===id);}
+      function removeGroups(id){if(typeof _v17RemoveFromGroups==='function')return _v17RemoveFromGroups(id); groups().forEach(g=>g.children=(g.children||[]).filter(x=>x!==id));}
+      function makeDrop(row,layerId,groupId){if(typeof _v17MakeLayerDrop==='function')_v17MakeLayerDrop(row,layerId,groupId);}
+      function layerRow(l,i,isChild=false,groupId=''){
+        ensureId(l,i);
+        const locked=!!l.locked;
+        const d=document.createElement('div');
+        d.className='item'+(isChild?' child':'')+(i===activeLayerIndex?' active':'')+(selected.has(i)?' multiSelected':'')+(locked?' lockedLayer':'');
+        d.draggable=!locked;
+        const g=childToGroup.get(l.id);
+        d.dataset.layerId=l.id;
+        d.innerHTML=`<input class="selBox" type="checkbox" ${selected.has(i)?'checked':''} ${locked?'disabled':''}>`+
+          `<button class="layerLockBtn" data-a="lock" title="${locked?'Déverrouiller':'Verrouiller'}">${locked?'🔒':'🔓'}</button>`+
+          `<button class="layerEye" data-a="eye" title="Afficher / masquer">${l.visible===false?'○':'●'}</button>`+
+          `<div class="name">${isChild?'↳ ':''}${i+1}. ${l.id||l.shape}<small>${l.shape||'shape'}${g?' · '+g.id:''}${l.visible===false?' · caché':''}${l.anim?.type?' · anim:'+l.anim.type:''}</small></div>`+
+          `<div class="mini"><button data-a="trash" class="trash" title="Supprimer layer">🗑</button></div>`;
+        d.addEventListener('dragstart',e=>{if(locked){e.preventDefault();return;} e.dataTransfer.setData('text/layer-id',l.id);e.dataTransfer.effectAllowed='move'});
+        makeDrop(d,l.id,groupId);
+        d.onclick=e=>{
+          const btn=e.target.closest('button');
+          if(btn){
+            const a=btn.dataset.a;
+            if(a==='lock'){
+              pushHistory();
+              l.locked=!l.locked;
+              if(l.locked){selected.delete(i); if(activeLayerIndex===i)activeLayerIndex=safeLayers().findIndex((x,j)=>x&&!isLockedIndex(j));}
+              renderAll(); setStatus(l.locked?'Layer verrouillé : non sélectionnable dans le canvas.':'Layer déverrouillé.'); return;
+            }
+            if(a==='eye'){pushHistory();l.visible=l.visible===false?true:false;renderAll();return}
+            if(a==='trash'){if(l.locked){setStatus('Layer verrouillé : déverrouille avant suppression.');return;} removeLayerByIndex(i);return}
+          }
+          const cb=e.target.closest('input.selBox');
+          if(cb){if(locked){cb.checked=false;setStatus('Layer verrouillé : non sélectionnable.');return;} cb.checked?selected.add(i):selected.delete(i);activeLayerIndex=i;activeGroupId='';renderAll();return}
+          if(locked){setStatus('Layer verrouillé : clic ignoré.');return;}
+          activeLayerIndex=i;activeGroupId='';if(!e.shiftKey&&!e.ctrlKey&&!e.metaKey)selected.clear();selected.add(i);renderAll();
+        };
+        return d;
+      }
+      function groupHead(g){
+        const h=document.createElement('div');
+        h.className='item groupHead'+(g.id===activeGroupId?' active':'');
+        h.draggable=true;
+        const collapsed=!!g.collapsed;
+        h.dataset.groupId=g.id;
+        h.innerHTML=`<button data-a="toggle" class="folder" title="Plier / déplier">${collapsed?'▸':'▾'}</button><div class="name"><span class="folder">📁 ${g.id}</span><small>${(g.children||[]).length} layer(s)${g.anim?.type?' · anim:'+g.anim.type:''}</small></div><div class="mini"><button data-a="trash" class="trash" title="Supprimer le groupe sans supprimer les layers">🗑</button></div>`;
+        h.addEventListener('dragstart',e=>{e.dataTransfer.setData('text/group-id',g.id);e.dataTransfer.effectAllowed='move'});
+        h.addEventListener('dragover',e=>{e.preventDefault();document.querySelectorAll('.dropBefore,.dropAfter,.dropInto').forEach(x=>x.classList.remove('dropBefore','dropAfter','dropInto'));h.classList.add('dropInto')});
+        h.addEventListener('dragleave',()=>document.querySelectorAll('.dropBefore,.dropAfter,.dropInto').forEach(x=>x.classList.remove('dropBefore','dropAfter','dropInto')));
+        h.addEventListener('drop',e=>{e.preventDefault();document.querySelectorAll('.dropBefore,.dropAfter,.dropInto').forEach(x=>x.classList.remove('dropBefore','dropAfter','dropInto'));const lid=e.dataTransfer.getData('text/layer-id');if(!lid)return;const li=findIdx(lid);if(isLockedIndex(li)){setStatus('Layer verrouillé : impossible de le déplacer dans un groupe.');return;}pushHistory();removeGroups(lid);g.children=[...(g.children||[]).filter(id=>id!==lid),lid];g.collapsed=false;activeGroupId=g.id;selected.clear();renderAll()});
+        h.onclick=e=>{const a=e.target.closest('button')?.dataset.a;if(a==='toggle'){g.collapsed=!g.collapsed;activeGroupId=g.id;selected.clear();renderAll();return}if(a==='trash'){pushHistory();asset().groups=groups().filter(x=>x.id!==g.id);activeGroupId='';selected.clear();renderAll();setStatus('Groupe supprimé, layers conservés à la racine.');return}activeGroupId=g.id;selected.clear();renderGroupForm();renderAll()};
+        return h;
+      }
+      safeLayers().forEach((l,i)=>{
+        ensureId(l,i);
+        const g=childToGroup.get(l.id);
+        if(g){
+          if(renderedGroups.has(g.id)){drawn.add(i);return}
+          renderedGroups.add(g.id); layersEl.appendChild(groupHead(g));
+          if(!g.collapsed){(g.children||[]).forEach(id=>{const ci=findIdx(id);if(ci>=0){layersEl.appendChild(layerRow(safeLayers()[ci],ci,true,g.id));drawn.add(ci)}})}
+          else{(g.children||[]).forEach(id=>{const ci=findIdx(id);if(ci>=0)drawn.add(ci)})}
+        }else if(!drawn.has(i)){layersEl.appendChild(layerRow(safeLayers()[i],i,false,''));drawn.add(i)}
+      });
+      layersEl.ondragover=e=>e.preventDefault();
+      layersEl.ondrop=e=>{const id=e.dataTransfer.getData('text/layer-id');if(!id)return;const i=findIdx(id);if(isLockedIndex(i)){setStatus('Layer verrouillé : déplacement refusé.');return;}pushHistory();removeGroups(id);activeLayerIndex=findIdx(id);selected.clear();if(activeLayerIndex>=0)selected.add(activeLayerIndex);activeGroupId='';renderAll()};
+    };
+  }
+
+  // Sélection par canvas : les layers verrouillés deviennent intouchables.
+  const baseHitLayerIndex = (typeof hitLayerIndex==='function') ? hitLayerIndex : null;
+  if(baseHitLayerIndex){
+    hitLayerIndex=function(p){
+      const h=baseHitLayerIndex(p);
+      if(h>=0 && isLockedIndex(h))return -1;
+      return h;
+    };
+  }
+  const baseHitV4333 = (typeof hitLayerAtPointV4333==='function') ? hitLayerAtPointV4333 : null;
+  if(baseHitV4333){
+    hitLayerAtPointV4333=function(p){
+      const h=baseHitV4333(p);
+      if(h>=0 && isLockedIndex(h))return -1;
+      return h;
+    };
+    window.hitLayerAtPointV4333=hitLayerAtPointV4333;
+  }
+
+  // Bouton Tout sélectionner : ignore les layers verrouillés.
+  setTimeout(()=>{
+    const selectAll=byId('selectAll');
+    if(selectAll)selectAll.onclick=()=>{selected=new Set(safeLayers().map((_,i)=>i).filter(i=>!isLockedIndex(i)));activeGroupId='';activeLayerIndex=[...selected][0]??0;renderAll();setStatus(selected.size+' layer(s) sélectionné(s), verrouillés exclus.');};
+  },0);
+
+  // Purge de sécurité avant rendu pour éviter qu'un ancien état sélectionne un locked.
+  const oldRenderAll = (typeof renderAll==='function') ? renderAll : null;
+  if(oldRenderAll){
+    renderAll=function(){purgeLockedSelection();return oldRenderAll.apply(this,arguments);};
+  }
+
+  setTimeout(()=>{try{renderAll();setStatus('V43.38 : rollback stable + lock layer sûr + Asset creation en asset seul.');}catch(e){}},0);
+})();
+</script>
+
+
+
+<style>
+/* ===== V43.39 LOCK UI CLEANUP =====
+   Le lock doit rester un état de layer dans la liste, pas une décoration parasite
+   qui casse la grille CSS ou laisse croire qu'un layer verrouillé est sélectionné. */
+#layers .item:not(.groupHead){
+  grid-template-columns:24px 30px 30px minmax(0,1fr) 34px!important;
+  column-gap:6px!important;
+  align-items:center!important;
+}
+#layers .item.groupHead{
+  grid-template-columns:auto minmax(0,1fr) auto!important;
+}
+#layers .item .name{
+  min-width:0!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+}
+#layers .item .name small{
+  display:block!important;
+  min-width:0!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
+}
+#layers .item.lockedLayer{
+  opacity:.72!important;
+  filter:none!important;
+  background:rgba(40,44,78,.62)!important;
+  border-color:rgba(255,214,64,.22)!important;
+}
+#layers .item.lockedLayer.active,
+#layers .item.lockedLayer.multiSelected{
+  outline:none!important;
+  box-shadow:none!important;
+}
+.layerLockBtn{
+  width:28px!important;
+  height:28px!important;
+  padding:0!important;
+  border-radius:8px!important;
+  display:inline-flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  font-size:13px!important;
+}
+#layers .item.lockedLayer .selBox{
+  opacity:.35!important;
+  pointer-events:none!important;
+}
+</style>
+
+<script>
+/* ===== V43.39 LOCK FIX / CLEAN LAYER LIST =====
+   Correction de la V43.38 :
+   - un layer locké ne peut plus rester actif ni sélectionné ;
+   - si tous les layers sont lockés, activeLayerIndex devient -1 ;
+   - le hit-test canvas ignore vraiment les locks ;
+   - la liste des layers ne déborde plus, même avec checkbox + cadenas + oeil + nom.
+*/
+(function(){
+  function byId(id){return document.getElementById(id);}
+  function safeLayers(){try{return layers();}catch(e){return [];}}
+  function safeGroups(){try{return groups();}catch(e){return [];}}
+  function layerIsLocked(i){const l=safeLayers()[i];return !!(l && l.locked===true);}
+  function firstUnlockedIndex(){return safeLayers().findIndex((l,i)=>l && !layerIsLocked(i));}
+  function setActiveUnlockedFallback(){
+    if(layerIsLocked(activeLayerIndex) || !safeLayers()[activeLayerIndex]){
+      activeLayerIndex=firstUnlockedIndex();
+    }
+    return activeLayerIndex;
+  }
+  function purgeLockedSelectionV4339(){
+    try{
+      [...selected].forEach(i=>{ if(layerIsLocked(i) || !safeLayers()[i]) selected.delete(i); });
+      setActiveUnlockedFallback();
+      if(activeLayerIndex<0){ selected.clear(); activeGroupId=''; }
+    }catch(e){ console.warn('[V43.39] purge locked failed',e); }
+  }
+  window.cgLayerIsLocked=function(i){return layerIsLocked(i);};
+  window.cgUnlockAllLayers=function(){safeLayers().forEach(l=>{if(l)l.locked=false;}); try{renderAll();}catch(e){};};
+
+  function ensureId(l,i){ if(typeof _v17EnsureLayerId==='function')return _v17EnsureLayerId(l,i); if(!l.id)l.id='layer_'+i; return l.id; }
+  function findIdx(id){ if(typeof _v17FindLayerIndexById==='function')return _v17FindLayerIndexById(id); return safeLayers().findIndex(l=>l&&l.id===id); }
+  function removeFromGroups(id){ if(typeof _v17RemoveFromGroups==='function')return _v17RemoveFromGroups(id); safeGroups().forEach(g=>g.children=(g.children||[]).filter(x=>x!==id)); }
+
+  function makeCleanLayerRow(l,i,isChild=false,groupId=''){
+    ensureId(l,i);
+    const locked=layerIsLocked(i);
+    const isActive=!locked && i===activeLayerIndex;
+    const isMulti=!locked && selected.has(i);
+    const childToGroup=new Map();
+    safeGroups().forEach(g=>(g.children||[]).forEach(id=>childToGroup.set(id,g)));
+    const g=childToGroup.get(l.id);
+    const d=document.createElement('div');
+    d.className='item'+(isChild?' child':'')+(isActive?' active':'')+(isMulti?' multiSelected':'')+(locked?' lockedLayer':'');
+    d.draggable=!locked;
+    d.dataset.layerId=l.id;
+    d.innerHTML=`<input class="selBox" type="checkbox" ${isMulti?'checked':''} ${locked?'disabled':''}>`+
+      `<button class="layerLockBtn" data-a="lock" title="${locked?'Déverrouiller ce layer':'Verrouiller ce layer'}">${locked?'🔒':'🔓'}</button>`+
+      `<button class="layerEye" data-a="eye" title="Afficher / masquer">${l.visible===false?'○':'●'}</button>`+
+      `<div class="name">${isChild?'↳ ':''}${i+1}. ${l.id||l.shape}<small>${l.shape||'shape'}${g?' · '+g.id:''}${l.visible===false?' · caché':''}${l.anim?.type?' · anim:'+l.anim.type:''}${locked?' · LOCK':''}</small></div>`+
+      `<div class="mini"><button data-a="trash" class="trash" title="Supprimer layer">🗑</button></div>`;
+    d.addEventListener('dragstart',e=>{ if(locked){e.preventDefault();return;} e.dataTransfer.setData('text/layer-id',l.id); e.dataTransfer.effectAllowed='move'; });
+    if(typeof _v17MakeLayerDrop==='function') _v17MakeLayerDrop(d,l.id,groupId);
+    d.onclick=e=>{
+      const btn=e.target.closest('button');
+      if(btn){
+        const a=btn.dataset.a;
+        if(a==='lock'){
+          pushHistory();
+          l.locked=!l.locked;
+          selected.delete(i);
+          if(l.locked && activeLayerIndex===i) setActiveUnlockedFallback();
+          if(!l.locked && activeLayerIndex<0) activeLayerIndex=i;
+          renderAll();
+          setStatus(l.locked?'Layer verrouillé : non sélectionnable et non modifiable.':'Layer déverrouillé.');
+          return;
+        }
+        if(a==='eye'){ pushHistory(); l.visible=l.visible===false?true:false; renderAll(); return; }
+        if(a==='trash'){
+          if(layerIsLocked(i)){ setStatus('Layer verrouillé : déverrouille avant suppression.'); return; }
+          removeLayerByIndex(i); return;
+        }
+      }
+      const cb=e.target.closest('input.selBox');
+      if(cb){
+        if(layerIsLocked(i)){ cb.checked=false; selected.delete(i); setActiveUnlockedFallback(); renderAll(); setStatus('Layer verrouillé : non sélectionnable.'); return; }
+        cb.checked?selected.add(i):selected.delete(i);
+        activeLayerIndex=i; activeGroupId=''; renderAll(); return;
+      }
+      if(layerIsLocked(i)){ selected.delete(i); setActiveUnlockedFallback(); renderAll(); setStatus('Layer verrouillé : clic ignoré.'); return; }
+      activeLayerIndex=i; activeGroupId='';
+      if(!e.shiftKey&&!e.ctrlKey&&!e.metaKey) selected.clear();
+      selected.add(i); renderAll();
+    };
+    return d;
+  }
+
+  function makeCleanGroupHead(g){
+    const h=document.createElement('div');
+    h.className='item groupHead'+(g.id===activeGroupId?' active':'');
+    h.draggable=true; h.dataset.groupId=g.id;
+    const collapsed=!!g.collapsed;
+    h.innerHTML=`<button data-a="toggle" class="folder" title="Plier / déplier">${collapsed?'▸':'▾'}</button>`+
+      `<div class="name"><span class="folder">📁 ${g.id}</span><small>${(g.children||[]).length} layer(s)${g.anim?.type?' · anim:'+g.anim.type:''}</small></div>`+
+      `<div class="mini"><button data-a="trash" class="trash" title="Supprimer le groupe sans supprimer les layers">🗑</button></div>`;
+    h.addEventListener('dragstart',e=>{ e.dataTransfer.setData('text/group-id',g.id); e.dataTransfer.effectAllowed='move'; });
+    h.addEventListener('dragover',e=>{ e.preventDefault(); h.classList.add('dropInto'); });
+    h.addEventListener('dragleave',()=>h.classList.remove('dropInto'));
+    h.addEventListener('drop',e=>{
+      e.preventDefault(); h.classList.remove('dropInto');
+      const lid=e.dataTransfer.getData('text/layer-id'); if(!lid)return;
+      const li=findIdx(lid);
+      if(layerIsLocked(li)){ setStatus('Layer verrouillé : impossible de le déplacer dans un groupe.'); return; }
+      pushHistory(); removeFromGroups(lid); g.children=[...(g.children||[]).filter(id=>id!==lid),lid]; g.collapsed=false; activeGroupId=g.id; selected.clear(); renderAll();
+    });
+    h.onclick=e=>{
+      const a=e.target.closest('button')?.dataset.a;
+      if(a==='toggle'){ g.collapsed=!g.collapsed; activeGroupId=g.id; selected.clear(); renderAll(); return; }
+      if(a==='trash'){ pushHistory(); asset().groups=safeGroups().filter(x=>x.id!==g.id); activeGroupId=''; selected.clear(); renderAll(); setStatus('Groupe supprimé, layers conservés.'); return; }
+      activeGroupId=g.id; selected.clear(); setActiveUnlockedFallback(); try{renderGroupForm();}catch(err){} renderAll();
+    };
+    return h;
+  }
+
+  rebuildLayers=function(){
+    purgeLockedSelectionV4339();
+    const layersEl=byId('layers'); if(!layersEl)return;
+    layersEl.innerHTML='';
+    const childToGroup=new Map();
+    safeGroups().forEach(g=>(g.children||[]).forEach(id=>childToGroup.set(id,g)));
+    const renderedGroups=new Set(); const drawn=new Set();
+    safeLayers().forEach((l,i)=>{
+      ensureId(l,i);
+      const g=childToGroup.get(l.id);
+      if(g){
+        if(renderedGroups.has(g.id)){ drawn.add(i); return; }
+        renderedGroups.add(g.id); layersEl.appendChild(makeCleanGroupHead(g));
+        if(!g.collapsed){
+          (g.children||[]).forEach(id=>{ const ci=findIdx(id); if(ci>=0){ layersEl.appendChild(makeCleanLayerRow(safeLayers()[ci],ci,true,g.id)); drawn.add(ci); } });
+        }else{
+          (g.children||[]).forEach(id=>{ const ci=findIdx(id); if(ci>=0)drawn.add(ci); });
+        }
+      }else if(!drawn.has(i)){
+        layersEl.appendChild(makeCleanLayerRow(l,i,false,'')); drawn.add(i);
+      }
+    });
+    layersEl.ondragover=e=>e.preventDefault();
+    layersEl.ondrop=e=>{
+      const id=e.dataTransfer.getData('text/layer-id'); if(!id)return;
+      const i=findIdx(id); if(layerIsLocked(i)){ setStatus('Layer verrouillé : déplacement refusé.'); return; }
+      pushHistory(); removeFromGroups(id); activeLayerIndex=findIdx(id); selected.clear(); if(activeLayerIndex>=0)selected.add(activeLayerIndex); activeGroupId=''; renderAll();
+    };
+  };
+
+  function filteredHit(baseFn,p){
+    const h=baseFn?baseFn(p):-1;
+    return (h>=0 && layerIsLocked(h)) ? -1 : h;
+  }
+  const oldHitLayerIndex=(typeof hitLayerIndex==='function')?hitLayerIndex:null;
+  if(oldHitLayerIndex) hitLayerIndex=function(p){return filteredHit(oldHitLayerIndex,p);};
+  const oldHitV4333=(typeof hitLayerAtPointV4333==='function')?hitLayerAtPointV4333:null;
+  if(oldHitV4333){ hitLayerAtPointV4333=function(p){return filteredHit(oldHitV4333,p);}; window.hitLayerAtPointV4333=hitLayerAtPointV4333; }
+
+  const oldSelectLayerOnly=window.selectLayerOnly;
+  window.selectLayerOnly=selectLayerOnly=function(i){
+    if(layerIsLocked(i)){ selected.delete(i); setActiveUnlockedFallback(); renderAll(); setStatus('Layer verrouillé : sélection refusée.'); return; }
+    selected.clear(); if(Number.isInteger(i)&&safeLayers()[i])selected.add(i); activeLayerIndex=i; activeGroupId=''; try{renderForm();}catch(e){} renderAll();
+  };
+
+  const oldRenderAll=(typeof renderAll==='function')?renderAll:null;
+  if(oldRenderAll){ renderAll=function(){ purgeLockedSelectionV4339(); return oldRenderAll.apply(this,arguments); }; }
+
+  setTimeout(()=>{
+    const selectAll=byId('selectAll');
+    if(selectAll) selectAll.onclick=()=>{ selected=new Set(safeLayers().map((_,i)=>i).filter(i=>!layerIsLocked(i))); activeGroupId=''; activeLayerIndex=[...selected][0]??firstUnlockedIndex(); renderAll(); setStatus(selected.size+' layer(s) sélectionné(s), locks exclus.'); };
+    try{renderAll(); setStatus('V43.39 : lock nettoyé. Les layers verrouillés ne sont plus sélectionnables, et la liste est remise au propre.');}catch(e){console.warn('[V43.39] init failed',e);}
+  },0);
+})();
+</script>
+
+
+
+<script>
+/* ===== V43.43 STABLE GROUP / SELECTION / BBOX REPAIR =====
+   Patch volontairement conservateur : on repart de l'UI stable et on corrige
+   seulement le comportement des groupes, du drop et des bbox. Oui, le minimum
+   vital, cette discipline exotique que les patchs précédents ont visiblement oubliée.
+*/
+(function(){
+  const byId = id => document.getElementById(id);
+  const n = (v, fallback=0) => Number.isFinite(Number(v)) ? Number(v) : fallback;
+  const r = v => Math.round(n(v)*1000)/1000;
+  const copy = v => JSON.parse(JSON.stringify(v));
+  const oldLayerBBox = (typeof layerBBox === 'function') ? layerBBox : null;
+  const oldMoveLayerData = (typeof moveLayerData === 'function') ? moveLayerData : null;
+  const oldRenderAll = (typeof renderAll === 'function') ? renderAll : null;
+
+  function L(){ try{return layers();}catch(e){return [];} }
+  function G(){ try{return groups();}catch(e){return [];} }
+  function A(){ try{return asset();}catch(e){return {layers:[],groups:[]};} }
+  function layerIndexById(id){ return L().findIndex(l => l && l.id === id); }
+  function layerById(id){ return L().find(l => l && l.id === id) || null; }
+  function groupById(id){ return G().find(g => g && g.id === id) || null; }
+  function ensureLayerId(l,i){ if(!l.id) l.id = (typeof uniqueLayerId === 'function') ? uniqueLayerId('layer_'+i) : ('layer_'+i+'_'+Date.now()); return l.id; }
+  function childGroupMap(){ const m=new Map(); G().forEach(g => (g.children||[]).forEach(id => m.set(id,g))); return m; }
+  function removeIdsFromEveryGroup(ids){ const set=new Set(ids); G().forEach(g => { g.children=(g.children||[]).filter(id => !set.has(id)); }); }
+  function selectedLayerIndices(){ return [...(selected||[])].filter(i => Number.isInteger(i) && i>=0 && i<L().length); }
+  function selectedLayerIdsForDrag(lid){
+    const idx = layerIndexById(lid);
+    const sel = selectedLayerIndices();
+    if(idx>=0 && sel.includes(idx) && sel.length>1){
+      return sel.map(i => L()[i]?.id).filter(Boolean);
+    }
+    return lid ? [lid] : [];
+  }
+  function cleanGroups(){
+    const valid = new Set(L().map((l,i)=>{ensureLayerId(l,i); return l.id;}));
+    const used = new Map();
+    G().forEach(g => {
+      g.children = [...new Set((g.children||[]).filter(id => valid.has(id)))];
+      g.children.forEach(id => used.set(id, (used.get(id)||0)+1));
+    });
+    // Un layer ne doit jamais vivre dans deux groupes. On garde la première occurrence.
+    const seen = new Set();
+    G().forEach(g => {
+      g.children = (g.children||[]).filter(id => {
+        if(seen.has(id)) return false;
+        seen.add(id); return true;
+      });
+    });
+  }
+
+  function pathFromSubpaths(subpaths){
+    return (subpaths||[]).map(points => {
+      if(!points || !points.length) return '';
+      return 'M '+points.map(p => `${r(p[0])} ${r(p[1])}`).join(' L ')+' Z';
+    }).filter(Boolean).join(' ');
+  }
+
+  function shiftPointArray(points,dx,dy){
+    return (points||[]).map(p => [r(n(p[0])+dx), r(n(p[1])+dy)]);
+  }
+
+  moveLayerData = function(l,dx,dy){
+    dx=n(dx); dy=n(dy);
+    if(!l) return;
+    if(Array.isArray(l.subpaths)){
+      l.subpaths = l.subpaths.map(points => shiftPointArray(points,dx,dy));
+      l.points = l.subpaths.flat();
+      l.d = pathFromSubpaths(l.subpaths);
+      if('pivotX' in l) l.pivotX = r(n(l.pivotX)+dx);
+      if('pivotY' in l) l.pivotY = r(n(l.pivotY)+dy);
+      if(l.anim){ if('pivotX' in l.anim) l.anim.pivotX=r(n(l.anim.pivotX)+dx); if('pivotY' in l.anim) l.anim.pivotY=r(n(l.anim.pivotY)+dy); }
+      return;
+    }
+    if(oldMoveLayerData) oldMoveLayerData(l,dx,dy);
+    else {
+      if('x' in l) l.x=r(n(l.x)+dx);
+      if('y' in l) l.y=r(n(l.y)+dy);
+      if(Array.isArray(l.points)) l.points=shiftPointArray(l.points,dx,dy);
+    }
+    if(l.shape==='path' && Array.isArray(l.points) && !Array.isArray(l.subpaths)){
+      try{ l.d = (typeof pointsToPath === 'function') ? pointsToPath(l.points,l.curveMode||'linear') : l.d; }catch(e){}
+    }
+    if('pivotX' in l) l.pivotX = r(n(l.pivotX)+dx);
+    if('pivotY' in l) l.pivotY = r(n(l.pivotY)+dy);
+    if(l.anim){ if('pivotX' in l.anim) l.anim.pivotX=r(n(l.anim.pivotX)+dx); if('pivotY' in l.anim) l.anim.pivotY=r(n(l.anim.pivotY)+dy); }
+  };
+
+  function rectPointsFromLayer(l){
+    if(!l) return [];
+    if(Array.isArray(l.subpaths)) return l.subpaths.map(sp=>shiftPointArray(sp,0,0));
+    if((l.shape==='polygon'||l.shape==='path') && Array.isArray(l.points) && l.points.length) return [shiftPointArray(l.points,0,0)];
+    if(l.shape==='circle'){
+      const cx=n(l.x,20), cy=n(l.y,20), rr=Math.max(.01,n(l.r,1));
+      const pts=[]; for(let i=0;i<16;i++){ const a=Math.PI*2*i/16; pts.push([r(cx+Math.cos(a)*rr), r(cy+Math.sin(a)*rr)]); }
+      return [pts];
+    }
+    if(l.shape==='text'){
+      const x=n(l.x,20), y=n(l.y,20), fs=n(l.fontSize,12), text=String(l.text||'?');
+      const w=Math.max(1,text.length*fs*.62), h=Math.max(1,fs);
+      return [[[x-w/2,y-h],[x+w/2,y-h],[x+w/2,y+fs*.25],[x-w/2,y+fs*.25]].map(p=>[r(p[0]),r(p[1])])];
+    }
+    const x=n(l.x), y=n(l.y), w=n(l.w,1), h=n(l.h,1);
+    return [[[x,y],[x+w,y],[x+w,y+h],[x,y+h]].map(p=>[r(p[0]),r(p[1])])];
+  }
+
+  layerBBox = function(l){
+    if(Array.isArray(l?.subpaths) && l.subpaths.length){
+      const pts=l.subpaths.flat();
+      if(pts.length){
+        const xs=pts.map(p=>n(p[0])), ys=pts.map(p=>n(p[1]));
+        return {minX:Math.min(...xs),minY:Math.min(...ys),maxX:Math.max(...xs),maxY:Math.max(...ys)};
+      }
+    }
+    const b = oldLayerBBox ? oldLayerBBox(l) : null;
+    if(b && [b.minX,b.minY,b.maxX,b.maxY].every(Number.isFinite)) return b;
+    const pts=rectPointsFromLayer(l).flat();
+    if(!pts.length) return {minX:0,minY:0,maxX:0,maxY:0};
+    const xs=pts.map(p=>n(p[0])), ys=pts.map(p=>n(p[1]));
+    return {minX:Math.min(...xs),minY:Math.min(...ys),maxX:Math.max(...xs),maxY:Math.max(...ys)};
+  };
+
+  function bboxForIds(ids){
+    const bs=(ids||[]).map(layerById).filter(Boolean).map(layerBBox).filter(Boolean);
+    if(!bs.length) return {x:0,y:0,w:0,h:0,cx:0,cy:0,minX:0,minY:0,maxX:0,maxY:0};
+    const minX=Math.min(...bs.map(b=>b.minX)), minY=Math.min(...bs.map(b=>b.minY));
+    const maxX=Math.max(...bs.map(b=>b.maxX)), maxY=Math.max(...bs.map(b=>b.maxY));
+    return {x:minX,y:minY,w:maxX-minX,h:maxY-minY,cx:(minX+maxX)/2,cy:(minY+maxY)/2,minX,minY,maxX,maxY};
+  }
+  bboxOfLayersByIds = function(ids){ return bboxForIds(ids); };
+
+  // Corrige le cas fréquent : le groupe a gardé tx/ty d'une ancienne transformation,
+  // alors que la bbox des enfants reste au vieux monde. On bake seulement la translation,
+  // ce qui conserve l'image et remet les coordonnées dans un état sain.
+  function bakeGroupTranslations(){
+    G().forEach(g => {
+      const dx=n(g.tx,0), dy=n(g.ty,0);
+      if(Math.abs(dx)<0.0001 && Math.abs(dy)<0.0001) return;
+      (g.children||[]).forEach(id => { const l=layerById(id); if(l) moveLayerData(l,dx,dy); });
+      if('pivotX' in g) g.pivotX=r(n(g.pivotX)+dx);
+      if('pivotY' in g) g.pivotY=r(n(g.pivotY)+dy);
+      if(g.anim){ if('pivotX' in g.anim) g.anim.pivotX=r(n(g.anim.pivotX)+dx); if('pivotY' in g.anim) g.anim.pivotY=r(n(g.anim.pivotY)+dy); }
+      g.tx=0; g.ty=0;
+    });
+  }
+
+  function stripLegacyDndLabels(){
+    document.querySelectorAll('#layers .groupHead[data-group-id]').forEach(el=>el.removeAttribute('data-group-id'));
+  }
+
+  function setActiveLayer(i,additive){
+    if(!Number.isInteger(i)||!L()[i]) return;
+    if(L()[i].locked){ setStatus('Layer verrouillé : non sélectionnable dans le canvas. Déverrouille-le si tu veux le modifier.'); return; }
+    activeGroupId=''; activeLayerIndex=i;
+    if(additive){ selected.has(i) ? selected.delete(i) : selected.add(i); }
+    else { selected.clear(); selected.add(i); }
+    try{renderForm();}catch(e){}
+    renderAll();
+  }
+
+  function makeLayerRow(l,i,isChild,groupId){
+    ensureLayerId(l,i);
+    const locked=!!l.locked;
+    const row=document.createElement('div');
+    row.className='item'+(isChild?' child':'')+(!locked && i===activeLayerIndex?' active':'')+(!locked && selected.has(i)?' multiSelected':'')+(locked?' lockedLayer':'');
+    row.draggable=true; // Lock = pas d'édition canvas, mais organisation outliner autorisée.
+    row.dataset.layerId=l.id;
+    const inGroup=groupId ? ` · ${groupId}` : '';
+    row.innerHTML =
+      `<input class="selBox" type="checkbox" ${(!locked&&selected.has(i))?'checked':''} ${locked?'disabled':''}>`+
+      `<button class="layerLockBtn" data-a="lock" title="${locked?'Déverrouiller':'Verrouiller'}">${locked?'🔒':'🔓'}</button>`+
+      `<button class="layerEye" data-a="eye" title="Afficher / masquer">${l.visible===false?'○':'●'}</button>`+
+      `<div class="name">${isChild?'↳ ':''}${i+1}. ${l.id||l.shape}<small>${l.shape||'shape'}${inGroup}${l.visible===false?' · caché':''}${l.anim?.type?' · anim:'+l.anim.type:''}${locked?' · LOCK':''}</small></div>`+
+      `<div class="mini"><button data-a="trash" class="trash" title="Supprimer">🗑</button></div>`;
+    row.addEventListener('dragstart', e => {
+      const ids=selectedLayerIdsForDrag(l.id);
+      e.dataTransfer.setData('text/layer-id', l.id);
+      e.dataTransfer.setData('application/x-cg-layer-ids', JSON.stringify(ids));
+      e.dataTransfer.effectAllowed='move';
+    });
+    row.onclick=e=>{
+      const btn=e.target.closest('button');
+      if(btn){
+        const a=btn.dataset.a;
+        if(a==='lock'){
+          pushHistory(); l.locked=!l.locked; if(l.locked)selected.delete(i); renderAll(); setStatus(l.locked?'Layer verrouillé : canvas ignoré, outliner encore rangeable.':'Layer déverrouillé.'); return;
+        }
+        if(a==='eye'){ pushHistory(); l.visible=l.visible===false?true:false; renderAll(); return; }
+        if(a==='trash'){
+          if(l.locked){ setStatus('Layer verrouillé : déverrouille avant suppression.'); return; }
+          if(typeof removeLayerByIndex==='function') removeLayerByIndex(i);
+          else { pushHistory(); removeIdsFromEveryGroup([l.id]); L().splice(i,1); selected.clear(); renderAll(); }
+          return;
+        }
+      }
+      const cb=e.target.closest('input.selBox');
+      if(cb){
+        if(locked){ cb.checked=false; setStatus('Layer verrouillé : non sélectionnable.'); return; }
+        activeGroupId=''; activeLayerIndex=i; cb.checked?selected.add(i):selected.delete(i); renderAll(); return;
+      }
+      setActiveLayer(i, e.ctrlKey||e.metaKey||e.shiftKey);
+    };
+    return row;
+  }
+
+  function getDroppedLayerIds(e){
+    let ids=[];
+    try{ ids=JSON.parse(e.dataTransfer.getData('application/x-cg-layer-ids')||'[]'); }catch(err){ ids=[]; }
+    const lid=e.dataTransfer.getData('text/layer-id') || e.dataTransfer.getData('text/plain');
+    if(!ids.length && lid) ids=[lid];
+    return [...new Set(ids)].filter(id => layerById(id));
+  }
+
+  function addIdsToGroup(ids,g){
+    if(!g || !ids.length) return false;
+    pushHistory();
+    removeIdsFromEveryGroup(ids);
+    g.children = [...new Set([...(g.children||[]), ...ids])];
+    g.collapsed=false; activeGroupId=g.id; selected.clear();
+    const first=layerIndexById(ids[0]); if(first>=0) activeLayerIndex=first;
+    cleanGroups(); bakeGroupTranslations(); renderAll();
+    setStatus(ids.length+' layer(s) rangé(s) dans '+g.id+'.');
+    return true;
+  }
+
+  function removeIdsToRoot(ids){
+    if(!ids.length) return false;
+    pushHistory(); removeIdsFromEveryGroup(ids); activeGroupId=''; selected.clear();
+    ids.forEach(id=>{const i=layerIndexById(id); if(i>=0)selected.add(i);});
+    activeLayerIndex=[...selected][0]??0; cleanGroups(); renderAll();
+    setStatus(ids.length+' layer(s) remis à la racine.');
+    return true;
+  }
+
+  function makeGroupHead(g){
+    const head=document.createElement('div');
+    head.className='item groupHead'+(g.id===activeGroupId?' active':'');
+    head.draggable=true;
+    head.dataset.cgGroupId=g.id; // volontairement pas data-group-id : évite les vieux handlers capture.
+    const b=bboxForIds(g.children||[]);
+    head.innerHTML =
+      `<button data-a="toggle" class="folder" title="Plier / déplier">${g.collapsed?'▸':'▾'}</button>`+
+      `<div class="name"><span class="folder">📁 ${g.id}</span><small>${(g.children||[]).length} layer(s) · bbox ${r(b.w)}×${r(b.h)}${g.anim?.type?' · anim:'+g.anim.type:''}</small></div>`+
+      `<div class="mini"><button data-a="trash" class="trash" title="Supprimer le groupe sans supprimer les layers">🗑</button></div>`;
+    head.addEventListener('dragstart',e=>{ e.dataTransfer.setData('text/group-id',g.id); e.dataTransfer.effectAllowed='move'; });
+    head.addEventListener('dragover',e=>{ e.preventDefault(); e.stopPropagation(); head.classList.add('dropInto'); });
+    head.addEventListener('dragleave',()=>head.classList.remove('dropInto'));
+    head.addEventListener('drop',e=>{
+      e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation(); head.classList.remove('dropInto');
+      const ids=getDroppedLayerIds(e).filter(id => !(g.children||[]).includes(id) || true);
+      if(!ids.length) return setStatus('Aucun layer valide à ranger dans ce groupe.');
+      addIdsToGroup(ids,g);
+    });
+    head.onclick=e=>{
+      const a=e.target.closest('button')?.dataset.a;
+      if(a==='toggle'){ g.collapsed=!g.collapsed; activeGroupId=g.id; selected.clear(); renderAll(); return; }
+      if(a==='trash'){
+        pushHistory(); A().groups=G().filter(x=>x.id!==g.id); activeGroupId=''; selected.clear(); renderAll(); setStatus('Groupe supprimé, layers conservés.'); return;
+      }
+      activeGroupId=g.id; selected.clear();
+      const first=(g.children||[]).map(layerIndexById).find(i=>i>=0); if(first!==undefined)activeLayerIndex=first;
+      try{renderGroupForm();}catch(err){}
+      renderAll(); setStatus('Groupe sélectionné : '+g.id+'. Clique un enfant pour éditer seulement lui.');
+    };
+    return head;
+  }
+
+  rebuildLayers = function(){
+    cleanGroups(); bakeGroupTranslations();
+    const panel=byId('layers'); if(!panel) return;
+    panel.innerHTML='';
+    const childMap=childGroupMap(); const drawn=new Set(); const renderedGroups=new Set();
+    L().forEach((l,i)=>{
+      ensureLayerId(l,i);
+      const g=childMap.get(l.id);
+      if(g){
+        if(!renderedGroups.has(g.id)){
+          renderedGroups.add(g.id); panel.appendChild(makeGroupHead(g));
+          if(!g.collapsed){
+            (g.children||[]).forEach(id=>{ const ci=layerIndexById(id); if(ci>=0){ panel.appendChild(makeLayerRow(L()[ci],ci,true,g.id)); drawn.add(ci); } });
+          }else (g.children||[]).forEach(id=>{ const ci=layerIndexById(id); if(ci>=0)drawn.add(ci); });
+        }
+      }else if(!drawn.has(i)){
+        panel.appendChild(makeLayerRow(l,i,false,'')); drawn.add(i);
+      }
+    });
+    panel.ondragover=e=>{ e.preventDefault(); };
+    panel.ondrop=e=>{
+      // Drop hors d'un groupe = retour racine. Si c'est sur un groupe, le handler du groupe a déjà stoppé.
+      const ids=getDroppedLayerIds(e); if(!ids.length) return;
+      e.preventDefault(); e.stopPropagation(); removeIdsToRoot(ids);
+    };
+    setTimeout(stripLegacyDndLabels,0);
+  };
+
+  function mergeSelectedLayersV4343(){
+    const idxs=selectedLayerIndices();
+    if(idxs.length<2) return setStatus('Sélectionne au moins deux layers à fusionner.');
+    const src=idxs.map(i=>L()[i]).filter(Boolean);
+    if(src.length<2) return;
+    const first=src[0];
+    const subpaths=src.flatMap(rectPointsFromLayer).filter(p=>p && p.length>=2);
+    if(!subpaths.length) return setStatus('Fusion impossible : aucune géométrie exploitable.');
+    const ids=src.map(l=>l.id);
+    const insertAt=Math.min(...idxs);
+    const commonGroup=G().find(g => ids.every(id => (g.children||[]).includes(id)));
+    pushHistory();
+    const merged={
+      id: (typeof uniqueLayerId==='function') ? uniqueLayerId('merged_'+(first.id||'layer')) : ('merged_'+Date.now()),
+      shape:'path', fill:first.fill??'none', stroke:first.stroke??'none', strokeWidth:first.strokeWidth??0, opacity:first.opacity??1,
+      subpaths:subpaths, points:subpaths.flat(), d:pathFromSubpaths(subpaths), curveMode:'linear',
+      pivotX:bboxForIds(ids).cx, pivotY:bboxForIds(ids).cy
+    };
+    removeIdsFromEveryGroup(ids);
+    const keep=L().filter((_,i)=>!idxs.includes(i));
+    keep.splice(Math.min(insertAt,keep.length),0,merged);
+    A().layers=keep;
+    if(commonGroup){ commonGroup.children=[...(commonGroup.children||[]), merged.id]; activeGroupId=commonGroup.id; }
+    cleanGroups();
+    const ni=layerIndexById(merged.id); selected.clear(); if(ni>=0)selected.add(ni); activeLayerIndex=ni>=0?ni:0;
+    renderAll(); setStatus('Fusion OK : 1 path composé créé, bbox recalculée, déplacement possible.');
+  }
+  window.cgMergeSelectedLayers = mergeSelectedLayersV4343;
+
+  function copyWholeAssetV4343(){
+    const data={kind:'asset', layers:copy(L()), groups:copy(G())};
+    clipboard=[data];
+    try{ localStorage.setItem('cg_svg_clipboard_asset_v4343', JSON.stringify(data)); }catch(e){}
+    setStatus('Asset complet copié : '+data.layers.length+' layer(s), '+data.groups.length+' groupe(s).');
+  }
+  function pasteV4343(){
+    let data=clipboard && clipboard[0] && clipboard[0].kind==='asset' ? clipboard[0] : null;
+    if(!data){ try{data=JSON.parse(localStorage.getItem('cg_svg_clipboard_asset_v4343')||'null');}catch(e){} }
+    if(!data || data.kind!=='asset'){
+      if(typeof pasteLayers==='function') return pasteLayers();
+      return setStatus('Rien à coller.');
+    }
+    pushHistory();
+    const idMap=new Map(); const added=[];
+    (data.layers||[]).forEach(src=>{
+      const c=copy(src); const old=c.id; c.id=(typeof uniqueLayerId==='function')?uniqueLayerId((old||'layer')+'_paste'):(old+'_paste_'+Date.now());
+      idMap.set(old,c.id); L().push(c); added.push(L().length-1);
+    });
+    (data.groups||[]).forEach(src=>{
+      const g=copy(src); g.id=(typeof uniqueGroupId==='function')?uniqueGroupId((g.id||'group')+'_paste'):(g.id+'_paste_'+Date.now());
+      g.children=(src.children||[]).map(id=>idMap.get(id)).filter(Boolean);
+      if(g.children.length) G().push(g);
+    });
+    selected=new Set(added); activeLayerIndex=added[0]??0; activeGroupId=''; cleanGroups(); renderAll();
+    setStatus('Asset collé avec groupes remappés.');
+  }
+
+  function bindButtons(){
+    const create=byId('createGroup');
+    let merge=byId('mergeSelectedLayers');
+    if(create && !merge){
+      merge=document.createElement('button'); merge.id='mergeSelectedLayers'; merge.className='pink'; merge.textContent='Fusionner layers';
+      create.parentElement?.appendChild(merge);
+    }
+    if(merge) merge.onclick=mergeSelectedLayersV4343;
+    const copyAll=byId('copyAll'); if(copyAll) copyAll.onclick=copyWholeAssetV4343;
+    const paste=byId('pasteLayers'); if(paste) paste.onclick=pasteV4343;
+  }
+
+  if(oldRenderAll){
+    renderAll=function(){
+      try{ cleanGroups(); bakeGroupTranslations(); }catch(e){ console.warn('[V43.43] pre-render repair failed',e); }
+      const out=oldRenderAll.apply(this,arguments);
+      setTimeout(()=>{ stripLegacyDndLabels(); bindButtons(); },15);
+      return out;
+    };
+  }
+
+  const style=document.createElement('style');
+  style.textContent=`
+    #layers .item{grid-template-columns:22px 28px 28px minmax(0,1fr) 34px!important;align-items:center;gap:6px;}
+    #layers .item.groupHead{grid-template-columns:34px minmax(0,1fr) 34px!important;}
+    #layers .item .name{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    #layers .item .name small{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+    #layers .item.multiSelected{outline:2px solid #ffd640!important;background:rgba(255,214,64,.12)!important;}
+    #layers .item.groupHead.active{outline:2px solid #52f28a!important;background:rgba(82,242,138,.14)!important;}
+    #layers .item.dropInto{outline:3px dashed #52f28a!important;}
+    #layers .lockedLayer{opacity:.62;}
+    #mergeSelectedLayers{flex-basis:100%;margin-top:6px;}
+  `;
+  document.head.appendChild(style);
+
+  setTimeout(()=>{
+    bindButtons(); cleanGroups(); bakeGroupTranslations();
+    try{ renderAll(); }catch(e){ console.error('[V43.43] render init failed',e); }
+    setStatus('V43.43 : groupes, sélection, bbox et fusion réparés sur base UI stable.');
+  },0);
+})();
+</script>
+
+
+
+<script>
+/* ===== V43.44 GROUP ORDER + FIDÈLE COMPOUND MERGE =====
+   Objectif : arrêter de transformer un merge en hachoir à formes.
+   - Un layer peut être déposé à une position précise dans un groupe.
+   - Un groupe possède des boutons d'ordre interne.
+   - Fusionner crée un layer "compound" fidèle : il contient les sous-layers
+     originaux avec leurs styles, au lieu d'aplatir tout en un seul contour.
+*/
+(function(){
+  const $id=id=>document.getElementById(id);
+  const N=(v,f=0)=>Number.isFinite(Number(v))?Number(v):f;
+  const R=v=>Math.round(N(v)*1000)/1000;
+  const C=v=>JSON.parse(JSON.stringify(v));
+  function L(){try{return layers();}catch(e){return []}}
+  function G(){try{return groups();}catch(e){return []}}
+  function A(){try{return asset();}catch(e){return {layers:[],groups:[]}}}
+  function idxById(id){return L().findIndex(l=>l&&l.id===id)}
+  function layerById(id){return L().find(l=>l&&l.id===id)||null}
+  function groupById(id){return G().find(g=>g&&g.id===id)||null}
+  function groupForId(id){return G().find(g=>(g.children||[]).includes(id))||null}
+  function uniq(arr){return [...new Set((arr||[]).filter(Boolean))]}
+  function idsFromSelectionOrDrag(lid){
+    const idx=idxById(lid);
+    const sel=[...(selected||[])].filter(i=>Number.isInteger(i)&&i>=0&&i<L().length);
+    if(idx>=0 && sel.includes(idx) && sel.length>1) return uniq(sel.map(i=>L()[i]?.id));
+    return lid?[lid]:[];
+  }
+  function removeIdsFromGroups(ids){const set=new Set(ids);G().forEach(g=>g.children=(g.children||[]).filter(id=>!set.has(id)));}
+  function cleanEmptyGroups(){const a=A(); if(!a.groups)return; a.groups=a.groups.filter(g=>(g.children||[]).length>0);}
+  function selectIds(ids){selected.clear();ids.forEach(id=>{const i=idxById(id);if(i>=0)selected.add(i)});activeLayerIndex=[...selected][0]??0;}
+
+  function insertIdsIntoGroupAt(ids, groupId, targetIndex){
+    const g=groupById(groupId); if(!g)return false;
+    ids=uniq(ids).filter(id=>layerById(id));
+    if(!ids.length)return false;
+    pushHistory();
+    // Retire d'abord les ids de tous les groupes, y compris celui cible, pour éviter les doublons et les fantômes.
+    G().forEach(gr=>gr.children=(gr.children||[]).filter(id=>!ids.includes(id)));
+    g.children=g.children||[];
+    targetIndex=Math.max(0,Math.min(Number.isFinite(targetIndex)?targetIndex:g.children.length,g.children.length));
+    g.children.splice(targetIndex,0,...ids);
+    g.collapsed=false;
+    activeGroupId=g.id;
+    selectIds(ids);
+    cleanEmptyGroups();
+    try{ if(typeof renderGroupForm==='function')renderGroupForm(); }catch(e){}
+    renderAll();
+    setStatus(ids.length+' layer(s) inséré(s) dans '+g.id+' à la position '+(targetIndex+1)+'.');
+    return true;
+  }
+  window.cgInsertIdsIntoGroupAt=insertIdsIntoGroupAt;
+
+  function moveSelectedInsideGroup(dir){
+    const ids=uniq([...(selected||[])].map(i=>L()[i]?.id));
+    if(!ids.length)return setStatus('Sélectionne un ou plusieurs enfants de groupe.');
+    const g=groupForId(ids[0]);
+    if(!g || !ids.every(id=>(g.children||[]).includes(id))) return setStatus('Les layers sélectionnés doivent être dans le même groupe.');
+    const children=[...(g.children||[])];
+    const positions=ids.map(id=>children.indexOf(id)).filter(i=>i>=0).sort((a,b)=>dir<0?a-b:b-a);
+    if(!positions.length)return;
+    pushHistory();
+    for(const pos of positions){
+      const newPos=pos+dir;
+      if(newPos<0||newPos>=children.length)continue;
+      const moving=children[pos];
+      const other=children[newPos];
+      // Ne bouge pas à travers un autre layer sélectionné déjà traité comme bloc.
+      if(ids.includes(other))continue;
+      children[newPos]=moving; children[pos]=other;
+    }
+    g.children=children; activeGroupId=g.id; renderAll();
+    setStatus('Ordre interne du groupe modifié. Le rendu suit maintenant cet ordre.');
+  }
+  window.cgMoveSelectedInsideGroup=moveSelectedInsideGroup;
+
+  function installOrderButtons(){
+    const merge=$id('mergeSelectedLayers');
+    const create=$id('createGroup');
+    const anchor=merge||create;
+    if(!anchor || $id('moveInGroupUp'))return;
+    const up=document.createElement('button'); up.id='moveInGroupUp'; up.textContent='↑ dans groupe'; up.title='Monte les layers sélectionnés dans l’ordre interne du groupe';
+    const down=document.createElement('button'); down.id='moveInGroupDown'; down.textContent='↓ dans groupe'; down.title='Descend les layers sélectionnés dans l’ordre interne du groupe';
+    up.onclick=()=>moveSelectedInsideGroup(-1); down.onclick=()=>moveSelectedInsideGroup(1);
+    anchor.parentElement.insertBefore(up, anchor.nextSibling);
+    anchor.parentElement.insertBefore(down, up.nextSibling);
+  }
+
+  // Drop précis : déposer sur un enfant de groupe insère avant/après cet enfant.
+  document.addEventListener('dragover',function(e){
+    const row=e.target.closest&&e.target.closest('#layers [data-layer-id]');
+    if(!row)return;
+    const targetId=row.dataset.layerId;
+    const g=groupForId(targetId);
+    if(!g)return;
+    e.preventDefault(); e.stopPropagation();
+    const rect=row.getBoundingClientRect();
+    const before=e.clientY < rect.top + rect.height/2;
+    row.classList.toggle('dropBefore',before);
+    row.classList.toggle('dropAfter',!before);
+  },true);
+  document.addEventListener('dragleave',function(e){
+    const row=e.target.closest&&e.target.closest('#layers [data-layer-id]');
+    if(row){row.classList.remove('dropBefore','dropAfter')}
+  },true);
+  document.addEventListener('drop',function(e){
+    const row=e.target.closest&&e.target.closest('#layers [data-layer-id]');
+    if(!row)return;
+    const targetId=row.dataset.layerId;
+    const g=groupForId(targetId);
+    if(!g)return;
+    const lid=e.dataTransfer?.getData('text/layer-id')||e.dataTransfer?.getData('text/plain');
+    const ids=idsFromSelectionOrDrag(lid).filter(id=>id!==targetId);
+    if(!ids.length)return;
+    e.preventDefault(); e.stopPropagation(); e.stopImmediatePropagation();
+    const rect=row.getBoundingClientRect();
+    const before=e.clientY < rect.top + rect.height/2;
+    let targetIndex=(g.children||[]).indexOf(targetId)+(before?0:1);
+    // Si on déplace un layer déjà dans le même groupe et situé avant la cible, l'index final doit être corrigé après retrait.
+    const oldChildren=g.children||[];
+    const removedBefore=ids.filter(id=>oldChildren.indexOf(id)>=0 && oldChildren.indexOf(id)<targetIndex).length;
+    targetIndex-=removedBefore;
+    row.classList.remove('dropBefore','dropAfter');
+    insertIdsIntoGroupAt(ids,g.id,targetIndex);
+  },true);
+
+  // ----- compound layer fidèle -----
+  const oldMakeLayerEl = (typeof makeLayerEl==='function') ? makeLayerEl : null;
+  const oldLayerBBox = (typeof layerBBox==='function') ? layerBBox : null;
+  const oldMoveLayerData = (typeof moveLayerData==='function') ? moveLayerData : null;
+  const oldScaleLayerAround = (typeof scaleLayerAround==='function') ? scaleLayerAround : null;
+  const oldBakeLayerForRuntime = (typeof bakeLayerForRuntime==='function') ? bakeLayerForRuntime : null;
+
+  function localBBox(l){
+    if(oldLayerBBox){try{return oldLayerBBox(l)}catch(e){}}
+    const x=N(l.x),y=N(l.y),w=N(l.w,1),h=N(l.h,1);return{minX:x,minY:y,maxX:x+w,maxY:y+h};
+  }
+  function bboxWithGroup(part){
+    const l=part.layer||part;
+    const b=localBBox(l);
+    const corners=[[b.minX,b.minY],[b.maxX,b.minY],[b.maxX,b.maxY],[b.minX,b.maxY]];
+    let pts=corners;
+    if(part.group && typeof groupTransformPoint==='function'){
+      pts=corners.map(p=>groupTransformPoint(part.group,p[0],p[1]));
+    }
+    const xs=pts.map(p=>N(p[0])), ys=pts.map(p=>N(p[1]));
+    return{minX:Math.min(...xs),minY:Math.min(...ys),maxX:Math.max(...xs),maxY:Math.max(...ys)};
+  }
+  function compoundBBox(l){
+    const boxes=(l.parts||[]).map(bboxWithGroup);
+    if(!boxes.length)return{minX:0,minY:0,maxX:0,maxY:0};
+    return{minX:Math.min(...boxes.map(b=>b.minX)),minY:Math.min(...boxes.map(b=>b.minY)),maxX:Math.max(...boxes.map(b=>b.maxX)),maxY:Math.max(...boxes.map(b=>b.maxY))};
+  }
+  makeLayerEl=function(l,t){
+    if(l && l.shape==='compound'){
+      const g=E('g',{});
+      if(l.visible===false)g.setAttribute('display','none');
+      (l.parts||[]).forEach(part=>{
+        const layer=part.layer||part;
+        const child=oldMakeLayerEl?oldMakeLayerEl(layer,t):E('g',{});
+        if(part.groupTransform){const wrap=E('g',{transform:part.groupTransform});wrap.appendChild(child);g.appendChild(wrap);}
+        else g.appendChild(child);
+      });
+      const trParts=[];
+      try{const st=staticTransform(l);if(st)trParts.push(st);}catch(e){}
+      try{const tr=animTransform(l,t);if(tr)trParts.push(tr);}catch(e){}
+      if(trParts.length)g.setAttribute('transform',trParts.join(' '));
+      return g;
+    }
+    return oldMakeLayerEl?oldMakeLayerEl(l,t):E('g',{});
+  };
+  layerBBox=function(l){
+    if(l && l.shape==='compound')return compoundBBox(l);
+    return oldLayerBBox?oldLayerBBox(l):localBBox(l);
+  };
+  moveLayerData=function(l,dx,dy){
+    if(l && l.shape==='compound'){
+      (l.parts||[]).forEach(part=>{ if(oldMoveLayerData)oldMoveLayerData(part.layer||part,dx,dy); });
+      if('pivotX' in l)l.pivotX=R(N(l.pivotX)+N(dx));
+      if('pivotY' in l)l.pivotY=R(N(l.pivotY)+N(dy));
+      return;
+    }
+    return oldMoveLayerData?oldMoveLayerData(l,dx,dy):undefined;
+  };
+  scaleLayerAround=function(l,sc,cx,cy){
+    if(l && l.shape==='compound'){
+      (l.parts||[]).forEach(part=>{ if(oldScaleLayerAround)oldScaleLayerAround(part.layer||part,sc,cx,cy); });
+      return;
+    }
+    return oldScaleLayerAround?oldScaleLayerAround(l,sc,cx,cy):undefined;
+  };
+  if(oldBakeLayerForRuntime){
+    bakeLayerForRuntime=function(layer){
+      if(layer && layer.shape==='compound'){
+        const l=C(layer);
+        l.parts=(l.parts||[]).map(part=>({
+          groupTransform:part.groupTransform||'',
+          layer:oldBakeLayerForRuntime(part.layer||part)
+        }));
+        ['_lastStroke','_lastFill','_lastStrokeWidth'].forEach(k=>delete l[k]);
+        return l;
+      }
+      return oldBakeLayerForRuntime(layer);
+    };
+  }
+
+  function makeCompoundFromSelected(){
+    const idxs=[...(selected||[])].filter(i=>Number.isInteger(i)&&i>=0&&i<L().length).sort((a,b)=>a-b);
+    if(idxs.length<2)return setStatus('Sélectionne au moins 2 layers à fusionner.');
+    const src=idxs.map(i=>L()[i]).filter(Boolean);
+    const ids=src.map(l=>l.id);
+    const parts=src.map(l=>{
+      const g=groupForId(l.id);
+      return {layer:C(l), group:g?C(g):null, groupTransform:g?(typeof groupStaticTransform==='function'?groupStaticTransform(g):''):''};
+    });
+    const bb=(function(){
+      const boxes=parts.map(bboxWithGroup);
+      return {minX:Math.min(...boxes.map(b=>b.minX)),minY:Math.min(...boxes.map(b=>b.minY)),maxX:Math.max(...boxes.map(b=>b.maxX)),maxY:Math.max(...boxes.map(b=>b.maxY))};
+    })();
+    const common=G().find(g=>ids.every(id=>(g.children||[]).includes(id)));
+    const insertAt=Math.min(...idxs);
+    pushHistory();
+    removeIdsFromGroups(ids);
+    A().layers=L().filter((_,i)=>!idxs.includes(i));
+    const merged={id:(typeof uniqueLayerId==='function'?uniqueLayerId('compound_'+(src[0].id||'layer')):'compound_'+Date.now()),shape:'compound',parts, pivotX:R((bb.minX+bb.maxX)/2), pivotY:R((bb.minY+bb.maxY)/2)};
+    A().layers.splice(Math.min(insertAt,A().layers.length),0,merged);
+    if(common){ common.children=[...(common.children||[]),merged.id]; activeGroupId=common.id; }
+    else activeGroupId='';
+    cleanEmptyGroups();
+    const ni=idxById(merged.id); selected.clear(); if(ni>=0)selected.add(ni); activeLayerIndex=ni>=0?ni:0;
+    renderAll();
+    setStatus('Fusion fidèle : 1 layer compound créé. Styles, couleurs et formes internes conservés.');
+  }
+  window.cgMergeSelectedLayers=makeCompoundFromSelected;
+
+  function bindV4344Buttons(){
+    const merge=$id('mergeSelectedLayers'); if(merge){merge.onclick=makeCompoundFromSelected; merge.textContent='Fusionner fidèle'; merge.title='Crée un seul layer compound qui garde les sous-formes, couleurs et styles.';}
+    installOrderButtons();
+  }
+  const oldRenderAll=(typeof renderAll==='function')?renderAll:null;
+  if(oldRenderAll){renderAll=function(){const out=oldRenderAll.apply(this,arguments);setTimeout(bindV4344Buttons,0);return out;};}
+  const style=document.createElement('style');
+  style.textContent=`#layers .dropBefore{box-shadow:inset 0 4px 0 #52f28a!important}#layers .dropAfter{box-shadow:inset 0 -4px 0 #52f28a!important}#moveInGroupUp,#moveInGroupDown{font-size:12px}`;
+  document.head.appendChild(style);
+  setTimeout(()=>{bindV4344Buttons();try{renderAll();}catch(e){};setStatus('V43.44 : ordre dans groupes + fusion fidèle compound.');},0);
+})();
+</script>
+
 </body>
 </html>
