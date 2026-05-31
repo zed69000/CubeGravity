@@ -601,6 +601,8 @@ function appendVectorLayer(parent,l,t){
       g.appendChild(wrap);
     });
     const trParts=[];
+    const tx=Number(l.tx||0), ty=Number(l.ty||0);
+    if(tx||ty)trParts.push(`translate(${tx} ${ty})`);
     const hasScale=Number.isFinite(Number(l.scaleX))||Number.isFinite(Number(l.scaleY));
     const hasRot=Number.isFinite(Number(l.rotation));
     if(hasScale||hasRot){
@@ -617,6 +619,8 @@ function appendVectorLayer(parent,l,t){
     }
     const tr=vectorAnimTransform(l,t); if(tr)trParts.push(tr);
     if(trParts.length)g.setAttribute("transform",trParts.join(" "));
+    const op=vectorAnimOpacity(l,t);
+    if(op!==1)g.setAttribute("opacity",op);
     g.setAttribute("pointer-events","none");
     parent.appendChild(g);
     return;
@@ -706,6 +710,11 @@ function vectorGroupStaticTransform(g,bb){
 function appendVectorAssetLayers(parent,a,t){
   const layersList=Array.isArray(a.layers)?a.layers:[];
   const groupsList=Array.isArray(a.groups)?a.groups:[];
+  // V43.49 : table stable id -> layer. Le rendu des enfants de groupe
+  // utilise maintenant group.children, pas l'ordre global des layers.
+  // Sinon un layer créé dans un groupe peut passer devant/derrière en jeu
+  // alors que l'éditeur affiche autre chose. Petite trahison visuelle, donc non.
+  const layerById=new Map(layersList.filter(Boolean).map(layer=>[layer.id,layer]));
   const childToGroup=new Map();
   groupsList.forEach(g=>(g.children||[]).forEach(id=>childToGroup.set(id,g)));
   const renderedGroups=new Set();
@@ -720,8 +729,12 @@ function appendVectorAssetLayers(parent,a,t){
       const trParts=[];const st=vectorGroupStaticTransform(gr,bb);if(st)trParts.push(st);
       const tr=vectorAnimTransform({...bb,pivotX:gr.anim?.pivotX??gr.pivotX,pivotY:gr.anim?.pivotY??gr.pivotY,anim:gr.anim},t);if(tr)trParts.push(tr);
       if(trParts.length)ge.setAttribute("transform",trParts.join(" "));
-      layersList.forEach(child=>{
-        if(child && child.visible!==false && (gr.children||[]).includes(child.id))appendVectorLayer(ge,child,t);
+      // V43.49 : ordre interne fidèle. Si le groupe dit [A,B,C], le jeu dessine A puis B puis C.
+      // Avant, le runtime reprenait l'ordre global layersList, donc l'ordre réglé dans le groupe
+      // pouvait être ignoré, surtout après création d'une forme directement dans le groupe.
+      (gr.children||[]).forEach(childId=>{
+        const child=layerById.get(childId);
+        if(child && child.visible!==false)appendVectorLayer(ge,child,t);
       });
       parent.appendChild(ge);
     }else{
@@ -905,6 +918,29 @@ function pushPlayerTrailCell(x,y,fallDistance=1){
   prunePlayerTrail();
 }
 
+function validTrailPaint(v){
+  return !!(v && v!=="none" && v!=="transparent" && v!=="rgba(0,0,0,0)");
+}
+
+function trailColorsForCurrentPlayer(){
+  const assetName=(typeof selectedCharacterAsset==="function") ? selectedCharacterAsset("player") : "player";
+  const a=vectorAsset(assetName) || vectorAsset("player");
+  const layers=Array.isArray(a?.layers)?a.layers:[];
+  const flat=[];
+  layers.forEach(layer=>{
+    if(!layer)return;
+    if(layer.shape==="compound" && Array.isArray(layer.parts)){
+      layer.parts.forEach(part=>flat.push(part.layer||part));
+    }else flat.push(layer);
+  });
+  const body=flat.find(l=>l && validTrailPaint(l.fill) && String(l.id||"").toLowerCase().includes("body"))
+          || flat.find(l=>l && validTrailPaint(l.fill) && !String(l.id||"").toLowerCase().includes("shadow"));
+  return {
+    fill:body?.fill || "#ffd640",
+    stroke:validTrailPaint(body?.stroke) ? body.stroke : "rgba(255,255,255,.82)"
+  };
+}
+
 function drawPlayerSpeedTrail(){
   if(edit||deadPlayer||!playerTrail.length)return;
   const now=Date.now();
@@ -931,8 +967,8 @@ function drawPlayerSpeedTrail(){
 
     g.appendChild(E("rect",{
       x:7,y:7,width:T-14,height:T-14,rx:Math.max(2,T*.08),ry:Math.max(2,T*.08),
-      fill:"#ffd640",
-      stroke:"#fff0a8",
+      fill:trailColorsForCurrentPlayer().fill,
+      stroke:trailColorsForCurrentPlayer().stroke,
       "stroke-width":Math.max(1,T*.045),
       "pointer-events":"none"
     }));
@@ -2287,7 +2323,28 @@ async function loadStaticLevels(){
   }
 }
 
-setInterval(()=>{idleTick++; if(!edit&&!busy&&!gameOver){draw()}},120);
+/* ===== V43.49 IN-GAME ANIMATION LOOP =====
+   Avant, les animations vectorielles du jeu étaient rafraîchies environ toutes les
+   120 ms quand le cube ne bougeait pas. Résultat : pulse/look/spin visibles dans
+   l'éditeur, mais plus saccadés en jeu. Là on passe par requestAnimationFrame,
+   avec un cap à 60 fps et un garde-fou pour ne rien dessiner avant le chargement.
+*/
+const INGAME_ANIM_FPS=60;
+let lastIngameAnimTs=0;
+function ingameAnimationLoop(ts){
+  if(!lastIngameAnimTs)lastIngameAnimTs=ts;
+  const minDt=1000/INGAME_ANIM_FPS;
+  const dt=ts-lastIngameAnimTs;
+  if(dt>=minDt){
+    idleTick+=dt/120; // garde la vitesse d'idle d'origine malgré le FPS plus élevé.
+    lastIngameAnimTs=ts;
+    if(levels.length && Array.isArray(b) && b.length && !edit && !gameOver && !gamePaused){
+      draw();
+    }
+  }
+  requestAnimationFrame(ingameAnimationLoop);
+}
+requestAnimationFrame(ingameAnimationLoop);
 
 function updateGlobalScale(){
   const w=window.innerWidth||document.documentElement.clientWidth||1280;
