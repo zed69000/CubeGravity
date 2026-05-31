@@ -400,7 +400,7 @@ body::before{
 
 
 
-/* ===== V43.28 MAIN MENU DA ADAPTATION =====
+/* ===== V43.47 MAIN MENU DA + COMPOUND LAYERS =====
    Objectif : reprendre la DA très lisible du mockup généré, mais en gardant
    le style vectoriel actuel du jeu. Pas de cadre autour des personnages, pas
    de bulle de pensée, et retour d'une petite animation idle. */
@@ -882,6 +882,29 @@ function makePathD(points){
 function drawLayer(layer){
   if(!layer || layer.visible===false)return null;
   const shape=layer.shape;
+
+  // V43.47 : support des layers fusionnés fidèles.
+  // L'éditeur crée maintenant des layers shape:"compound" pour garder les
+  // sous-formes, couleurs, strokes et arrondis. Le menu doit donc les rendre
+  // récursivement au lieu de les ignorer comme un vieux grille-pain vexé.
+  if(shape==="compound"){
+    const g=svgEl("g",{});
+    const parts=Array.isArray(layer.parts) ? layer.parts : [];
+    parts.forEach(part=>{
+      const childLayer=part?.layer || part;
+      const child=drawLayer(childLayer);
+      if(!child)return;
+      if(part?.groupTransform){
+        const wrap=svgEl("g",{transform:part.groupTransform});
+        wrap.appendChild(child);
+        g.appendChild(wrap);
+      }else{
+        g.appendChild(child);
+      }
+    });
+    return applyCommon(g,layer);
+  }
+
   let el=null;
 
   if(shape==="rect"){
