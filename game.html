@@ -2180,7 +2180,7 @@ const editPanel=document.getElementById("editPanel"),levelNameInput=document.get
 const banner=document.getElementById("banner"),bannerTitle=document.getElementById("bannerTitle"),bannerText=document.getElementById("bannerText"),starsEl=document.getElementById("stars"),bannerAction=document.getElementById("bannerAction");
 
 let levels=[];
-const GAME_VERSION="V43.21-inclusive-shared";
+const GAME_VERSION="V43.22-ios-audio-sync";
 setTimeout(()=>{const v=document.getElementById("gameVersionBadge"); if(v)v.textContent=GAME_VERSION;},0);
 let gameSettings={fallDelayMs:135,rotationDurationMs:320};
 let fallbackLevels=[]; // V57: aucun niveau de gameplay en dur. levels.json est obligatoire.
@@ -2480,20 +2480,28 @@ function applyAudioVolumes(){
 
   syncAudioSliders();
 }
-function beep(freq=440,dur=.08,type="square",gain=.04,kind="sfx"){
+function beepAt(freq=440,delayMs=0,dur=.08,type="square",gain=.04,kind="sfx"){
   if(kind==="sfx" && (!soundOn || !sfxOn || sfxVolume<=0))return;
   if(kind==="music" && (!soundOn || !musicOn || musicVolume<=0))return;
   const ac=ensureAudio(); if(!ac)return;
+  const t=ac.currentTime+Math.max(0,Number(delayMs)||0)/1000;
   const o=ac.createOscillator(), g=ac.createGain(), f=ac.createBiquadFilter();
-  o.type=type; o.frequency.value=freq;
-  f.type="lowpass"; f.frequency.value=kind==="music"?1200:4200;
+  o.type=type;
+  o.frequency.setValueAtTime(freq,t);
+  f.type="lowpass";
+  f.frequency.setValueAtTime(kind==="music"?1200:4200,t);
   const baseVolume = kind==="music" ? musicVolume : sfxVolume;
   const boost = kind==="sfx" ? SFX_GAIN_BOOST : 1;
   const maxGain = kind==="sfx" ? SFX_MAX_GAIN : 0.18;
   const finalGain=Math.max(0.0001,Math.min(maxGain,gain*baseVolume*boost));
-  g.gain.setValueAtTime(finalGain,ac.currentTime);
-  g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+Math.max(.02,dur));
-  o.connect(f); f.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime+dur);
+  g.gain.setValueAtTime(finalGain,t);
+  g.gain.exponentialRampToValueAtTime(0.001,t+Math.max(.02,dur));
+  o.connect(f); f.connect(g); g.connect(ac.destination);
+  o.start(t);
+  o.stop(t+dur+.03);
+}
+function beep(freq=440,dur=.08,type="square",gain=.04,kind="sfx"){
+  beepAt(freq,0,dur,type,gain,kind);
 }
 function startElevatorMusic(){
   if(!soundOn || !musicOn || gamePaused || edit || gameOver)return;
@@ -2526,10 +2534,15 @@ function setPaused(v){
   if(menu)menu.classList.toggle("hidden",!gamePaused);
   if(gamePaused)stopElevatorMusic(); else if(!edit&&!gameOver)startElevatorMusic();
 }
-function soundMove(){beep(210,.045,"square",.012,"sfx")}
+function soundMove(){beepAt(210,0,.045,"square",.012,"sfx")}
 function soundRotate(d){
-  if(d>0){beep(260,.055,"triangle",.026,"sfx");setTimeout(()=>beep(360,.07,"sine",.022,"sfx"),65)}
-  else{beep(360,.055,"triangle",.026,"sfx");setTimeout(()=>beep(240,.07,"sine",.022,"sfx"),65)}
+  if(d>0){
+    beepAt(260,0,.055,"triangle",.026,"sfx");
+    beepAt(360,65,.07,"sine",.022,"sfx");
+  }else{
+    beepAt(360,0,.055,"triangle",.026,"sfx");
+    beepAt(240,65,.07,"sine",.022,"sfx");
+  }
 }
 function soundLand(d=1){
   const now=performance.now();
@@ -2537,24 +2550,90 @@ function soundLand(d=1){
   lastWallSoundAt=now;
   const notes=[196,220,246.94,261.63,293.66,329.63,349.23,392];
   const f=notes[wallNoteIndex++%notes.length];
-  beep(f,.105,"sine",.028,"sfx");
-  setTimeout(()=>beep(f*2,.055,"triangle",.010,"sfx"),55);
+  beepAt(f,0,.105,"sine",.028,"sfx");
+  beepAt(f*2,55,.055,"triangle",.010,"sfx");
 }
-function soundCrash(){beep(110,.14,"triangle",.026,"sfx");setTimeout(()=>beep(82,.18,"sine",.018,"sfx"),90)}
+function soundCrash(){
+  beepAt(110,0,.14,"triangle",.026,"sfx");
+  beepAt(82,90,.18,"sine",.018,"sfx");
+}
 function soundWin(){
-  [523,659,784,1046].forEach((f,i)=>setTimeout(()=>beep(f,.12,"triangle",.034,"sfx"),i*85));
-  for(let i=0;i<10;i++)setTimeout(()=>beep(650+Math.random()*500,.045,"sine",.012,"sfx"),230+i*50);
+  [523,659,784,1046].forEach((f,i)=>beepAt(f,i*85,.12,"triangle",.034,"sfx"));
+  for(let i=0;i<10;i++)beepAt(650+Math.random()*500,230+i*50,.045,"sine",.012,"sfx");
 }
-function soundLove(){beep(523,.08,"sine",.03,"sfx");setTimeout(()=>beep(784,.12,"sine",.028,"sfx"),100)}
-function soundLose(){beep(330,.16,"triangle",.026,"sfx");setTimeout(()=>beep(294,.18,"triangle",.022,"sfx"),170);setTimeout(()=>beep(247,.34,"sine",.018,"sfx"),350)}
-function soundDoor(){beep(180,.045,"square",.024,"sfx");setTimeout(()=>beep(420,.10,"triangle",.024,"sfx"),60);}
-function soundEternalFall(){beep(150,.14,"triangle",.025,"sfx");setTimeout(()=>beep(120,.20,"sine",.020,"sfx"),150);setTimeout(()=>beep(98,.28,"sine",.016,"sfx"),330)}
+function soundLove(){
+  beepAt(523,0,.08,"sine",.03,"sfx");
+  beepAt(784,100,.12,"sine",.028,"sfx");
+}
+function soundLose(){
+  beepAt(330,0,.16,"triangle",.026,"sfx");
+  beepAt(294,170,.18,"triangle",.022,"sfx");
+  beepAt(247,350,.34,"sine",.018,"sfx");
+}
+function soundDoor(){
+  beepAt(180,0,.045,"square",.024,"sfx");
+  beepAt(420,60,.10,"triangle",.024,"sfx");
+}
+function soundEternalFall(){
+  beepAt(150,0,.14,"triangle",.025,"sfx");
+  beepAt(120,150,.20,"sine",.020,"sfx");
+  beepAt(98,330,.28,"sine",.016,"sfx");
+}
 function userAudioGesture(){
   ensureAudio();
   // Ne jamais appeler bgMusic.load() ici : sur mobile, chaque rotation déclenche userAudioGesture(),
   // et load() remet le MP3 au début / provoque une coupure. La musique doit survivre aux rotations.
   if(musicOn && !gamePaused && !edit && !gameOver)startElevatorMusic();
 }
+
+/* ===== V43.22 iOS audio sync / lifecycle repair =====
+   Safari iPhone peut suspendre AudioContext et retarder les timers JS.
+   Les SFX sont maintenant planifiés sur audioCtx.currentTime, et la musique
+   est remise proprement après pagehide/pageshow/focus sans faire bgMusic.load().
+*/
+let iosAudioWasPlayingBeforeHide=false;
+function shouldPlayMusicNow(){
+  return !!(soundOn && musicOn && !gamePaused && !edit && !gameOver);
+}
+function resumeAudioAfterIOSPause(){
+  try{
+    const ac=ensureAudio();
+    if(ac && ac.state==="suspended")ac.resume().catch(()=>{});
+    if(bgMusic){
+      ensureMusicRouting();
+      applyAudioVolumes();
+    }
+    if(shouldPlayMusicNow())startElevatorMusic();
+  }catch(e){
+    console.warn("[AUDIO iOS RESUME]",e);
+  }
+}
+function pauseAudioForIOS(){
+  try{
+    iosAudioWasPlayingBeforeHide=!!(bgMusic && !bgMusic.paused);
+    if(bgMusic)bgMusic.pause();
+    if(audioCtx && audioCtx.state==="running")audioCtx.suspend().catch(()=>{});
+  }catch(e){
+    console.warn("[AUDIO iOS PAUSE]",e);
+  }
+}
+function installIOSAudioLifecycleFix(){
+  if(window.__cgIOSAudioLifecycleFixInstalled)return;
+  window.__cgIOSAudioLifecycleFixInstalled=true;
+
+  document.addEventListener("visibilitychange",()=>{
+    if(document.visibilityState==="hidden")pauseAudioForIOS();
+    else resumeAudioAfterIOSPause();
+  });
+  window.addEventListener("pagehide",pauseAudioForIOS);
+  window.addEventListener("pageshow",resumeAudioAfterIOSPause);
+  window.addEventListener("focus",resumeAudioAfterIOSPause);
+
+  ["pointerdown","touchstart","click"].forEach(evt=>{
+    window.addEventListener(evt,resumeAudioAfterIOSPause,{passive:true});
+  });
+}
+installIOSAudioLifecycleFix();
 function toggleSound(){
   soundOn=!soundOn; sfxOn=soundOn; musicOn=soundOn;
   updatePauseButtons();
@@ -2925,9 +3004,9 @@ function refreshTeleporterCooldown(){
   if(!c || c!==teleporterCooldownType)teleporterCooldownType=null;
 }
 function soundTeleport(){
-  beep(520,.045,"sine",.026,"sfx");
-  setTimeout(()=>beep(780,.055,"triangle",.018,"sfx"),48);
-  setTimeout(()=>beep(1040,.045,"sine",.012,"sfx"),95);
+  beepAt(520,0,.045,"sine",.026,"sfx");
+  beepAt(780,48,.055,"triangle",.018,"sfx");
+  beepAt(1040,95,.045,"sine",.012,"sfx");
 }
 function teleportFx(x,y,type){
   const svgRect=svg.getBoundingClientRect();
