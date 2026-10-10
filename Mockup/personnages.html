@@ -1,0 +1,127 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Date Gravity – Personnages</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;800;900&display=swap" rel="stylesheet">
+<style>
+/* Maquette : la galerie des personnages jouables, en elle et en lui.
+   Les 9 premiers existent déjà dans le jeu (spirits.js) ; les 7 suivants sont des propositions,
+   définies seulement ici tant qu'elles ne sont pas validées. */
+:root{--navy:#0d1230;--navy2:#131a45;--navy3:#172052;--ink:#eaf0ff;--muted:#8fa0d8;--line:#2b3a8c;--c1:#f6ff3d;--c2:#19e3ff;--pink:#ff4f8b}
+*{box-sizing:border-box}
+body{margin:0;background:#07091a;color:var(--ink);font:500 15px/1.45 Rubik,Arial,sans-serif}
+main{max-width:1080px;margin:0 auto;padding:28px 18px 60px}
+h1{margin:0;font:900 34px/1 Rubik,Arial,sans-serif;text-transform:uppercase;background:linear-gradient(90deg,var(--c1),var(--c2));-webkit-background-clip:text;background-clip:text;color:transparent}
+.lead{max-width:720px;margin:10px 0 0;color:var(--muted)}
+.bar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;margin:20px 0 6px}
+.bar span{margin-right:4px;font:800 11px/1 Rubik,Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.bar button{padding:8px 14px;border:0;border-radius:99px;background:var(--navy3);box-shadow:inset 0 0 0 2px var(--line);color:var(--ink);font:800 13px/1 Rubik,Arial,sans-serif;cursor:pointer}
+.bar button.on{background:linear-gradient(90deg,var(--c1),var(--c2));box-shadow:none;color:var(--navy)}
+h2{margin:30px 0 4px;font:900 18px/1.1 Rubik,Arial,sans-serif;text-transform:uppercase;letter-spacing:.04em}
+h2 small{margin-left:8px;font:500 13px/1 Rubik,Arial,sans-serif;text-transform:none;letter-spacing:0;color:var(--muted)}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px;margin-top:14px}
+.card{padding:14px 12px 12px;border-radius:22px;border:3px solid transparent;background:linear-gradient(var(--navy2),var(--navy2)) padding-box,linear-gradient(135deg,var(--k1),var(--k2)) border-box;box-shadow:0 0 22px color-mix(in srgb,var(--k1) 22%,transparent)}
+.card.locked{background:linear-gradient(var(--navy2),var(--navy2)) padding-box,linear-gradient(135deg,var(--line),var(--line)) border-box;box-shadow:none}
+.duo{display:flex;justify-content:center;gap:6px}
+.duo figure{margin:0;width:104px;text-align:center}
+.duo svg{display:block;width:104px;height:108px;overflow:visible}
+.duo figcaption{margin-top:-2px;font:800 11px/1 Rubik,Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.card b{display:block;margin-top:10px;text-align:center;font:900 19px/1 Rubik,Arial,sans-serif;text-transform:uppercase}
+.card p{margin:6px 0 0;text-align:center;font-size:13px;color:var(--muted);min-height:38px}
+.tag{display:block;width:max-content;max-width:100%;margin:8px auto 0;padding:5px 10px;border-radius:99px;font:800 11px/1.2 Rubik,Arial,sans-serif;text-align:center;background:var(--navy);box-shadow:inset 0 0 0 1.5px var(--line);color:var(--ink)}
+.tag.free{background:linear-gradient(90deg,var(--c1),var(--c2));box-shadow:none;color:var(--navy)}
+.tag.new{box-shadow:inset 0 0 0 1.5px var(--pink);color:var(--pink)}
+.note{margin-top:34px;padding:16px 18px;border-radius:18px;background:var(--navy2);box-shadow:inset 0 0 0 2px var(--line);color:var(--muted)}
+.note b{color:var(--ink)}
+.note ul{margin:8px 0 0;padding-left:20px}
+</style>
+</head>
+<body>
+<main>
+  <h1>Personnages</h1>
+  <p class="lead">Tous les personnages jouables, chacun en version elle et lui. Aujourd'hui le joueur est toujours la Flamme : cette galerie montre ce qu'on pourrait débloquer pour changer de personnage.</p>
+
+  <div class="bar" id="moods"><span>Expression</span></div>
+
+  <h2>Déjà dans le jeu <small>la Flamme (toi) et les 8 rencontres des chapitres</small></h2>
+  <div class="grid" id="existing"></div>
+
+  <h2>Nouvelles propositions <small>à valider : elles n'existent que dans cette maquette</small></h2>
+  <div class="grid" id="proposed"></div>
+
+  <div class="note">
+    <b>Comment les débloquer (proposition)</b>
+    <ul>
+      <li><b>Flamme</b> : personnage de départ.</li>
+      <li><b>Les 8 rencontres</b> : jouables dès que la relation atteint « Crush » dans leur chapitre. Tu peux alors incarner Nami, Sylve, etc.</li>
+      <li><b>Les nouveaux</b> : gagnés aux paliers de cœurs, ou dans les blisters si on les fait.</li>
+    </ul>
+  </div>
+</main>
+
+<script src="../spirits.js"></script>
+<script>
+/* propositions : même gabarit que spirits.js (corps commun, seule la crête change) */
+Object.assign(DGSpirit.KINDS,{
+  goutte:{body:"#4aa8ff",crest:"#c4e6ff",scarf:"#ffd23f",line:"#0b2a66",d:"M20 -8Q32 6 29 17H11Q8 6 20 -8Z"},
+  champi:{body:"#ffe8c9",crest:"#ff5a5a",scarf:"#7dff6a",line:"#5a1a1a",d:"M3 17Q2 -4 20 -4Q38 -4 37 17Z"},
+  cactus:{body:"#58c98a",crest:"#a4f2be",scarf:"#ff5fa2",line:"#0f4a2c",d:"M8 17V9Q8 5 11 5Q14 5 14 9V2Q14 -5 20 -5Q26 -5 26 2V9Q26 5 29 5Q32 5 32 9V17Z"},
+  comete:{body:"#ff7a59",crest:"#ffd9a0",scarf:"#19e3ff",line:"#5a1608",d:"M6 17Q5 4 19 3Q30 2 38 -7Q37 6 33 17Z"},
+  glacon:{body:"#bfe9ff",crest:"#ffffff",scarf:"#7a5cff",line:"#1b3f73",d:"M8 17L6 5L13 9L16 -3L21 8L27 -5L28 9L35 4L32 17Z"},
+  bonbon:{body:"#ff9ad5",crest:"#fff0a8",scarf:"#19e3ff",line:"#6a1456",d:"M20 11L6 1Q2 10 8 17H32Q38 10 34 1Z"},
+  soleil:{body:"#ffb52e",crest:"#fff07a",scarf:"#ff4f8b",line:"#6a3a00",d:"M6 17L3 9L10 10L9 1L16 6L20 -5L24 6L31 1L30 10L37 9L34 17Z"}
+});
+const EXISTING=[
+  ["flamme","Flamme","Ton personnage de départ.","free","personnage de départ"],
+  ["vague","Nami","Chapitre 1 · Toujours partant·e pour un détour.","","Crush au chapitre 1"],
+  ["feuille","Sylve","Chapitre 2 · Adore sortir des sentiers battus.","","Crush au chapitre 2"],
+  ["etoile","Astre","Chapitre 3 · A la clé de toutes les portes.","","Crush au chapitre 3"],
+  ["nuage","Nimbe","Chapitre 4 · Marche sur des œufs, et toi avec.","","Crush au chapitre 4"],
+  ["lune","Lune","Chapitre 5 · Te fait tourner la tête.","","Crush au chapitre 5"],
+  ["eclair","Volt","Chapitre 6 · Le coup de foudre, version express.","","Crush au chapitre 6"],
+  ["fleur","Pétale","Chapitre 7 · C'est compliqué, mais ça sent bon.","","Crush au chapitre 7"],
+  ["cristal","Opale","Chapitre 8 · Rare. Vraiment rare.","","Crush au chapitre 8"]
+];
+const PROPOSED=[
+  ["goutte","Ondée","Toujours dans le bon tempo.","new","palier 60 ♥"],
+  ["champi","Bolet","Pousse là où on ne l'attend pas.","new","palier 120 ♥"],
+  ["cactus","Piquant","Un peu sur la défensive, au fond très doux.","new","palier 180 ♥"],
+  ["comete","Comète","Passe vite, mais on s'en souvient.","new","palier 240 ♥"],
+  ["glacon","Givre","Met du temps à fondre.","new","palier 300 ♥"],
+  ["bonbon","Praline","Trop sucré·e ? Jamais.","new","blister"],
+  ["soleil","Zénith","Rayonne, même un lundi.","new","tout finir en 3 ♥"]
+];
+const MOODS=[["Normal",null],["Content",{eye:"happy",mouth:"grin"}],["Impact",{eye:"hit",mouth:"o"}],["Chute",{stretch:.8,ey:1.5,mouth:"o"}],["Triste",{eye:"sad",mouth:"sad"}]];
+let mood=0;
+
+function render(){
+  [["existing",EXISTING],["proposed",PROPOSED]].forEach(([id,list])=>{
+    const host=document.getElementById(id);
+    host.innerHTML="";
+    list.forEach(([kind,name,line,tag,unlock])=>{
+      const K=DGSpirit.KINDS[kind], card=document.createElement("div");
+      card.className="card";
+      card.style.setProperty("--k1",K.body);card.style.setProperty("--k2",K.scarf);
+      card.innerHTML='<div class="duo"><figure>'+DGSpirit.portrait(kind,"f",MOODS[mood][1])+'<figcaption>elle</figcaption></figure><figure>'+DGSpirit.portrait(kind,"m",MOODS[mood][1])+'<figcaption>lui</figcaption></figure></div><b></b><p></p><span class="tag '+tag+'"></span>';
+      card.querySelector("b").textContent=name;
+      card.querySelector("p").textContent=line;
+      card.querySelector(".tag").textContent=(tag==="free"?"":"🔒 ")+unlock;
+      host.appendChild(card);
+    });
+  });
+}
+const bar=document.getElementById("moods");
+MOODS.forEach(([label],i)=>{
+  const b=document.createElement("button");
+  b.type="button";b.textContent=label;b.className=i===mood?"on":"";
+  b.onclick=()=>{mood=i;[...bar.querySelectorAll("button")].forEach((x,j)=>x.classList.toggle("on",j===i));render();};
+  bar.appendChild(b);
+});
+render();
+</script>
+</body>
+</html>

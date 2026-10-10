@@ -333,21 +333,17 @@ function updateStats(){
   if(!l)return;
   const info=dgLevelPos(currentLevel);
   const titleEl=document.getElementById("title");
-  titleEl.textContent=l.name||("Niveau "+info.pos);
-  // le nom se réduit selon sa longueur pour tenir entre pause et compteur
-  titleEl.style.fontSize=Math.max(.95,Math.min(1.7,15.5/Math.max(8,titleEl.textContent.length))).toFixed(2)+"rem";
+  titleEl.textContent="";
+  const nameEl=document.createElement("span");
+  nameEl.textContent=l.name||("Niveau "+info.pos);
+  titleEl.appendChild(nameEl);
+
   const sub=document.createElement("small");
   sub.textContent="chapitre "+info.number+" · niveau "+info.pos;
   titleEl.appendChild(sub);
-  // jusqu'à 6 coups d'objectif : une pastille par coup ; au-delà, un compteur
   const max=Number(l.maxMoves)||0;
-  let html="<em>coups</em>";
-  if(max>0&&max<=6){
-    for(let n=1;n<=max;n++)html+='<i class="'+(n<=moves?"on":"")+(n===moves?" last":"")+'"></i>';
-    if(moves>max)html+="<b>+"+(moves-max)+"</b>";
-  }else{
-    html+=(moves>max&&max?"<b>"+moves+"</b>":moves)+" / "+(max||"?");
-  }
+  const html="<b"+(moves?' class="pop"':"")+">"+moves+"</b><span>/ "+(max||"?")+"</span><em>coups</em>";
+  playStats.classList.toggle("over",max>0&&moves>max);
   playStats.innerHTML=html;
   dgTint(info.ci);
   if(!dgTutoActive)dgSetReact(dgReactLine(),false);
@@ -2375,6 +2371,7 @@ function ingameAnimationLoop(ts){
     // après la victoire ou la défaite on continue de dessiner : les personnages réagissent encore
     if(levels.length && Array.isArray(b) && b.length && !edit && !gamePaused && !document.querySelector(".screen.show")){
       dgMotes(dt);
+      dgIdle();
       draw();
     }
   }
@@ -2530,13 +2527,49 @@ function dgLevelPos(idx){
   const ch=dgChapterOfLevel(idx), ci=dgChapterIndexOfLevel(idx);
   return {ch,ci,number:(ch&&ch.number)||ci+1,pos:ch?ch.levelIds.indexOf(idx)+1:idx+1};
 }
+/* Un décor par chapitre, à l'image de la personne qu'on y rencontre : teinte du fond + motif
+   (vagues, feuilles, étoiles, nuages, lunes, éclairs, pétales, cristaux). */
+const DG_BIOMES=[
+  ["#0b1533","M0 44q22 -18 45 0t45 0t45 0t45 0M0 134q22 -18 45 0t45 0t45 0t45 0"],
+  ["#0a1a22","M28 52q20 -30 42 0q-22 30 -42 0zM28 52h42"],
+  ["#1a0f2e","M44 24l6 15l15 6l-15 6l-6 15l-6 -15l-15 -6l15 -6z"],
+  ["#0e1836","M26 62a12 12 0 0 1 12 -14a16 16 0 0 1 30 -2a12 12 0 0 1 10 16z"],
+  ["#120d34","M50 26a22 22 0 1 0 20 34a17 17 0 1 1 -20 -34z"],
+  ["#1c1420","M52 18l-18 34h14l-8 30l26 -40h-15l10 -24z"],
+  ["#220f2a","M48 50q-20 -20 0 -30q20 10 0 30q20 -20 30 0q-10 20 -30 0q20 20 0 30q-20 -10 0 -30q-20 20 -30 0q10 -20 30 0z"],
+  ["#0c1a2e","M50 18l18 22l-18 30l-18 -30zM32 40h36"]
+];
+let dgTintIndex=-1;
 function dgTint(ci){
-  const w=DG_WORLDS[ci%DG_WORLDS.length];
-  if(w[0]===dgC1&&w[1]===dgC2)return;
+  ci=ci%DG_WORLDS.length;
+  if(ci===dgTintIndex)return;
+  dgTintIndex=ci;
+  const w=DG_WORLDS[ci],bio=DG_BIOMES[ci%DG_BIOMES.length],root=document.documentElement.style;
   dgC1=w[0];dgC2=w[1];
-  document.documentElement.style.setProperty("--c1",dgC1);
-  document.documentElement.style.setProperty("--c2",dgC2);
+  root.setProperty("--c1",dgC1);
+  root.setProperty("--c2",dgC2);
+  root.setProperty("--bg",bio[0]);
+  const svg='<svg xmlns="http://www.w3.org/2000/svg" width="180" height="180" fill="none" stroke="'+dgC2+'" stroke-opacity=".5" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="'+bio[1]+'"/><g transform="translate(98 94) scale(.7)"><path d="'+bio[1]+'"/></g></svg>';
+  root.setProperty("--biome",'url("data:image/svg+xml,'+encodeURIComponent(svg)+'")');
 }
+/* rappel du swipe : seulement quand le joueur ne fait rien depuis un moment (plus longtemps s'il connaît déjà le geste) */
+let dgIdleAt=performance.now(),dgHintOn=false,dgHintDelay=3500;
+function dgIdle(){
+  const el=document.getElementById("swipeHint");
+  if(!el)return;
+  const now=performance.now();
+  if(busy||gameOver||stage.classList.contains("swiping")||dgUiOpen())dgIdleAt=now;
+  const on=now-dgIdleAt>dgHintDelay;
+  if(on===dgHintOn)return;
+  dgHintOn=on;
+  el.classList.toggle("show",on);
+  if(!on){
+    let n=0;
+    try{n=Number(localStorage.getItem("dg_swipe_count"))||0;}catch(e){}
+    dgHintDelay=n>=3?12000:3500;
+  }
+}
+document.addEventListener("pointerdown",()=>{dgIdleAt=performance.now();},{passive:true});
 /* ce que la rencontre du chapitre est devenue (voir DGSpirit.status) */
 function dgRelation(ci){
   const ch=dgChapters[ci];
@@ -3077,7 +3110,7 @@ loadVectorAssets()
 
   function threshold(){return Math.max(36,Math.min(90,window.innerWidth*0.14));}
   function blocked(t){
-    return !!(t&&t.closest&&t.closest("button,a,input,select,textarea,label,.screen,.overlay,#confirmBox,#top,#companionDock,#dgAdOverlay,#loadingOverlay"));
+    return !!(t&&t.closest&&t.closest("button,a,input,select,textarea,label,.screen,.overlay,#confirmBox,#top,#dgAdOverlay,#loadingOverlay"));
   }
   function canSwipe(){return !edit&&!busy&&!gameOver&&!gamePaused&&levels.length>0;}
   function setTilt(a){rot.setAttribute("transform","rotate("+a+" "+(BOARD/2)+" "+(BOARD/2)+")");}

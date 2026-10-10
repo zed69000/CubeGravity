@@ -34,7 +34,7 @@ html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none;backgrou
 body{position:fixed;inset:0;display:flex;justify-content:center;color:var(--ink);font:500 1.3rem/1.4 Rubik,Arial,sans-serif;user-select:none;-webkit-user-select:none;touch-action:manipulation}
 button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:pointer;touch-action:manipulation}
 .hidden{display:none!important}
-#app{position:relative;width:25.4rem;height:100dvh;display:flex;flex-direction:column;overflow:hidden;overflow:clip;background:var(--navy)}
+#app{position:relative;width:25.4rem;height:100dvh;display:flex;flex-direction:column;overflow:hidden;overflow:clip;background:var(--bg,var(--navy));transition:background .5s}
 #app>*{position:relative;z-index:1}
 
 /* ---------- briques communes */
@@ -59,12 +59,12 @@ button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:poin
 /* ---------- décor : halos du chapitre, circuit très discret, poussière qui tombe (pilotée par le jeu) */
 #gfx{position:absolute!important;inset:0;z-index:0!important;pointer-events:none;overflow:hidden;
   background:
-    radial-gradient(circle 17rem at 84% 10%,color-mix(in srgb,var(--c2) 12%,transparent),transparent 70%),
-    radial-gradient(circle 19rem at 6% 92%,color-mix(in srgb,var(--c1) 9%,transparent),transparent 70%);transition:background .5s}
-/* le circuit ne passe pas derrière le plateau : il n'habille que le haut et le bas de l'écran */
+    radial-gradient(circle 19rem at 84% 8%,color-mix(in srgb,var(--c2) 22%,transparent),transparent 70%),
+    radial-gradient(circle 21rem at 6% 94%,color-mix(in srgb,var(--c1) 17%,transparent),transparent 70%);transition:background .5s}
+/* le motif du chapitre ne passe pas derrière le plateau : il n'habille que le haut et le bas de l'écran */
 #gfx::before{content:"";position:absolute;inset:0;opacity:.4;
   -webkit-mask-image:linear-gradient(#000 0,#000 9%,transparent 17%,transparent 71%,#000 80%);mask-image:linear-gradient(#000 0,#000 9%,transparent 17%,transparent 71%,#000 80%);
-  background:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180' fill='none' stroke='%232a3a8c' stroke-width='1.5' stroke-linecap='round'%3E%3Cpath d='M20 0v46q0 12 12 12h40M120 30v60q0 12 -12 12h-58M150 100v50q0 12 12 12h18M60 130v50M0 80h14q12 0 12 12v30'/%3E%3C/svg%3E")}
+  background:var(--biome,url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180' fill='none' stroke='%232a3a8c' stroke-width='1.5' stroke-linecap='round'%3E%3Cpath d='M20 0v46q0 12 12 12h40M120 30v60q0 12 -12 12h-58M150 100v50q0 12 12 12h18M60 130v50M0 80h14q12 0 12 12v30'/%3E%3C/svg%3E"))}
 #motes{position:absolute;inset:0;
   background:
     radial-gradient(circle,rgba(143,160,216,.55) .09rem,transparent .11rem) 0 0/5.3rem 7.1rem,
@@ -72,21 +72,24 @@ button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:poin
   background-position:0 calc(var(--my,0)*-1px),2.1rem calc(1.3rem - var(--my,0)*1.6px)}
 
 /* ---------- en-tête de jeu */
-#title{min-width:0;flex:1;text-align:center;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font:900 1.7rem/1 Rubik,Arial,sans-serif;text-transform:uppercase;letter-spacing:.02em}
-#title small{display:block;margin-top:.4rem;font:500 1rem/1 Rubik,Arial,sans-serif;text-transform:none;letter-spacing:0;color:var(--muted);overflow:hidden;text-overflow:ellipsis}
-#playStats{flex:none;display:flex;align-items:center;gap:.4rem;padding:.7rem 1rem;border-radius:99rem;background:var(--navy3);box-shadow:inset 0 0 0 .2rem var(--c1),0 0 1.2rem color-mix(in srgb,var(--c1) 40%,transparent);font-weight:800;font-size:1.15rem;white-space:nowrap}
-#playStats em{margin-right:.2rem;font:500 .95rem/1 Rubik,Arial,sans-serif;font-style:normal;color:var(--muted)}
-#playStats i{width:1rem;height:1rem;border-radius:50%;background:var(--navy);box-shadow:inset 0 0 0 .15rem var(--line)}
-#playStats i.on{background:var(--c1);box-shadow:0 0 .8rem var(--c1)}
-#playStats i.last{animation:gPip .5s cubic-bezier(.2,1.8,.4,1)}
-#playStats b{color:var(--pink)}
+#title{min-width:0;flex:1;text-align:center;font:900 1.25rem/1.08 Rubik,Arial,sans-serif;text-transform:uppercase;letter-spacing:.02em}
+#title span{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden}
+#title small{display:block;margin-top:.35rem;font:500 .95rem/1 Rubik,Arial,sans-serif;text-transform:none;letter-spacing:0;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+/* compteur de coups : joués / objectif, en gros, toujours lisible */
+#playStats{flex:none;min-width:5.6rem;padding:.45rem .9rem .5rem;border-radius:1.4rem;background:var(--navy3);box-shadow:inset 0 0 0 .2rem var(--c1),0 0 1.2rem color-mix(in srgb,var(--c1) 40%,transparent);text-align:center;white-space:nowrap;line-height:1}
+#playStats em{display:block;margin-top:.25rem;font:800 .8rem/1 Rubik,Arial,sans-serif;font-style:normal;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+#playStats b{font:900 1.9rem/1 Rubik,Arial,sans-serif;color:var(--c1)}
+#playStats b.pop{display:inline-block;animation:gPip .4s cubic-bezier(.2,1.8,.4,1)}
+#playStats span{margin-left:.25rem;font:800 1.15rem/1 Rubik,Arial,sans-serif;color:var(--ink)}
+#playStats.over{box-shadow:inset 0 0 0 .2rem var(--pink),0 0 1.2rem color-mix(in srgb,var(--pink) 40%,transparent)}
+#playStats.over b{color:var(--pink)}
 @keyframes gPip{from{transform:scale(2.2)}to{transform:scale(1)}}
 #status{display:none}
 
 /* ---------- plateau : aucun cadre, les tubes sont le plateau */
 #stage{flex:1;min-height:0;display:grid;place-items:center;padding:0 .8rem;touch-action:none;cursor:grab;overflow:visible}
 #stage.swiping{cursor:grabbing}
-.boardWrap{position:relative;width:min(100%,calc(100dvh - 21.5rem))}
+.boardWrap{position:relative;width:min(100%,calc(100dvh - 19rem))}
 .boardWrap svg{display:block;width:100%;height:auto;aspect-ratio:1;overflow:visible}
 .ghostBoard{position:absolute!important;z-index:2;pointer-events:none}
 .hitcell{pointer-events:all}
@@ -94,7 +97,7 @@ button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:poin
 @keyframes gGrav{0%{transform:translateY(-.3rem);opacity:.4}70%{transform:translateY(.5rem);opacity:1}100%{transform:translateY(.5rem);opacity:0}}
 
 /* ---------- bas d'écran : la personne du chapitre te parle, puis la zone du pouce */
-#foot{height:11.2rem;padding:0 1.2rem calc(1.4rem + env(safe-area-inset-bottom));display:flex;flex-direction:column;justify-content:flex-end;gap:2rem}
+#foot{height:7rem;padding:0 1.2rem calc(1.4rem + env(safe-area-inset-bottom));display:flex;flex-direction:column;justify-content:flex-end}
 .react{position:relative;display:flex;align-items:flex-end;height:4.6rem}
 .react .mini{flex:none;width:4.6rem;height:4.6rem}
 /* la bulle grandit vers le haut, par-dessus l'espace libre sous le plateau, sans pousser la zone du pouce */
@@ -102,18 +105,13 @@ button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:poin
 .react p.pop{animation:gPop .35s cubic-bezier(.2,1.6,.4,1)}
 @keyframes gPop{0%{transform:scale(.6);opacity:0}100%{transform:scale(1);opacity:1}}
 #companionSkip{margin-left:.6rem;padding:.2rem .8rem;border-radius:99rem;background:var(--c2);color:var(--navy);font-weight:900;font-size:1.05rem}
-.thumb{display:flex;align-items:center;gap:.8rem}
-.reset{flex:none;padding:1.2rem 1.2rem;border-radius:99rem;background:var(--navy3);box-shadow:inset 0 0 0 .2rem var(--line);font-size:1.05rem;font-weight:800;white-space:nowrap}
-.arc{position:relative;flex:1;display:flex;align-items:center;justify-content:space-between;height:4.4rem;padding:0 1.3rem;border-radius:99rem;border:.25rem solid transparent;
-  background:linear-gradient(var(--navy),var(--navy)) padding-box,var(--grad) border-box;box-shadow:0 0 1.6rem color-mix(in srgb,var(--c2) 40%,transparent)}
-.arc b{z-index:1;font-size:2rem;color:var(--c1);transition:transform .1s}
-.arc b:last-of-type{color:var(--c2)}
-.arc.left b:first-of-type,.arc.right b:last-of-type{transform:scale(1.5)}
-.arc .lbl{position:absolute;left:0;right:0;top:-1.7rem;text-align:center;font-size:.95rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
-.knob{position:absolute;left:50%;top:50%;width:2.8rem;height:2.8rem;margin:-1.4rem 0 0 -1.4rem;border-radius:50%;background:var(--grad);box-shadow:0 0 1.4rem var(--c2);animation:gKnob 2.6s ease-in-out infinite;pointer-events:none}
-@keyframes gKnob{0%,100%{transform:translateX(0)}22%{transform:translateX(4.6rem)}50%{transform:translateX(0)}72%{transform:translateX(-4.6rem)}}
-.arc.learned .knob{animation:none;opacity:.3}
-.arc.learned .lbl{opacity:.6}
+/* rappel du geste : il n'apparaît sous le plateau que si le joueur ne fait rien, et s'efface dès qu'il joue */
+#swipeHint{position:absolute;left:50%;top:calc(100% + 2.7rem);width:10rem;margin-left:-5rem;height:2rem;display:flex;align-items:center;justify-content:space-between;color:var(--muted);font-size:1.5rem;font-weight:900;opacity:0;transition:opacity .6s;pointer-events:none}
+#swipeHint.show{opacity:.9}
+#swipeHint i{width:1.5rem;height:1.5rem;border-radius:50%;background:var(--grad);box-shadow:0 0 1rem var(--c2)}
+#swipeHint.show i{animation:gHint 2.4s ease-in-out infinite}
+@keyframes gHint{0%,100%{transform:translateX(0)}22%,30%{transform:translateX(2.6rem)}50%{transform:translateX(0)}72%,80%{transform:translateX(-2.6rem)}}
+body.editing #swipeHint{display:none}
 .kbdOnly{display:none}
 
 /* ---------- écrans pleins (chapitres, niveaux, rencontre, collection) */
@@ -322,6 +320,7 @@ html:not(.editor-enabled) #toggleEdit,html:not(.editor-enabled) #compactEdit{dis
     <div class="boardWrap">
       <svg viewBox="0 0 520 520" aria-label="Plateau"><g id="rot"><g id="grid"></g></g></svg>
       <span class="grav" aria-hidden="true">↓</span>
+      <div id="swipeHint" aria-hidden="true"><b>⟲</b><i></i><b>⟳</b></div>
     </div>
     <div id="confirmBox" class="hidden"><h2>Confirmer la suppression</h2><p id="confirmText"></p><div class="row"><button id="confirmCancel">Annuler</button><button id="confirmDelete" class="danger">Supprimer</button></div></div>
   </main>
@@ -331,11 +330,10 @@ html:not(.editor-enabled) #toggleEdit,html:not(.editor-enabled) #compactEdit{dis
       <button class="mini" id="companionHelp" aria-label="Demander un indice"></button>
       <p id="reactBubble"><span id="companionText"></span><button id="companionSkip" class="hidden" type="button">OK</button></p>
     </div>
-    <div class="thumb" id="controls">
-      <button id="reset" class="reset" type="button">↺ reset</button>
-      <div id="swipeHint" class="arc" aria-hidden="true"><b>⟲</b><span class="lbl">glisse pour tourner</span><i class="knob"></i><b>⟳</b></div>
-      <button id="sideLeft" class="kbdOnly" type="button" aria-label="Tourner à gauche">⟲</button>
-      <button id="sideRight" class="kbdOnly" type="button" aria-label="Tourner à droite">⟳</button>
+    <div id="controls" class="hidden">
+      <button id="reset" type="button">reset</button>
+      <button id="sideLeft" type="button" aria-label="Tourner à gauche">⟲</button>
+      <button id="sideRight" type="button" aria-label="Tourner à droite">⟳</button>
     </div>
   </footer>
 
@@ -743,21 +741,17 @@ function updateStats(){
   if(!l)return;
   const info=dgLevelPos(currentLevel);
   const titleEl=document.getElementById("title");
-  titleEl.textContent=l.name||("Niveau "+info.pos);
-  // le nom se réduit selon sa longueur pour tenir entre pause et compteur
-  titleEl.style.fontSize=Math.max(.95,Math.min(1.7,15.5/Math.max(8,titleEl.textContent.length))).toFixed(2)+"rem";
+  titleEl.textContent="";
+  const nameEl=document.createElement("span");
+  nameEl.textContent=l.name||("Niveau "+info.pos);
+  titleEl.appendChild(nameEl);
+
   const sub=document.createElement("small");
   sub.textContent="chapitre "+info.number+" · niveau "+info.pos;
   titleEl.appendChild(sub);
-  // jusqu'à 6 coups d'objectif : une pastille par coup ; au-delà, un compteur
   const max=Number(l.maxMoves)||0;
-  let html="<em>coups</em>";
-  if(max>0&&max<=6){
-    for(let n=1;n<=max;n++)html+='<i class="'+(n<=moves?"on":"")+(n===moves?" last":"")+'"></i>';
-    if(moves>max)html+="<b>+"+(moves-max)+"</b>";
-  }else{
-    html+=(moves>max&&max?"<b>"+moves+"</b>":moves)+" / "+(max||"?");
-  }
+  const html="<b"+(moves?' class="pop"':"")+">"+moves+"</b><span>/ "+(max||"?")+"</span><em>coups</em>";
+  playStats.classList.toggle("over",max>0&&moves>max);
   playStats.innerHTML=html;
   dgTint(info.ci);
   if(!dgTutoActive)dgSetReact(dgReactLine(),false);
@@ -2785,6 +2779,7 @@ function ingameAnimationLoop(ts){
     // après la victoire ou la défaite on continue de dessiner : les personnages réagissent encore
     if(levels.length && Array.isArray(b) && b.length && !edit && !gamePaused && !document.querySelector(".screen.show")){
       dgMotes(dt);
+      dgIdle();
       draw();
     }
   }
@@ -2940,13 +2935,49 @@ function dgLevelPos(idx){
   const ch=dgChapterOfLevel(idx), ci=dgChapterIndexOfLevel(idx);
   return {ch,ci,number:(ch&&ch.number)||ci+1,pos:ch?ch.levelIds.indexOf(idx)+1:idx+1};
 }
+/* Un décor par chapitre, à l'image de la personne qu'on y rencontre : teinte du fond + motif
+   (vagues, feuilles, étoiles, nuages, lunes, éclairs, pétales, cristaux). */
+const DG_BIOMES=[
+  ["#0b1533","M0 44q22 -18 45 0t45 0t45 0t45 0M0 134q22 -18 45 0t45 0t45 0t45 0"],
+  ["#0a1a22","M28 52q20 -30 42 0q-22 30 -42 0zM28 52h42"],
+  ["#1a0f2e","M44 24l6 15l15 6l-15 6l-6 15l-6 -15l-15 -6l15 -6z"],
+  ["#0e1836","M26 62a12 12 0 0 1 12 -14a16 16 0 0 1 30 -2a12 12 0 0 1 10 16z"],
+  ["#120d34","M50 26a22 22 0 1 0 20 34a17 17 0 1 1 -20 -34z"],
+  ["#1c1420","M52 18l-18 34h14l-8 30l26 -40h-15l10 -24z"],
+  ["#220f2a","M48 50q-20 -20 0 -30q20 10 0 30q20 -20 30 0q-10 20 -30 0q20 20 0 30q-20 -10 0 -30q-20 20 -30 0q10 -20 30 0z"],
+  ["#0c1a2e","M50 18l18 22l-18 30l-18 -30zM32 40h36"]
+];
+let dgTintIndex=-1;
 function dgTint(ci){
-  const w=DG_WORLDS[ci%DG_WORLDS.length];
-  if(w[0]===dgC1&&w[1]===dgC2)return;
+  ci=ci%DG_WORLDS.length;
+  if(ci===dgTintIndex)return;
+  dgTintIndex=ci;
+  const w=DG_WORLDS[ci],bio=DG_BIOMES[ci%DG_BIOMES.length],root=document.documentElement.style;
   dgC1=w[0];dgC2=w[1];
-  document.documentElement.style.setProperty("--c1",dgC1);
-  document.documentElement.style.setProperty("--c2",dgC2);
+  root.setProperty("--c1",dgC1);
+  root.setProperty("--c2",dgC2);
+  root.setProperty("--bg",bio[0]);
+  const svg='<svg xmlns="http://www.w3.org/2000/svg" width="180" height="180" fill="none" stroke="'+dgC2+'" stroke-opacity=".5" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="'+bio[1]+'"/><g transform="translate(98 94) scale(.7)"><path d="'+bio[1]+'"/></g></svg>';
+  root.setProperty("--biome",'url("data:image/svg+xml,'+encodeURIComponent(svg)+'")');
 }
+/* rappel du swipe : seulement quand le joueur ne fait rien depuis un moment (plus longtemps s'il connaît déjà le geste) */
+let dgIdleAt=performance.now(),dgHintOn=false,dgHintDelay=3500;
+function dgIdle(){
+  const el=document.getElementById("swipeHint");
+  if(!el)return;
+  const now=performance.now();
+  if(busy||gameOver||stage.classList.contains("swiping")||dgUiOpen())dgIdleAt=now;
+  const on=now-dgIdleAt>dgHintDelay;
+  if(on===dgHintOn)return;
+  dgHintOn=on;
+  el.classList.toggle("show",on);
+  if(!on){
+    let n=0;
+    try{n=Number(localStorage.getItem("dg_swipe_count"))||0;}catch(e){}
+    dgHintDelay=n>=3?12000:3500;
+  }
+}
+document.addEventListener("pointerdown",()=>{dgIdleAt=performance.now();},{passive:true});
 /* ce que la rencontre du chapitre est devenue (voir DGSpirit.status) */
 function dgRelation(ci){
   const ch=dgChapters[ci];
@@ -3487,7 +3518,7 @@ loadVectorAssets()
 
   function threshold(){return Math.max(36,Math.min(90,window.innerWidth*0.14));}
   function blocked(t){
-    return !!(t&&t.closest&&t.closest("button,a,input,select,textarea,label,.screen,.overlay,#confirmBox,#top,#companionDock,#dgAdOverlay,#loadingOverlay"));
+    return !!(t&&t.closest&&t.closest("button,a,input,select,textarea,label,.screen,.overlay,#confirmBox,#top,#dgAdOverlay,#loadingOverlay"));
   }
   function canSwipe(){return !edit&&!busy&&!gameOver&&!gamePaused&&levels.length>0;}
   function setTilt(a){rot.setAttribute("transform","rotate("+a+" "+(BOARD/2)+" "+(BOARD/2)+")");}
