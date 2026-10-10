@@ -728,7 +728,7 @@ function resetPlay(){
   levels[currentLevel].map=map();
   b=arr(levels[currentLevel].map);
   door=baseDoorOpen();
-  dgFallAnim=null;dgImpact=null;dgRot=null;dgMelody=[];dgWhoosh(0);
+  dgFallAnim=null;dgImpact=null;dgRot=null;dgMelody=[];dgQueue=[];dgWhoosh(0);
   moves=0;busy=false;gameOver=false;deadPlayer=false;rotatorCooldown=false;teleporterCooldownType=null;eternalFallWraps=0;gamePaused=false;activeSwitchKey=null;activeSwitchHeld=false;resetPlayerTrail();hideBanner();
   rot.setAttribute("transform",`rotate(0 ${BOARD/2} ${BOARD/2})`);visualOri=0;
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){
@@ -1701,7 +1701,8 @@ function toggleDoors(){
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){if(b[y][x]=="D")b[y][x]="O";else if(b[y][x]=="O")b[y][x]="D";}
 }
 function turn(d,fromAngle=0){
-  if(edit||busy||gameOver||gamePaused||dgUiOpen())return;
+  if(edit||gameOver||gamePaused||dgUiOpen())return;
+  if(busy){if(dgQueue.length<2)dgQueue.push(d);return;} // le plateau bouge encore : le coup attend son tour
   hideCompanion(false);clearTimeout(companionTimer);clearTimeout(companionIdleTimer);
   busy=true;moves++;rotatorCooldown=false;userAudioGesture();soundRotate(d);updateStats();
   dgSpin(d,(Math.sign(fromAngle)===d)?fromAngle:0,()=>{apply(d);draw();fall();});
@@ -2791,6 +2792,7 @@ function ingameAnimationLoop(ts){
     if(levels.length && Array.isArray(b) && b.length && !edit && !gamePaused && !document.querySelector(".screen.show")){
       dgMotes(dt);
       dgIdle();
+      dgFlush();
       draw();
     }
   }
@@ -3184,7 +3186,16 @@ function dgPlayMelody(){
 }
 
 /* --- chute et impact */
-function dgStepDelay(n){return Math.max(18,getFallDelayMs()*1.9*(Math.sqrt(n+1)-Math.sqrt(n)));}
+/* Coups en attente : un swipe fait pendant une rotation ou une chute n'est pas perdu, il part dès
+   l'atterrissage. Deux au plus, pour ne pas enchaîner des coups que le joueur n'a pas vus venir. */
+let dgQueue=[];
+function dgFlush(){
+  if(!dgQueue.length||busy)return;
+  if(edit||gameOver||gamePaused||dgUiOpen()){dgQueue=[];return;}
+  turn(dgQueue.shift());
+}
+/* tant qu'un coup attend, la chute et la rotation en cours se dépêchent */
+function dgStepDelay(n){return Math.max(dgQueue.length?10:18,getFallDelayMs()*(dgQueue.length?1.1:1.9)*(Math.sqrt(n+1)-Math.sqrt(n)));}
 function dgStepSpeed(ms){return Math.max(0,Math.min(1,(getFallDelayMs()*1.9/Math.max(1,ms)-1)/3.6));}
 function dgLand(dist){
   dgFallAnim=null;
@@ -3200,11 +3211,12 @@ function dgLand(dist){
 }
 /* rotation du plateau : il dépasse un peu les 90° puis revient */
 function dgSpin(d,from,done){
-  const dur=Math.max(200,getRotationDurationMs()*1.9),token=fallToken,t0=performance.now();
+  const full=Math.max(160,getRotationDurationMs()*1.5),token=fallToken,t0=performance.now();
   dgRot={dir:d,angle:from,k:0};
   if(dgImpact)dgImpact.flash=false;
   (function tick(now){
     if(token!==fallToken){dgRot=null;return;}
+    const dur=dgQueue.length?full*.6:full;
     const k=Math.min(1,(now-t0)/dur),e=1+2.9*Math.pow(k-1,3)+1.9*Math.pow(k-1,2);
     const a=from+(d*90-from)*e;
     rot.setAttribute("transform","rotate("+a+" "+(BOARD/2)+" "+(BOARD/2)+")");
@@ -3531,7 +3543,7 @@ loadVectorAssets()
   function blocked(t){
     return !!(t&&t.closest&&t.closest("button,a,input,select,textarea,label,.screen,.overlay,#confirmBox,#top,#dgAdOverlay,#loadingOverlay"));
   }
-  function canSwipe(){return !edit&&!busy&&!gameOver&&!gamePaused&&levels.length>0;}
+  function canSwipe(){return !edit&&!gameOver&&!gamePaused&&levels.length>0;}
   function setTilt(a){rot.setAttribute("transform","rotate("+a+" "+(BOARD/2)+" "+(BOARD/2)+")");}
   function syncHint(dir){
     if(!hint)return;
@@ -3567,7 +3579,7 @@ loadVectorAssets()
       stage.classList.add("swiping");
     }
     sw.tilt=Math.max(-MAX_TILT,Math.min(MAX_TILT,dx/threshold()*14))*sw.dir;
-    setTilt(sw.tilt);
+    if(busy)sw.tilt=0;else setTilt(sw.tilt);
     syncHint(Math.abs(dx)>=threshold()?Math.sign(dx):0);
   },{passive:true});
 
