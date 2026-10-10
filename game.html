@@ -3278,7 +3278,7 @@ function dgShowSolution(){
   bannerTitle.textContent="Le coup de pouce";
   bannerText.textContent=helper.name+" te souffle la solution, depuis le début du niveau :";
   starsEl.innerHTML='<div class="seq">'+seq.split("").map(c=>c==="R"?'<b class="r">⟳</b>':'<b>⟲</b>').join("")+'</div>'+
-    '<p>'+seq.length+' coup'+(seq.length>1?'s':'')+' · ⟳ glisse à droite, ⟲ glisse à gauche</p>';
+    '<p>'+seq.length+' coup'+(seq.length>1?'s':'')+' · ⟳ tourne vers la droite, ⟲ tourne vers la gauche</p>';
   const alt=document.getElementById("bannerAlt");
   bannerAction.textContent="Recommencer";
   bannerAction.onclick=()=>resetPlay();
@@ -3552,7 +3552,8 @@ loadVectorAssets()
   document.addEventListener("pointerdown",e=>{
     if(e.pointerType==="mouse"&&e.button!==0)return;
     if(sw||blocked(e.target)||!canSwipe())return;
-    sw={id:e.pointerId,x:e.clientX,y:e.clientY,tilt:0,active:false};
+    const br=svg.getBoundingClientRect();
+    sw={id:e.pointerId,x:e.clientX,y:e.clientY,tilt:0,active:false,dir:e.clientY>br.top+br.height/2?-1:1};
   },{passive:true});
 
   document.addEventListener("pointermove",e=>{
@@ -3565,7 +3566,7 @@ loadVectorAssets()
       sw.active=true;
       stage.classList.add("swiping");
     }
-    sw.tilt=Math.max(-MAX_TILT,Math.min(MAX_TILT,dx/threshold()*14));
+    sw.tilt=Math.max(-MAX_TILT,Math.min(MAX_TILT,dx/threshold()*14))*sw.dir;
     setTilt(sw.tilt);
     syncHint(Math.abs(dx)>=threshold()?Math.sign(dx):0);
   },{passive:true});
@@ -3582,7 +3583,7 @@ loadVectorAssets()
       learned++;
       try{localStorage.setItem(SWIPE_KEY,String(learned));}catch(err){}
       syncHint(0);
-      turn(dx>0?1:-1,s.tilt);
+      turn((dx>0?1:-1)*s.dir,s.tilt);
     }else{
       springBack(s.tilt);
     }
