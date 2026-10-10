@@ -1172,10 +1172,10 @@ function draw(){
   editPanel.className=editing?"":"hidden";
   document.getElementById("levelInput").value=currentLevel+1;updateLockUI();
 }
-/* la poussière du décor remonte quand on tombe : c'est elle qui donne la vitesse */
+/* la poussière du décor tombe en continu (elle montre le sens de la gravité) et accélère pendant une chute */
 function dgMotes(dt){
   const v=dgFallAnim?dgFallAnim.v:0;
-  dgMoteY=(dgMoteY+dt*(.006+v*.55))%100000;
+  dgMoteY=(dgMoteY+dt*(.035+v*.5))%100000;
   const m=document.getElementById("motes");
   if(m)m.style.setProperty("--my",dgMoteY.toFixed(1));
 }

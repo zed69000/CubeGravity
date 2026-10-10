@@ -56,7 +56,7 @@ button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:poin
 .art svg,.mini svg,.ic svg,.av svg{display:block;width:100%;height:100%;overflow:visible}
 .gtext{background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
 
-/* ---------- décor : halos du chapitre, circuit très discret, poussière qui tombe (pilotée par le jeu) */
+/* ---------- décor : halos du chapitre, motif discret, et une pluie de poussière qui tombe toujours vers le bas de l'écran : c'est elle qui indique la gravité (pilotée par le jeu) */
 #gfx{position:absolute!important;inset:0;z-index:0!important;pointer-events:none;overflow:hidden;
   background:
     radial-gradient(circle 19rem at 84% 8%,color-mix(in srgb,var(--c2) 22%,transparent),transparent 70%),
@@ -67,9 +67,9 @@ button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:poin
   background:var(--biome,url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180' fill='none' stroke='%232a3a8c' stroke-width='1.5' stroke-linecap='round'%3E%3Cpath d='M20 0v46q0 12 12 12h40M120 30v60q0 12 -12 12h-58M150 100v50q0 12 12 12h18M60 130v50M0 80h14q12 0 12 12v30'/%3E%3C/svg%3E"))}
 #motes{position:absolute;inset:0;
   background:
-    radial-gradient(circle,rgba(143,160,216,.55) .09rem,transparent .11rem) 0 0/5.3rem 7.1rem,
-    radial-gradient(circle,color-mix(in srgb,var(--c2) 55%,transparent) .07rem,transparent .09rem) 2.1rem 1.3rem/3.7rem 9.3rem;
-  background-position:0 calc(var(--my,0)*-1px),2.1rem calc(1.3rem - var(--my,0)*1.6px)}
+    radial-gradient(ellipse .1rem .34rem,rgba(143,160,216,.6) 90%,transparent) 0 0/5.3rem 7.1rem,
+    radial-gradient(ellipse .08rem .26rem,color-mix(in srgb,var(--c2) 60%,transparent) 90%,transparent) 2.1rem 1.3rem/3.7rem 9.3rem;
+  background-position:0 calc(var(--my,0)*1px),2.1rem calc(1.3rem + var(--my,0)*1.6px)}
 
 /* ---------- en-tête de jeu */
 #title{min-width:0;flex:1;text-align:center;font:900 1.25rem/1.08 Rubik,Arial,sans-serif;text-transform:uppercase;letter-spacing:.02em}
@@ -106,11 +106,23 @@ button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:poin
 @keyframes gPop{0%{transform:scale(.6);opacity:0}100%{transform:scale(1);opacity:1}}
 #companionSkip{margin-left:.6rem;padding:.2rem .8rem;border-radius:99rem;background:var(--c2);color:var(--navy);font-weight:900;font-size:1.05rem}
 /* rappel du geste : il n'apparaît sous le plateau que si le joueur ne fait rien, et s'efface dès qu'il joue */
-#swipeHint{position:absolute;left:50%;top:calc(100% + 2.7rem);width:10rem;margin-left:-5rem;height:2rem;display:flex;align-items:center;justify-content:space-between;color:var(--muted);font-size:1.5rem;font-weight:900;opacity:0;transition:opacity .6s;pointer-events:none}
-#swipeHint.show{opacity:.9}
-#swipeHint i{width:1.5rem;height:1.5rem;border-radius:50%;background:var(--grad);box-shadow:0 0 1rem var(--c2)}
-#swipeHint.show i{animation:gHint 2.4s ease-in-out infinite}
-@keyframes gHint{0%,100%{transform:translateX(0)}22%,30%{transform:translateX(2.6rem)}50%{transform:translateX(0)}72%,80%{transform:translateX(-2.6rem)}}
+#swipeHint{position:absolute;left:50%;top:calc(100% + .7rem);width:15rem;margin-left:-7.5rem;height:4rem;display:flex;align-items:center;justify-content:center;gap:.5rem;opacity:0;transition:opacity .6s;pointer-events:none}
+#swipeHint.show{opacity:1}
+/* la main reste au centre et oscille ; les chevrons s'allument l'un après l'autre, à droite puis à gauche */
+#swipeHint svg{flex:none;width:3.8rem;height:3.8rem;overflow:visible;filter:drop-shadow(0 0 .7rem var(--c2))}
+#swipeHint path{fill:#fff;stroke:var(--navy);stroke-width:1.1;stroke-linejoin:round;paint-order:stroke}
+#swipeHint circle{fill:none;stroke:#fff;stroke-width:1.2;transform-box:fill-box;transform-origin:center;opacity:0}
+#swipeHint.show svg{animation:gHand 2.8s ease-in-out infinite}
+#swipeHint.show circle{animation:gTap 1.4s ease-out infinite}
+.chev{display:flex;gap:.1rem;font:900 2.6rem/1 Rubik,Arial,sans-serif;color:var(--line)}
+.chev.l{flex-direction:row-reverse}
+.chev i{font-style:normal}
+#swipeHint.show .chev i{animation:gChev 2.8s linear infinite}
+#swipeHint.show .chev.r i:nth-child(2){animation-delay:.12s}#swipeHint.show .chev.r i:nth-child(3){animation-delay:.24s}
+#swipeHint.show .chev.l i:nth-child(1){animation-delay:1.4s}#swipeHint.show .chev.l i:nth-child(2){animation-delay:1.52s}#swipeHint.show .chev.l i:nth-child(3){animation-delay:1.64s}
+@keyframes gChev{0%,100%{color:var(--line);text-shadow:none}6%,16%{color:var(--c2);text-shadow:0 0 1rem var(--c2)}30%{color:var(--line);text-shadow:none}}
+@keyframes gHand{0%,100%{transform:translateX(0)}18%{transform:translateX(1.2rem)}36%,50%{transform:translateX(0)}68%{transform:translateX(-1.2rem)}86%{transform:translateX(0)}}
+@keyframes gTap{0%{transform:scale(.6);opacity:.9}70%,100%{transform:scale(1.8);opacity:0}}
 body.editing #swipeHint{display:none}
 .kbdOnly{display:none}
 
@@ -319,8 +331,7 @@ html:not(.editor-enabled) #toggleEdit,html:not(.editor-enabled) #compactEdit{dis
   <main id="stage">
     <div class="boardWrap">
       <svg viewBox="0 0 520 520" aria-label="Plateau"><g id="rot"><g id="grid"></g></g></svg>
-      <span class="grav" aria-hidden="true">↓</span>
-      <div id="swipeHint" aria-hidden="true"><b>⟲</b><i></i><b>⟳</b></div>
+      <div id="swipeHint" aria-hidden="true"><span class="chev l"><i>‹</i><i>‹</i><i>‹</i></span><svg viewBox="0 0 24 24"><circle cx="11.5" cy="7.5" r="3.4"/><path d="M18.84 15.87l-4.54-2.26c-.17-.07-.35-.11-.54-.11H13v-6c0-.83-.67-1.5-1.5-1.5S10 6.67 10 7.5v10.74l-3.43-.72c-.08-.01-.15-.03-.24-.03-.31 0-.59.13-.79.33l-.79.8 4.94 4.94c.27.27.65.44 1.06.44h6.79c.75 0 1.33-.55 1.44-1.28l.75-5.27c.01-.07.02-.14.02-.2 0-.62-.38-1.16-.91-1.38z"/></svg><span class="chev r"><i>›</i><i>›</i><i>›</i></span></div>
     </div>
     <div id="confirmBox" class="hidden"><h2>Confirmer la suppression</h2><p id="confirmText"></p><div class="row"><button id="confirmCancel">Annuler</button><button id="confirmDelete" class="danger">Supprimer</button></div></div>
   </main>
@@ -1580,10 +1591,10 @@ function draw(){
   editPanel.className=editing?"":"hidden";
   document.getElementById("levelInput").value=currentLevel+1;updateLockUI();
 }
-/* la poussière du décor remonte quand on tombe : c'est elle qui donne la vitesse */
+/* la poussière du décor tombe en continu (elle montre le sens de la gravité) et accélère pendant une chute */
 function dgMotes(dt){
   const v=dgFallAnim?dgFallAnim.v:0;
-  dgMoteY=(dgMoteY+dt*(.006+v*.55))%100000;
+  dgMoteY=(dgMoteY+dt*(.035+v*.5))%100000;
   const m=document.getElementById("motes");
   if(m)m.style.setProperty("--my",dgMoteY.toFixed(1));
 }
