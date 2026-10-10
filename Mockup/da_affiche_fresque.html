@@ -1,0 +1,355 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Date Gravity – Affiche, Fresque et 4 nouvelles directions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;800;900&family=Dela+Gothic+One&family=Londrina+Solid:wght@400;900&family=Nunito:wght@600;800&family=Fredoka:wght@700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#0c0d12;color:#eef0f6;font:600 15px/1.45 Nunito,Arial,sans-serif}
+header,.sep{max-width:1340px;margin:0 auto;padding:30px 20px 0}
+h1{margin:0 0 6px;font:700 30px/1.1 Fredoka,Arial,sans-serif}
+header p,.sep p{margin:0;max-width:920px;color:#b9bdcc}
+.prop{max-width:1340px;margin:22px auto;padding:22px;border-radius:24px;background:#181a24}
+.num{font:800 12px/1 Nunito,Arial,sans-serif;letter-spacing:.16em;color:#9aa0b6}
+.prop h2{margin:6px 0 6px;font:700 28px/1.05 Fredoka,Arial,sans-serif;color:#ffd166}
+.prop>p{margin:0 0 6px;max-width:920px;color:#c9cddb;font-size:14px}
+.prop ul{margin:0 0 16px;padding-left:16px;color:#aab;font-size:13px;max-width:920px}
+.lay{display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start}
+.side{flex:1;min-width:300px}
+.side h3{margin:0 0 8px;font:800 12px/1 Nunito,Arial,sans-serif;letter-spacing:.12em;color:#9aa0b6;text-transform:uppercase}
+.tints{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px}
+.tints figure{margin:0;border-radius:12px;overflow:hidden;font-size:11px;text-align:center}
+.tints svg{display:block;width:100%;height:auto}
+.tints figcaption{padding:5px 2px;background:#0c0d12;color:#c9cddb}
+.cast{display:flex;gap:6px;flex-wrap:wrap;padding:12px;border-radius:14px;margin-bottom:14px}
+.cast figure{margin:0;width:84px;text-align:center;font-size:11px;line-height:1.2}
+.cast svg{display:block;width:76px;height:76px;margin:0 auto 2px;overflow:visible}
+.keys{display:flex;gap:6px;flex-wrap:wrap;padding:10px;border-radius:14px}
+.keys svg{width:44px;height:44px;overflow:visible}
+.pw{text-align:center}
+.pw>small{display:block;margin-top:8px;font:800 11px/1 Nunito,Arial,sans-serif;letter-spacing:.1em;color:#9aa0b6;text-transform:uppercase}
+.phone{position:relative;width:270px;height:560px;border-radius:36px;border:7px solid #000;overflow:hidden;box-shadow:0 18px 40px rgba(0,0,0,.6);display:flex;flex-direction:column;text-align:left}
+.phone>.bg{position:absolute;inset:0;z-index:0}
+.phone>.bg svg{width:100%;height:100%;display:block}
+.phone>*:not(.bg){position:relative;z-index:1}
+.hd{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 12px 0;height:54px}
+.mid{flex:1;min-height:0;display:grid;place-items:center;padding:0 8px}
+.mid svg{display:block;width:100%;height:auto;overflow:visible}
+.foot{padding:0 12px 14px;display:flex;flex-direction:column;gap:10px}
+.react{display:flex;align-items:flex-end;gap:8px}
+.react svg{flex:none;width:48px;height:48px;overflow:visible}
+.swipe{display:flex;align-items:center;justify-content:space-between;height:42px;padding:0 14px}
+.menu{align-items:center}
+.menu .pair{display:flex;gap:8px;margin-top:18px}
+.menu .pair div{width:110px;padding:8px 8px 7px;text-align:center}
+.menu .pair svg{display:block;width:100%;height:auto;overflow:visible}
+.menu .tag{margin-top:10px;font-size:12px;text-align:center;padding:0 18px}
+.menu .play{margin-top:auto;margin-bottom:24px;width:210px;padding:14px;text-align:center}
+.vert{position:absolute!important;right:10px;top:36px;writing-mode:vertical-rl;letter-spacing:.16em;display:none}
+
+/* ===== Affiche (retenue) */
+.sc .phone,.sc .cast,.sc .keys{background:#efe6cd;color:#16130f;font-family:Rubik,Arial,sans-serif}
+.sc .ttl,.se .ttl{font:400 18px/1 "Dela Gothic One",Impact,sans-serif;text-transform:uppercase}
+.sc .ttl small,.se .ttl small{display:block;margin-top:3px;font:800 9px/1 Rubik,Arial,sans-serif;letter-spacing:.12em}
+.sc .pill,.sc .rnd,.se .pill,.se .rnd{padding:7px 10px;background:#16130f;color:#efe6cd;font:800 11px Rubik,Arial,sans-serif}
+.sc .bubble,.se .bubble{padding:8px 11px;background:#16130f;color:#efe6cd;font:500 11.5px/1.25 Rubik,Arial,sans-serif;border-left:8px solid var(--c1)}
+.sc .swipe,.se .swipe{background:var(--c1);color:#efe6cd;font:400 13px "Dela Gothic One",Impact,sans-serif;letter-spacing:.12em}
+.sc .logo,.se .logo{margin-top:30px;align-self:stretch;padding:0 18px;font:400 37px/.9 "Dela Gothic One",Impact,sans-serif;text-transform:uppercase}
+.sc .logo b,.se .logo b{display:block;color:var(--c1);font-weight:400}
+.sc .vert{display:block;font:400 13px "Dela Gothic One",Impact,sans-serif;color:var(--c1)}
+.sc .pair div,.se .pair div{background:#16130f;color:#efe6cd;font:800 11px Rubik,Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase}
+.sc .pair div+div,.se .pair div+div{background:var(--c1)}
+.sc .play,.se .play{background:#16130f;color:#efe6cd;font:400 26px "Dela Gothic One",Impact,sans-serif;letter-spacing:.08em;border-bottom:8px solid var(--c1)}
+
+/* ===== Fresque (retenue) */
+.sd .phone,.sd .cast,.sd .keys{background:#0a0a0a;color:#fff;font-family:"Londrina Solid",Arial,sans-serif}
+.sd .ttl,.sf .ttl{font:900 23px/1 "Londrina Solid",Arial,sans-serif;text-transform:uppercase;letter-spacing:.03em}
+.sd .ttl small,.sf .ttl small{display:block;font:400 12px/1 "Londrina Solid",Arial,sans-serif;text-transform:none;letter-spacing:.04em}
+.sd .hd{background:linear-gradient(#0a0a0a 70%,transparent)}
+.sd .pill,.sd .rnd{padding:6px 11px;border-radius:99px;background:#0a0a0a;border:3px solid var(--c1);font-size:14px}
+.sd .foot{background:linear-gradient(transparent,#0a0a0a 26%)}
+.sd .bubble,.sf .bubble{padding:8px 12px;border-radius:16px 16px 16px 3px;background:#fff;color:#0a0a0a;font-size:14px;line-height:1.15}
+.sd .swipe{border-radius:99px;background:var(--c1);color:#0a0a0a;font:900 16px "Londrina Solid",Arial,sans-serif;letter-spacing:.14em}
+.sd .logo{margin-top:36px;padding:6px 16px 10px;background:#0a0a0a;border-radius:18px;text-align:center;font:900 54px/.84 "Londrina Solid",Arial,sans-serif;text-transform:uppercase;color:var(--c1)}
+.sd .logo b{display:block;color:#fff}
+.sd .pair div{border-radius:16px;background:#0a0a0a;border:3px solid var(--c1);font-size:16px}
+.sd .pair div+div{border-color:#fff}
+.sd .tag,.sf .tag{background:#0a0a0a;color:#fff;border-radius:99px;padding:4px 12px!important;font-size:14px!important}
+.sd .play{border-radius:99px;background:var(--c1);color:#0a0a0a;font:900 30px "Londrina Solid",Arial,sans-serif;letter-spacing:.1em;box-shadow:0 0 0 6px #0a0a0a}
+
+/* ===== 1. Affiche-Fresque */
+.se .phone,.se .cast,.se .keys{background:#efe6cd;color:#16130f;font-family:Rubik,Arial,sans-serif}
+.se .hd{background:linear-gradient(#efe6cd 72%,transparent)}
+.se .foot{background:linear-gradient(transparent,#efe6cd 24%)}
+.se .logo{background:#efe6cd;padding:8px 18px 10px;margin-top:24px}
+.se .tag{background:#efe6cd;padding:3px 10px!important;font-weight:800}
+
+/* ===== 2. Fresque couleur */
+.sf .phone,.sf .cast,.sf .keys{background:var(--c1);color:#0a0a0a;font-family:"Londrina Solid",Arial,sans-serif}
+.sf .cast,.sf .keys{background:#ffd21f}
+.sf .hd{background:linear-gradient(var(--c1) 70%,transparent)}
+.sf .foot{background:linear-gradient(transparent,var(--c1) 26%)}
+.sf .pill,.sf .rnd{padding:6px 11px;border-radius:99px;background:#0a0a0a;color:#fff;font-size:14px}
+.sf .swipe{border-radius:99px;background:#0a0a0a;color:#fff;font:900 16px "Londrina Solid",Arial,sans-serif;letter-spacing:.14em}
+.sf .logo{margin-top:36px;padding:6px 16px 10px;background:#0a0a0a;border-radius:18px;text-align:center;font:900 54px/.84 "Londrina Solid",Arial,sans-serif;text-transform:uppercase;color:#fff}
+.sf .logo b{display:block;color:var(--c1)}
+.sf .pair div{border-radius:16px;background:#fff;border:4px solid #0a0a0a;font-size:16px;box-shadow:4px 4px 0 #0a0a0a}
+.sf .play{border-radius:99px;background:#0a0a0a;color:#fff;font:900 30px "Londrina Solid",Arial,sans-serif;letter-spacing:.1em;box-shadow:0 0 0 6px var(--c1)}
+
+/* ===== 3. Plan de métro */
+.sg .phone,.sg .cast,.sg .keys{background:#f4f1e8;color:#14151a;font-family:Rubik,Arial,sans-serif}
+.sg .ttl{font:900 17px/1 Rubik,Arial,sans-serif;text-transform:uppercase}
+.sg .ttl small{display:block;margin-top:3px;font:500 10px/1 Rubik,Arial,sans-serif;text-transform:none;color:#6a6d78}
+.sg .rnd{width:34px;height:34px;display:grid;place-items:center;border-radius:50%;background:var(--c1);color:#fff;font-weight:900;font-size:13px;box-shadow:0 0 0 3px #14151a}
+.sg .pill{padding:7px 11px;border-radius:8px;background:#14151a;color:#fff;font-weight:800;font-size:12px}
+.sg .hd{border-bottom:3px solid #14151a;height:58px;padding-bottom:8px;background:#f4f1e8}
+.sg .bubble{padding:8px 12px;border-radius:10px;background:#fff;border:3px solid #14151a;font-weight:500;font-size:11.5px;line-height:1.25}
+.sg .swipe{border-radius:10px;background:#14151a;color:#fff;font-weight:900;font-size:13px;letter-spacing:.16em;border-bottom:6px solid var(--c1)}
+.sg .logo{margin-top:34px;align-self:stretch;padding:0 20px;font:900 46px/.88 Rubik,Arial,sans-serif;text-transform:uppercase;letter-spacing:-.02em}
+.sg .logo b{display:block;color:var(--c1)}
+.sg .pair div{border-radius:14px;background:#fff;border:3px solid #14151a;font-weight:800;font-size:11.5px}
+.sg .tag{align-self:stretch;text-align:left!important;padding:0 20px!important;font-weight:500}
+.sg .play{border-radius:12px;background:var(--c1);color:#fff;font-weight:900;font-size:24px;letter-spacing:.1em;box-shadow:0 0 0 3px #14151a,5px 6px 0 3px #14151a}
+
+/* ===== 4. Glyphes */
+.sh .phone,.sh .cast,.sh .keys{background:#14110d;color:#efe6cd;font-family:Rubik,Arial,sans-serif}
+.sh .ttl{font:400 18px/1 "Dela Gothic One",Impact,sans-serif;text-transform:uppercase;color:#efe6cd}
+.sh .ttl small{display:block;margin-top:3px;font:800 9px/1 Rubik,Arial,sans-serif;letter-spacing:.12em;color:var(--c1)}
+.sh .pill,.sh .rnd{padding:7px 10px;background:#efe6cd;color:#14110d;font:800 11px Rubik,Arial,sans-serif}
+.sh .bubble{padding:8px 11px;background:#efe6cd;color:#14110d;font:500 11.5px/1.25 Rubik,Arial,sans-serif;border-left:8px solid var(--c1)}
+.sh .swipe{border:3px solid #efe6cd;font:400 13px "Dela Gothic One",Impact,sans-serif;letter-spacing:.12em}
+.sh .logo{margin-top:30px;align-self:stretch;padding:0 18px;font:400 37px/.9 "Dela Gothic One",Impact,sans-serif;text-transform:uppercase}
+.sh .logo b{display:block;color:var(--c1);font-weight:400}
+.sh .vert{display:block;font:400 13px "Dela Gothic One",Impact,sans-serif;color:var(--c2)}
+.sh .pair div{background:#efe6cd;color:#14110d;font:800 11px Rubik,Arial,sans-serif;letter-spacing:.1em;text-transform:uppercase}
+.sh .pair div+div{background:var(--c1);color:#14110d}
+.sh .play{background:var(--c1);color:#14110d;font:400 26px "Dela Gothic One",Impact,sans-serif;letter-spacing:.08em;border-bottom:8px solid #efe6cd}
+</style>
+</head>
+<body>
+<header>
+  <h1>Affiche et Fresque, avec des personnages vivants</h1>
+  <p>D'abord les deux directions que tu gardes, corrigées sur les personnages : ils ont maintenant des pupilles, un reflet dans l'œil, des sourcils ou des cils, une bouche et des joues, et chaque esprit existe en version « lui » et « elle ». Ensuite quatre nouvelles directions dans la même famille : aplats francs, trait épais, pas de néon ni de mosaïque.</p>
+</header>
+<div id="kept"></div>
+<div class="sep"><h1>4 nouvelles directions</h1><p>Toutes partent de ce qui marche dans l'Affiche et la Fresque : peu de couleurs, des formes pleines, des murs qui se rejoignent en un seul tracé, un plateau sans cadre.</p></div>
+<div id="root"></div>
+
+<script>
+const g=(x,y,inner,extra)=>'<g transform="translate('+x+' '+y+')"'+(extra||"")+'>'+inner+'</g>';
+const rr=(x,y,w,h,r)=>"M"+(x+r)+" "+y+"H"+(x+w-r)+"a"+r+" "+r+" 0 0 1 "+r+" "+r+"V"+(y+h-r)+"a"+r+" "+r+" 0 0 1 -"+r+" "+r+"H"+(x+r)+"a"+r+" "+r+" 0 0 1 -"+r+" -"+r+"V"+(y+r)+"a"+r+" "+r+" 0 0 1 "+r+" -"+r+"Z";
+const circ=(cx,cy,r)=>"M"+(cx-r)+" "+cy+"a"+r+" "+r+" 0 1 0 "+(2*r)+" 0a"+r+" "+r+" 0 1 0 -"+(2*r)+" 0Z";
+function rng(seed){let s=seed;return()=>((s=Math.imul(s^(s>>>15),2246822507)^Math.imul(s^(s>>>13),3266489909),(s^=s>>>16)>>>0)/4294967296);}
+
+/* ---------- personnages : esprits vivants, en version lui / elle
+   lui  : crête courte et dressée, sourcils francs
+   elle : crête plus ample avec deux mèches qui retombent, cils, joues plus marquées, pendentif */
+const KIND={
+  flamme:{body:"#ff9a2e",crest:"#ffd23f",scarf:"#c93a2b",line:"#7a2a12",
+    m:"M7 17Q2 6 11 8Q10 -4 19 2Q22 -8 28 3Q38 1 33 17Z",
+    f:"M6 18Q-1 5 11 6Q12 -5 21 0Q30 -7 31 4Q41 5 34 18Z",
+    locks:["M5 15Q-4 23 2 33Q8 27 6 17Z","M35 15Q44 23 38 33Q32 27 34 17Z"]},
+  vague:{body:"#2fc4d6",crest:"#9aeef5",scarf:"#7a4dff",line:"#0e4a66",
+    m:"M7 17Q4 5 15 6Q22 -4 31 4Q26 5 27 9Q36 8 33 17Z",
+    f:"M6 18Q1 5 13 6Q15 -5 25 -2Q36 0 31 8Q39 9 34 18Z",
+    locks:["M5 16Q-3 22 3 31Q5 34 7 30Q4 24 6 18Z","M35 16Q43 22 37 31Q35 34 33 30Q36 24 34 18Z"]},
+  feuille:{body:"#6cc86a",crest:"#b6ef7a",scarf:"#d98a2b",line:"#1f5a2a",
+    m:"M20 17Q5 14 8 1Q18 4 20 12Q22 4 32 1Q35 14 20 17Z",
+    f:"M20 17Q2 15 4 -1Q17 1 20 11Q23 1 36 -1Q38 15 20 17Z",
+    locks:["M6 15Q-2 20 2 29Q8 24 7 17Z","M34 15Q42 20 38 29Q32 24 33 17Z"]},
+  etoile:{body:"#9d7bff",crest:"#ffd23f",scarf:"#ff5fa2",line:"#3a2380",
+    m:"M20 -6L24 6L36 6L26 13L30 17H10L14 13L4 6L16 6Z",
+    f:"M20 -7L24.5 5L38 5L27 12.5L31 17H9L13 12.5L2 5L15.5 5Z",
+    locks:["M6 15Q0 21 3 28L8 22Z","M34 15Q40 21 37 28L32 22Z"]}
+};
+function spirit(S,kind,sex,mood){
+  const P=KIND[kind],fem=sex==="f",ln=S.charLine||P.line,sw=S.charSw===undefined?2.2:S.charSw;
+  const st=sw?' stroke="'+ln+'" stroke-width="'+sw+'" stroke-linejoin="round"':"";
+  const eyeInk=S.eyeInk||ln;
+  const crest=fem?P.f:P.m;
+  let s="";
+  if(S.sticker){
+    const w=' fill="'+S.sticker+'" stroke="'+S.sticker+'" stroke-width="6" stroke-linejoin="round"';
+    s+='<path d="'+rr(4,13,32,26,9)+'"'+w+'/><path d="'+crest+'"'+w+'/>'+(fem?P.locks.map(d=>'<path d="'+d+'"'+w+'/>').join(""):"");
+  }
+  if(fem)s+=P.locks.map(d=>'<path d="'+d+'" fill="'+P.crest+'"'+st+'/>').join("");
+  s+='<path d="'+crest+'" fill="'+P.crest+'"'+st+'/>';
+  s+='<path d="'+rr(4,13,32,26,9)+'" fill="'+P.body+'"'+st+'/>';
+  if(!S.flat)s+='<path d="M5 29H35V30a9 9 0 0 1 -9 9H14a9 9 0 0 1 -9 -9Z" fill="#000" opacity=".15"/><path d="M9 17Q10 15 14 15" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".6"/>';
+  // écharpe ; fermoir rond pour lui, pendentif en losange pour elle
+  s+='<path d="M4.5 32H35.5V35.5Q20 40 4.5 35.5Z" fill="'+P.scarf+'"'+st+'/>';
+  s+=fem?'<path d="M20 32.6L23 35.6L20 38.8L17 35.6Z" fill="#ffd23f"'+(sw?' stroke="'+ln+'" stroke-width="1.2" stroke-linejoin="round"':"")+'/>'
+        :'<circle cx="20" cy="35.2" r="2.5" fill="#ffd23f"'+(sw?' stroke="'+ln+'" stroke-width="1.2"':"")+'/>';
+  // joues
+  s+='<ellipse cx="8.6" cy="28.2" rx="'+(fem?3:2.4)+'" ry="'+(fem?2:1.6)+'" fill="#ff5d8f" opacity="'+(fem?.6:.38)+'"/><ellipse cx="31.4" cy="28.2" rx="'+(fem?3:2.4)+'" ry="'+(fem?2:1.6)+'" fill="#ff5d8f" opacity="'+(fem?.6:.38)+'"/>';
+  // yeux : blanc + pupille + reflet. Le regard part vers l'autre personnage.
+  const look=fem?-1:1;
+  if(mood==="happy"){
+    s+='<path d="M9.4 24.6Q13.2 19.6 17 24.6M23 24.6Q26.8 19.6 30.6 24.6" fill="none" stroke="'+eyeInk+'" stroke-width="2.3" stroke-linecap="round"/>';
+  }else{
+    [13.2,26.8].forEach(x=>{
+      s+='<ellipse cx="'+x+'" cy="23.2" rx="4.3" ry="4.9" fill="#fff" stroke="'+eyeInk+'" stroke-width="1.5"/><circle cx="'+(x+look)+'" cy="23.8" r="2.5" fill="'+eyeInk+'"/><circle cx="'+(x+look+1)+'" cy="22.6" r=".95" fill="#fff"/>';
+    });
+  }
+  if(fem)s+='<path d="M8.6 20.2L6.4 18M10.6 18.8L9.4 16.2M31.4 20.2L33.6 18M29.4 18.8L30.6 16.2" stroke="'+eyeInk+'" stroke-width="1.3" stroke-linecap="round"/>';
+  else s+='<path d="M9.2 16.6L16.4 17.6M30.8 16.6L23.6 17.6" stroke="'+eyeInk+'" stroke-width="2" stroke-linecap="round"/>';
+  // bouche
+  s+=mood==="happy"?'<path d="M15.5 28.6Q20 34.6 24.5 28.6Z" fill="'+eyeInk+'"/>':'<path d="M16.4 29.4Q20 32.6 23.6 29.4" fill="none" stroke="'+eyeInk+'" stroke-width="1.9" stroke-linecap="round"/>';
+  return s;
+}
+
+/* ---------- pictos des blocs */
+const IC={
+  key:i=>'<circle cx="15.5" cy="20" r="3.4" fill="none" stroke="'+i+'" stroke-width="2.4"/><path d="M18.9 20H27M24 20v3M27 20v2.6" fill="none" stroke="'+i+'" stroke-width="2.4" stroke-linecap="round"/>',
+  lock:i=>'<path d="M15.5 15v-3.4a4.5 4.5 0 0 1 9 0V15" fill="none" stroke="'+i+'" stroke-width="2.6"/><rect x="12.5" y="14.5" width="15" height="11.5" rx="3" fill="'+i+'"/>',
+  open:i=>'<path d="M24.5 17v-3.4a4.5 4.5 0 0 0 -9 0" fill="none" stroke="'+i+'" stroke-width="2.6" stroke-linecap="round"/><rect x="12.5" y="16.5" width="15" height="11.5" rx="3" fill="'+i+'"/>',
+  heart:(c,k)=>'<path d="M20 31L9.5 20.5Q5 13.5 11 10Q16 7.5 20 13.5Q24 7.5 29 10Q35 13.5 30.5 20.5Z" fill="'+c+'"/><path d="M20.5 12.5l-3.2 5 5.2 3.4 -3 6.6" fill="none" stroke="'+k+'" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>',
+  arrow:(c,r)=>r?'<path d="M12.5 18A8 8 0 1 1 20 23" fill="none" stroke="'+c+'" stroke-width="3.4" stroke-linecap="round"/><polygon points="20,18 20,28 14,23" fill="'+c+'"/>':'<path d="M27.5 18A8 8 0 1 0 20 23" fill="none" stroke="'+c+'" stroke-width="3.4" stroke-linecap="round"/><polygon points="20,18 20,28 26,23" fill="'+c+'"/>'
+};
+function blk(S,fill,o){
+  o=o||{};
+  const d=o.round?circ(20,20,15.5):rr(2.5,2.5,35,35,S.r||8);
+  let s='<path d="'+d+'" fill="'+fill+'"'+(S.sw?' stroke="'+S.ink+'" stroke-width="'+S.sw+'" stroke-linejoin="round"':"")+'/>';
+  if(!S.flat&&!o.round)s+='<path d="M2.5 29H37.5V29.5a8 8 0 0 1 -8 8H10.5a8 8 0 0 1 -8 -8Z" fill="#000" opacity=".18"/><path d="M8 6.5H22" stroke="#fff" stroke-width="2.2" stroke-linecap="round" opacity=".55"/>';
+  return s;
+}
+function tile(S,c){
+  const P=S.pal;
+  if(c==="D")return blk(S,P.key)+IC.lock(P.keyInk);
+  if(c==="O")return '<path d="'+rr(4,4,32,32,7)+'" fill="'+P.key+'" opacity=".16"/><path d="'+rr(4,4,32,32,7)+'" fill="none" stroke="'+(P.openInk||P.key)+'" stroke-width="2" stroke-dasharray="4 3.5" opacity=".85"/><g opacity=".75">'+IC.open(P.openInk||P.key)+'</g>';
+  if(c==="S")return blk(S,P.key,{round:1})+IC.key(P.keyInk);
+  if(c==="X")return blk(S,P.dark)+IC.heart(P.heart,P.dark);
+  if(c==="R"||c==="L")return blk(S,P.rot)+IC.arrow(P.rotInk,c==="R");
+  if("123".includes(c))return blk(S,P.tp[c-1],{round:1})+'<circle cx="20" cy="20" r="9.5" fill="'+P.dark+'"/><text x="20" y="25.2" text-anchor="middle" font-family="Fredoka,Arial,sans-serif" font-weight="700" font-size="14.5" fill="'+(P.tpInk||"#fff")+'">'+"ABC"[c-1]+'</text>';
+  return "";
+}
+const isW=(map,x,y)=>map[y]&&map[y][x]==="#";
+const deg=(map,x,y)=>isW(map,x+1,y)+isW(map,x-1,y)+isW(map,x,y+1)+isW(map,x,y-1);
+function tubePath(map){
+  let d="";
+  map.forEach((row,y)=>[...row].forEach((c,x)=>{
+    if(c!=="#")return;
+    const cx=x*40+20,cy=y*40+20;
+    d+="M"+cx+" "+cy+"h.01";
+    if(isW(map,x+1,y))d+="M"+cx+" "+cy+"H"+(cx+40);
+    if(isW(map,x,y+1))d+="M"+cx+" "+cy+"V"+(cy+40);
+  }));
+  return d;
+}
+const eachWall=(map,fn)=>map.map((row,y)=>[...row].map((c,x)=>c==="#"?fn(x*40+20,y*40+20,deg(map,x,y)):"").join("")).join("");
+function doodles(w,h,color,seed,op,sw){
+  const r=rng(seed),step=38;let d="";
+  for(let y=0;y<h+step;y+=step)for(let x=0;x<w+step;x+=step){
+    const cx=x+r()*14-7,cy=y+r()*14-7,k=Math.floor(r()*8),a=11+r()*7;
+    if(k===0)d+="M"+(cx-a)+" "+cy+"a"+a+" "+a+" 0 0 1 "+(2*a)+" 0";
+    else if(k===1)d+="M"+(cx-a)+" "+cy+"a"+a+" "+a+" 0 1 0 "+a+" -"+a+"M"+(cx-a/2)+" "+cy+"a"+(a/2)+" "+(a/2)+" 0 1 0 "+(a/2)+" -"+(a/2);
+    else if(k===2)d+="M"+(cx-a)+" "+(cy-6)+"h"+(2*a)+"M"+(cx-a)+" "+(cy+6)+"h"+(2*a);
+    else if(k===3)d+="M"+(cx-a)+" "+(cy+a)+"l"+a+" -"+(2*a)+"l"+a+" "+(2*a)+"z";
+    else if(k===4)d+="M"+(cx-a)+" "+cy+"q"+(a/2)+" -"+a+" "+a+" 0t"+a+" 0";
+    else if(k===5)d+="M"+(cx-a)+" "+(cy-a)+"v"+(2*a)+"h"+(2*a);
+    else if(k===6)d+="M"+(cx-6)+" "+cy+"h.01M"+(cx+6)+" "+cy+"h.01M"+cx+" "+(cy-9)+"h.01M"+cx+" "+(cy+9)+"h.01";
+    else d+="M"+(cx-a)+" "+(cy-a)+"h"+(2*a)+"v"+(2*a)+"h-"+(2*a)+"z";
+  }
+  return '<path d="'+d+'" fill="none" stroke="'+color+'" stroke-width="'+(sw||6)+'" stroke-linecap="round" stroke-linejoin="round" opacity="'+op+'"/>';
+}
+const CREAM="#efe6cd",INKC="#16130f";
+const POSTER=[["Premier pas","#d8382c"],["Sortir du cadre","#2a4fa8"],["Boutons du cœur","#e0a526"],["Zones dangereuses","#2f7f6a"]];
+const FRESK=[["Premier pas","#ff2d55"],["Sortir du cadre","#19c8ff"],["Boutons du cœur","#ffd21f"],["Zones dangereuses","#7dff6a"]];
+
+const ST={
+ sc:{name:"Affiche (retenue)",flat:true,sw:0,r:3,ink:INKC,charSw:1.6,charLine:INKC,
+   pal:{key:"#e0a526",keyInk:INKC,openInk:"#a87a12",dark:INKC,heart:"#d8382c",rot:"#2f7f6a",rotInk:CREAM,tp:["#2a4fa8","#d8382c","#2f7f6a"]},
+   worlds:POSTER.map(w=>[w[0],w[1],INKC]),
+   bg:(w,h,W)=>'<rect width="'+w+'" height="'+h+'" fill="'+CREAM+'"/><circle cx="'+(w-28)+'" cy="'+(h-150)+'" r="86" fill="'+W[1]+'"/><rect x="0" y="'+(h-112)+'" width="'+w+'" height="6" fill="'+INKC+'"/><rect x="18" y="62" width="'+(w-36)+'" height="2" fill="'+INKC+'"/>',
+   cell:(x,y,W)=>(x+y)%2?'<rect x="'+x*40+'" y="'+y*40+'" width="40.4" height="40.4" fill="'+W[1]+'" opacity=".13"/>':'<rect x="'+x*40+'" y="'+y*40+'" width="40.4" height="40.4" fill="'+CREAM+'" opacity=".86"/>',
+   walls:(map,W)=>'<path d="'+tubePath(map)+'" fill="none" stroke="'+INKC+'" stroke-width="34" stroke-linecap="square" stroke-linejoin="miter"/>'+eachWall(map,(cx,cy,n)=>n===0?'<circle cx="'+cx+'" cy="'+cy+'" r="8" fill="'+W[1]+'"/>':"")},
+ sd:{name:"Fresque (retenue)",sticker:"#fff",sw:2.4,r:9,ink:"#0a0a0a",charSw:2.2,charLine:"#0a0a0a",
+   pal:{key:"#ffe14a",keyInk:"#0a0a0a",dark:"#0a0a0a",heart:"#ff2d55",rot:"#b06cff",rotInk:"#0a0a0a",tp:["#19c8ff","#ff7ad6","#7dff6a"]},
+   worlds:FRESK.map(w=>[w[0],w[1],"#fff"]),
+   bg:(w,h,W)=>'<rect width="'+w+'" height="'+h+'" fill="#0a0a0a"/>'+doodles(w,h,W[1],5,1),
+   under:n=>'<rect x="-10" y="-10" width="'+(n+20)+'" height="'+(n+20)+'" rx="30" fill="#0a0a0a"/>',
+   cell:(x,y,W)=>(x+y)%2?'<path d="'+rr(x*40+2,y*40+2,36,36,9)+'" fill="'+W[1]+'" opacity=".16"/>':'',
+   walls:(map,W)=>{const d=tubePath(map);return '<g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="'+d+'" stroke="'+W[1]+'" stroke-width="27"/><path d="'+d+'" stroke="#0a0a0a" stroke-width="3.2" stroke-dasharray="1 12.3"/></g>';}},
+
+ se:{name:"1 · Affiche × Fresque",flat:true,sticker:CREAM,sw:0,r:3,ink:INKC,charSw:1.8,charLine:INKC,
+   pal:{key:"#e0a526",keyInk:INKC,openInk:"#a87a12",dark:INKC,heart:"#d8382c",rot:"#2f7f6a",rotInk:CREAM,tp:["#2a4fa8","#d8382c","#2f7f6a"]},
+   worlds:POSTER.map(w=>[w[0],w[1],INKC]),
+   bg:(w,h,W)=>'<rect width="'+w+'" height="'+h+'" fill="'+CREAM+'"/>'+doodles(w,h,W[1],9,.95),
+   under:n=>'<rect x="-9" y="-9" width="'+(n+18)+'" height="'+(n+18)+'" fill="'+CREAM+'"/>',
+   cell:(x,y,W)=>(x+y)%2?'<rect x="'+x*40+'" y="'+y*40+'" width="40.4" height="40.4" fill="'+W[1]+'" opacity=".12"/>':'',
+   walls:(map,W)=>'<path d="'+tubePath(map)+'" fill="none" stroke="'+INKC+'" stroke-width="34" stroke-linecap="square" stroke-linejoin="miter"/>'+eachWall(map,(cx,cy,n)=>n<=1?'<circle cx="'+cx+'" cy="'+cy+'" r="7.5" fill="'+W[1]+'"/>':"")},
+
+ sf:{name:"2 · Fresque plein soleil",sticker:"#fff",sw:2.6,r:9,ink:"#0a0a0a",charSw:2.2,charLine:"#0a0a0a",
+   pal:{key:"#fff",keyInk:"#0a0a0a",openInk:"#0a0a0a",dark:"#0a0a0a",heart:"#ff2d55",rot:"#fff",rotInk:"#0a0a0a",tp:["#fff","#fff","#fff"]},
+   worlds:[["Premier pas","#ff5a4a"],["Sortir du cadre","#3db8ff"],["Boutons du cœur","#ffc81f"],["Zones dangereuses","#5fd97a"]].map(w=>[w[0],w[1],"#0a0a0a"]),
+   bg:(w,h,W)=>'<rect width="'+w+'" height="'+h+'" fill="'+W[1]+'"/>'+doodles(w,h,"#0a0a0a",5,.9),
+   under:(n,W)=>'<rect x="-10" y="-10" width="'+(n+20)+'" height="'+(n+20)+'" rx="30" fill="'+W[1]+'"/>',
+   cell:(x,y,W)=>(x+y)%2?'<path d="'+rr(x*40+2,y*40+2,36,36,9)+'" fill="#fff" opacity=".22"/>':'<path d="'+rr(x*40+2,y*40+2,36,36,9)+'" fill="#0a0a0a" opacity=".06"/>',
+   walls:(map,W)=>{const d=tubePath(map);return '<g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="'+d+'" stroke="#0a0a0a" stroke-width="28"/><path d="'+d+'" stroke="#fff" stroke-width="3.2" stroke-dasharray="1 12.3"/></g>';}},
+
+ sg:{name:"3 · Plan de métro",sw:2.6,r:9,ink:"#14151a",charSw:2.2,charLine:"#14151a",
+   pal:{key:"#ffd21f",keyInk:"#14151a",openInk:"#9a7a00",dark:"#14151a",heart:"#ff4a3d",rot:"#b06cff",rotInk:"#14151a",tp:["#19a8ff","#ff7ab8","#37c46a"]},
+   worlds:[["Ligne 1 · Premier pas","#ff4a3d"],["Ligne 2 · Sortir du cadre","#1f7bf2"],["Ligne 3 · Boutons du cœur","#f2a900"],["Ligne 4 · Zones dangereuses","#1faa6a"]].map(w=>[w[0],w[1],"#14151a"]),
+   bg:(w,h,W)=>'<rect width="'+w+'" height="'+h+'" fill="#f4f1e8"/><path d="M-10 '+(h-170)+'H'+(w*.42)+'L'+(w*.62)+' '+(h-110)+'H'+(w+10)+'" fill="none" stroke="'+W[1]+'" stroke-width="12" stroke-linejoin="round" opacity=".28"/><path d="M'+(w*.2)+' -10V'+(h*.2)+'L'+(w*.36)+' '+(h*.27)+'" fill="none" stroke="#14151a" stroke-width="5" stroke-linejoin="round" opacity=".12"/>',
+   cell:(x,y,W)=>'<circle cx="'+(x*40)+'" cy="'+(y*40)+'" r="1.6" fill="#14151a" opacity=".22"/>'+((x+y)%2?'<path d="'+rr(x*40+3,y*40+3,34,34,8)+'" fill="'+W[1]+'" opacity=".09"/>':''),
+   walls:(map,W)=>{const d=tubePath(map);return '<g fill="none" stroke-linecap="round" stroke-linejoin="round"><path d="'+d+'" stroke="#14151a" stroke-width="30"/><path d="'+d+'" stroke="'+W[1]+'" stroke-width="22"/></g>'+eachWall(map,(cx,cy,n)=>n!==2?'<circle cx="'+cx+'" cy="'+cy+'" r="7" fill="#fff" stroke="#14151a" stroke-width="3"/>':"");}},
+
+ sh:{name:"4 · Glyphes",flat:true,sticker:"#14110d",sw:0,r:3,ink:"#14110d",charSw:1.6,charLine:"#14110d",
+   pal:{key:"#e0a526",keyInk:"#14110d",dark:"#2a251d",heart:"#ff4a3d",rot:"#3fae8f",rotInk:"#14110d",tp:["#5b8cff","#ff4a3d","#3fae8f"]},
+   worlds:[["Premier pas","#ff4a3d","#e0a526"],["Sortir du cadre","#5b8cff","#efe6cd"],["Boutons du cœur","#e0a526","#ff4a3d"],["Zones dangereuses","#3fae8f","#e0a526"]],
+   bg:(w,h,W)=>'<rect width="'+w+'" height="'+h+'" fill="#14110d"/><circle cx="34" cy="'+(h-150)+'" r="70" fill="none" stroke="'+W[1]+'" stroke-width="22"/><circle cx="34" cy="'+(h-150)+'" r="20" fill="'+W[2]+'"/><rect x="18" y="62" width="'+(w-36)+'" height="2" fill="'+CREAM+'"/>',
+   under:n=>'<rect x="-8" y="-8" width="'+(n+16)+'" height="'+(n+16)+'" fill="#14110d"/>',
+   cell:(x,y,W)=>(x+y)%2?'<rect x="'+x*40+'" y="'+y*40+'" width="40.4" height="40.4" fill="'+CREAM+'" opacity=".07"/>':'',
+   walls:(map,W)=>'<path d="'+tubePath(map)+'" fill="none" stroke="'+CREAM+'" stroke-width="30" stroke-linecap="round" stroke-linejoin="round"/>'+
+     eachWall(map,(cx,cy,n)=>n===1?'<circle cx="'+cx+'" cy="'+cy+'" r="15" fill="'+W[1]+'"/><circle cx="'+cx+'" cy="'+cy+'" r="5" fill="#14110d"/>':n===0?'<circle cx="'+cx+'" cy="'+cy+'" r="15" fill="'+W[2]+'"/><circle cx="'+cx+'" cy="'+cy+'" r="5" fill="#14110d"/>':"")}
+};
+const MAP=["........1","..X..#...","###..#.2.","...A.#...","..##D#...",".S...O..B",".###.####","..R.1..2.","......L.."];
+function board(S,map,W){
+  const n=map.length*40;
+  let s=(S.under?S.under(n,W):""),top="";
+  for(let y=0;y<map.length;y++)for(let x=0;x<map.length;x++)s+=S.cell(x,y,W);
+  s+=S.walls(map,W);
+  map.forEach((row,y)=>[...row].forEach((c,x)=>{
+    if(c==="A")top+=g(x*40,y*40,spirit(S,"flamme","m"));
+    else if(c==="B")top+='<circle cx="'+(x*40+20)+'" cy="'+(y*40+22)+'" r="27" fill="'+KIND.vague.crest+'" opacity=".22"/>'+g(x*40,y*40,spirit(S,"vague","f"));
+    else if(c!=="."&&c!=="#")s+=g(x*40,y*40,tile(S,c));
+  }));
+  return '<svg viewBox="-6 -10 '+(n+12)+' '+(n+18)+'" xmlns="http://www.w3.org/2000/svg">'+s+top+'</svg>';
+}
+const one=(S,inner)=>'<svg viewBox="-8 -11 56 56" xmlns="http://www.w3.org/2000/svg">'+inner+'</svg>';
+
+const TXT={
+ sc:["Papier crème, noir, une couleur forte par chapitre, murs en barres noires continues. Inchangée, sauf les personnages.",[]],
+ sd:["Fond noir couvert de gribouillis d'une couleur vive par chapitre, murs tracés du même trait. Inchangée, sauf les personnages.",[]],
+ se:["La fusion des deux que tu gardes : le papier crème et les barres noires de l'Affiche, avec les gribouillis de la Fresque imprimés dans la couleur du chapitre tout autour du plateau. Les bouts de murs sont ponctués d'un rond de couleur.",
+   ["Garde la lisibilité de l'Affiche (clair, très contrasté) et la vie de la Fresque.","Les personnages sont détourés en crème pour se détacher des gribouillis.","Le décor est dense : il s'arrête net autour du plateau pour ne pas gêner la lecture."]],
+ sf:["La Fresque retournée : le fond prend la couleur vive du chapitre et les gribouillis passent en noir. Murs noirs épais, blocs et pictos en noir et blanc, personnages en autocollants. Seuls les personnages et le cœur brisé restent en couleur.",
+   ["La plus solaire et la plus affirmée : chaque chapitre est une couleur entière.","Tout ce qui est noir est décor ou mur, tout ce qui est en couleur est vivant : la lecture est immédiate.","À vérifier : le confort sur un fond très saturé pendant une longue session."]],
+ sg:["Le plateau est un plan de métro. Les murs sont des lignes épaisses de la couleur du chapitre, cernées de noir, avec une station blanche à chaque extrémité et à chaque embranchement. Les chapitres deviennent des lignes numérotées.",
+   ["Même principe de tracé continu que la Fresque, en version nette et signalétique.","Le thème colle au jeu : trouver son chemin jusqu'à quelqu'un.","Fond clair avec un simple semis de points pour la grille : c'est le damier le plus discret des six."]],
+ sh:["L'Affiche en version nuit, poussée vers la typographie : fond noir, murs crème arrondis qui ressemblent à des traits de lettres, terminés par de grands disques de couleur comme sur tes affiches. Chaque niveau a l'air d'un caractère inventé.",
+   ["La plus proche de ta planche d'affiches : formes construites, disques, peu de couleurs.","Deux couleurs par chapitre en plus du crème et du noir.","Les disques de bout de mur sont décoratifs : il faudra vérifier qu'on ne les prend pas pour des boutons."]]
+};
+const FONTS={sc:"Dela Gothic One · Rubik",sd:"Londrina Solid",se:"Dela Gothic One · Rubik",sf:"Londrina Solid",sg:"Rubik Black",sh:"Dela Gothic One · Rubik"};
+const CAST=[["flamme","m","Flamme · lui"],["flamme","f","Flamme · elle"],["vague","m","Vague · lui"],["vague","f","Vague · elle"],["feuille","f","Feuille · elle"],["etoile","m","Étoile · lui"],["vague","f","…contente","happy"]];
+
+function section(k,label){
+  const S=ST[k],T=TXT[k],W=S.worlds[0],vars='--c1:'+W[1]+';--c2:'+W[2];
+  const bg='<div class="bg"><svg viewBox="0 0 256 546" preserveAspectRatio="xMidYMid slice" xmlns="http://www.w3.org/2000/svg">'+S.bg(256,546,W)+'</svg></div>';
+  const game='<div class="pw"><div class="phone" style="'+vars+'">'+bg+'<div class="hd"><span class="rnd">'+(k==="sg"?"1":"II")+'</span><span class="ttl">Fermer à clé<small>chapitre 1 · niveau 7</small></span><span class="pill">1 / 6</span></div><div class="mid">'+board(S,MAP,W)+'</div>'+
+    '<div class="foot"><div class="react">'+one(S,spirit(S,"vague","f"))+'<span class="bubble">Encore 5 coups pour le sans-faute.</span></div><div class="swipe"><span>⟲</span><span>GLISSE</span><span>⟳</span></div></div></div><small>écran de jeu</small></div>';
+  const menu='<div class="pw"><div class="phone menu" style="'+vars+'">'+bg+'<span class="vert">TROUVE LE CHEMIN</span><div class="logo">date<b>gravity</b></div><div class="pair"><div>'+one(S,spirit(S,"flamme","m"))+'Moi</div><div>'+one(S,spirit(S,"vague","f"))+'Mon date</div></div><div class="tag">Trouve le chemin jusqu’à ton date.</div><div class="play">JOUER</div></div><small>menu</small></div>';
+  const tints=S.worlds.map((w,i)=>'<figure><svg viewBox="0 0 172 172" xmlns="http://www.w3.org/2000/svg">'+S.bg(172,172,w)+'<g transform="translate(6 10)">'+board(S,["....","#.A.","##.B","...."],w).replace(/^<svg[^>]*>/,"").replace(/<\/svg>$/,"")+'</g></svg><figcaption>'+(k==="sg"?"":(i+1)+' · ')+w[0]+'</figcaption></figure>').join("");
+  const cast=CAST.map(c=>'<figure>'+one(S,spirit(S,c[0],c[1],c[3]))+c[2]+'</figure>').join("");
+  const keys=["S","D","O","X","R","L","1","2","3"].map(c=>one(S,tile(S,c))).join("");
+  return '<section class="prop '+k+'"><div class="num">'+label+'</div><h2>'+S.name+'</h2><p>'+T[0]+'</p>'+(T[1].length?'<ul>'+T[1].map(x=>"<li>"+x+"</li>").join("")+'</ul>':'<ul></ul>')+
+    '<div class="lay">'+game+menu+'<div class="side"><h3>Le plateau, une teinte par chapitre</h3><div class="tints">'+tints+'</div><h3>Les personnages, lui et elle</h3><div class="cast" style="'+vars+'">'+cast+'</div><h3>Les blocs en pictos</h3><div class="keys" style="'+vars+'">'+keys+'</div><p style="margin:10px 0 0;font-size:12.5px;color:#aab">Typographie : '+FONTS[k]+'</p></div></div></section>';
+}
+document.getElementById("kept").innerHTML=section("sc","DIRECTION RETENUE")+section("sd","DIRECTION RETENUE");
+document.getElementById("root").innerHTML=["se","sf","sg","sh"].map(k=>section(k,"NOUVELLE DIRECTION")).join("");
+</script>
+</body>
+</html>

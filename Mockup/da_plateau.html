@@ -1,0 +1,206 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Date Gravity – page du plateau, 6 propositions</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&family=Nunito:wght@600;800;900&family=Caveat:wght@700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#14151c;color:#eef0f6;font:600 15px/1.45 Nunito,Arial,sans-serif}
+header{max-width:1280px;margin:0 auto;padding:32px 20px 0}
+header h1{margin:0 0 6px;font:700 32px/1.1 Fredoka,Arial,sans-serif}
+header p{margin:0;max-width:860px;color:#b9bdcc}
+.grid{max-width:1280px;margin:22px auto 40px;padding:0 20px;display:grid;grid-template-columns:repeat(auto-fill,minmax(580px,1fr));gap:22px}
+.card{padding:20px;border-radius:24px;background:#1d1f2a}
+.num{font:800 12px/1 Nunito,Arial,sans-serif;letter-spacing:.16em;color:#9aa0b6}
+.card h2{margin:6px 0 6px;font:700 26px/1.05 Fredoka,Arial,sans-serif;color:#ff6b5e}
+.card>p{margin:0 0 6px;color:#c9cddb;font-size:13.5px}
+.card ul{margin:0 0 14px;padding-left:16px;color:#aab;font-size:12.5px}
+.phones{display:flex;gap:18px;justify-content:center;flex-wrap:wrap}
+.pw{text-align:center}
+.pw>small{display:block;margin-top:8px;font:800 11px/1 Nunito,Arial,sans-serif;letter-spacing:.1em;color:#9aa0b6;text-transform:uppercase}
+
+/* ---- téléphone : reprend l'habillage actuel du jeu (en-tête, bulle, piste de swipe) */
+.phone{position:relative;width:250px;height:520px;border-radius:34px;border:7px solid #06070b;overflow:hidden;box-shadow:0 18px 40px rgba(0,0,0,.5);color:#33261f;
+  background:#fbf3e7 radial-gradient(rgba(51,38,31,.07) 1px,transparent 1.2px) 0 0/11px 11px;display:flex;flex-direction:column;text-align:left}
+.phone::before{content:"";position:absolute;left:0;right:0;top:0;height:150px;background:linear-gradient(180deg,#ffd9cf,transparent);pointer-events:none}
+.phone>*{position:relative}
+.hd{display:flex;align-items:center;justify-content:space-between;gap:8px;height:50px;padding:8px 11px 0}
+.round{flex:none;width:32px;height:32px;border-radius:50%;display:grid;place-items:center;background:#fff;box-shadow:0 3px 0 rgba(51,38,31,.1);font-weight:900;font-size:12px}
+.ttl{flex:1;text-align:center;font:700 22px/1 Caveat,cursive;white-space:nowrap}
+.ttl small{display:block;font:800 9px/1 Nunito,Arial,sans-serif;color:#8a7467}
+.pips{flex:none;display:flex;align-items:center;gap:4px;padding:6px 9px;border-radius:99px;background:#fff;box-shadow:0 3px 0 rgba(51,38,31,.12);font:800 10px/1 Nunito,Arial,sans-serif;color:#8a7467}
+.pips i{width:10px;height:10px;border-radius:50%;background:#eadfce}
+.pips i.on{background:#ff6b5e;box-shadow:inset 0 -2px 0 #c9443b}
+.mid{flex:1;min-height:0;display:grid;place-items:center}
+.foot{height:104px;padding:0 11px 13px;display:flex;flex-direction:column;justify-content:flex-end;gap:16px}
+.react{display:flex;align-items:flex-end;gap:8px}
+.react .mini{flex:none;width:40px;height:40px;border-radius:5px;border:3px solid #fff;background:#9be3d8;transform:rotate(-7deg);box-shadow:0 5px 10px rgba(51,38,31,.22)}
+.react p{margin:0 0 3px;padding:7px 10px;border-radius:13px 13px 13px 4px;background:#fff;box-shadow:0 3px 0 rgba(51,38,31,.1);font-weight:800;font-size:11px;line-height:1.25}
+.thumb{display:flex;align-items:center;gap:8px}
+.reset{flex:none;padding:10px 11px;border-radius:99px;background:#fff;box-shadow:0 3px 0 rgba(51,38,31,.1);font-size:10px;font-weight:900}
+.arc{position:relative;flex:1;display:flex;align-items:center;justify-content:space-between;height:40px;padding:0 12px;border-radius:99px;background:#fff;box-shadow:inset 0 3px 0 rgba(51,38,31,.08),0 3px 0 rgba(51,38,31,.1);font-size:18px;color:#5cc8c0}
+.arc b:last-child{color:#ff6b5e}
+.arc i{position:absolute;left:50%;top:50%;width:28px;height:28px;margin:-14px 0 0 -14px;border-radius:50%;background:#ff6b5e;box-shadow:inset 0 -4px 0 #c9443b,0 0 0 5px rgba(255,107,94,.18)}
+.board{position:relative;width:100%}
+.board svg{display:block;width:100%;height:auto;overflow:visible}
+.grav{position:absolute;left:50%;bottom:-13px;width:26px;height:26px;margin-left:-13px;border-radius:50%;display:grid;place-items:center;background:#ffd166;font-weight:900;font-size:14px;box-shadow:0 3px 0 #d9a73f;z-index:2}
+
+/* ================= 0. actuel (rappel) */
+.p0 .mid{padding:0 9px}
+.p0 .board{padding:8px;border-radius:24px;background:linear-gradient(125deg,#ff6b5e,#ffd166,#5cc8c0,#ffe3f1);box-shadow:0 8px 0 #e79a8c,0 22px 28px rgba(51,38,31,.3)}
+.p0 .board svg{border-radius:16px;box-shadow:0 0 0 3px #33261f;overflow:hidden;background:#fff8ee}
+
+/* ================= 1. sans cadre : le damier se fond dans la page */
+.p1 .board svg{-webkit-mask:linear-gradient(90deg,transparent 0,#000 9%,#000 91%,transparent 100%),linear-gradient(180deg,transparent 0,#000 9%,#000 91%,transparent 100%);-webkit-mask-composite:source-in;mask:linear-gradient(90deg,transparent 0,#000 9%,#000 91%,transparent 100%),linear-gradient(180deg,transparent 0,#000 9%,#000 91%,transparent 100%);mask-composite:intersect}
+.p1 .grav{bottom:-20px}
+
+/* ================= 2. pastilles : chaque case est une tuile, pas de bord extérieur */
+.p2 .mid{padding:0 5px}
+
+/* ================= 3. grille de points : le fond de la page devient le plateau */
+.p3 .phone{background:#fbf3e7}
+.p3 .mid{padding:0 6px}
+.p3 .rays{position:absolute;left:50%;top:50%;width:560px;height:560px;margin:-280px 0 0 -280px;border-radius:50%;background:repeating-conic-gradient(rgba(255,107,94,.12) 0 8deg,transparent 8deg 16deg);-webkit-mask:radial-gradient(circle,#000 14%,transparent 60%);mask:radial-gradient(circle,#000 14%,transparent 60%)}
+
+/* ================= 4. polaroïd géant : le plateau est la photo, le HUD est la légende */
+.p4 .hd{height:44px}
+.p4 .hd .ttl,.p4 .hd .pips{visibility:hidden}
+.p4 .mid{padding:0 12px}
+.p4 .board{padding:9px 9px 0;background:#fff;border-radius:6px;box-shadow:0 14px 26px rgba(51,38,31,.24);transform:rotate(-1.5deg)}
+.p4 .board::before{content:"";position:absolute;left:50%;top:-10px;width:70px;height:20px;margin-left:-35px;background:rgba(255,209,102,.85);transform:rotate(3deg);z-index:2}
+.p4 .board svg{border-radius:3px;overflow:hidden;background:#fff8ee}
+.p4 .cap{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:8px 2px 10px}
+.p4 .cap b{font:700 19px/1 Caveat,cursive;white-space:nowrap}
+.p4 .cap b small{display:block;font:800 9px/1.2 Nunito,Arial,sans-serif;color:#8a7467}
+.p4 .cap .pips{box-shadow:none;background:#fbf3e7}
+.p4 .grav{bottom:auto;top:calc(100% - 62px);left:auto;right:-10px;margin:0}
+
+/* ================= 5. feuille scotchée : papier quadrillé posé sur la table */
+.p5 .mid{padding:0 10px}
+.p5 .board{padding:10px;background:#fff;border-radius:3px;box-shadow:0 10px 22px rgba(51,38,31,.2);transform:rotate(1.4deg)}
+.p5 .board::before,.p5 .board::after{content:"";position:absolute;width:46px;height:17px;background:rgba(255,209,102,.85);z-index:2}
+.p5 .board::before{left:-12px;top:6px;transform:rotate(-38deg)}
+.p5 .board::after{right:-12px;bottom:8px;transform:rotate(-38deg);background:rgba(155,227,216,.9)}
+.p5 .doodle{position:absolute;right:16px;top:-22px;font:700 17px/1 Caveat,cursive;color:#ff6b5e;transform:rotate(6deg)}
+
+/* ================= 6. île en relief : le plateau est un objet posé, vu légèrement d'en haut */
+.p6 .mid{padding:0 12px;perspective:620px}
+.p6 .board{transform:rotateX(20deg);transform-origin:50% 60%;border-radius:22px;background:#fff8ee;box-shadow:0 12px 0 #e3cfae,0 26px 0 -6px rgba(51,38,31,.13),0 40px 34px rgba(51,38,31,.22)}
+.p6 .board svg{border-radius:22px;overflow:hidden}
+.p6 .grav{bottom:-34px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Page du plateau – 6 propositions</h1>
+  <p>Même en-tête, même bulle et même piste de swipe partout : seule la façon de poser le plateau change. Chaque proposition est montrée sur un niveau fermé du chapitre 1 et sur un niveau ouvert avec bouton, parce que l'effet « enfermé » n'est pas le même dans les deux cas. En premier, pour comparer, la version actuelle du jeu.</p>
+</header>
+<div class="grid" id="grid"></div>
+
+<script>
+const NS="http://www.w3.org/2000/svg";
+let PACK=null;
+function el(tag,attrs){const e=document.createElementNS(NS,tag);for(const k in attrs)if(attrs[k]!==undefined&&attrs[k]!==null)e.setAttribute(k,attrs[k]);return e;}
+function layer(l){
+  let e;
+  if(l.shape==="circle")e=el("circle",{cx:l.x,cy:l.y,r:l.r});
+  else if(l.shape==="path")e=el("path",{d:l.d,"stroke-linecap":"round","stroke-linejoin":"round"});
+  else if(l.shape==="polygon")e=el("polygon",{points:(l.points||[]).map(p=>p.join(",")).join(" ")});
+  else e=el("rect",{x:l.x,y:l.y,width:l.w,height:l.h,rx:l.rx,ry:l.ry});
+  e.setAttribute("fill",l.fill||"none");e.setAttribute("stroke",l.stroke||"none");e.setAttribute("stroke-width",l.strokeWidth||0);
+  if(l.opacity!==undefined)e.setAttribute("opacity",l.opacity);
+  return e;
+}
+function asset(name,x,y){
+  const g=el("g",{transform:"translate("+x+" "+y+")"});
+  (PACK.assets[name]?.layers||[]).forEach(l=>g.appendChild(layer(l)));
+  return g;
+}
+const TILE={"#":"wall",S:"button_off",D:"block_up",O:"block_down",X:"danger",R:"rotator_right",L:"rotator_left","1":"teleporter_1","2":"teleporter_2","3":"teleporter_3"};
+
+/* floor : checker | tiles | dots | paper */
+function boardSvg(map,floor){
+  const n=map.length,S=40;
+  const svg=el("svg",{viewBox:"0 0 "+n*S+" "+n*S});
+  for(let y=0;y<n;y++)for(let x=0;x<n;x++){
+    if(floor==="checker")svg.appendChild(el("rect",{x:x*S,y:y*S,width:S+.5,height:S+.5,fill:(x+y)%2?"#f7ead6":"#fff8ee"}));
+    if(floor==="tiles"){
+      svg.appendChild(el("rect",{x:x*S+2,y:y*S+4.5,width:36,height:35,rx:9,fill:"#e6d5bb"}));
+      svg.appendChild(el("rect",{x:x*S+2,y:y*S+2,width:36,height:35,rx:9,fill:(x+y)%2?"#fff3e1":"#fffaf2"}));
+    }
+    if(floor==="paper"){
+      svg.appendChild(el("rect",{x:x*S,y:y*S,width:S,height:S,fill:"#fff",stroke:"rgba(90,169,230,.38)","stroke-width":1}));
+    }
+  }
+  if(floor==="dots")for(let y=0;y<=n;y++)for(let x=0;x<=n;x++)svg.appendChild(el("circle",{cx:x*S,cy:y*S,r:2.2,fill:"rgba(51,38,31,.26)"}));
+  let me=null,date=null;
+  map.forEach((row,y)=>[...row].forEach((c,x)=>{
+    if(TILE[c])svg.appendChild(asset(TILE[c],x*S,y*S));
+    if(c==="A")me=[x,y];
+    if(c==="B")date=[x,y];
+  }));
+  if(date){
+    svg.appendChild(el("circle",{cx:date[0]*S+20,cy:date[1]*S+20,r:29,fill:"#ff6b5e",opacity:.24}));
+    svg.appendChild(asset("date_girl",date[0]*S,date[1]*S));
+  }
+  if(me)svg.appendChild(asset("player_boy",me[0]*S,me[1]*S));
+  return svg;
+}
+
+const LIST=[
+  ["p0","checker","Version actuelle (rappel)","Cadre irisé épais, liseré brun, scotch. C'est ce qui est dans le jeu aujourd'hui.",[]],
+  ["p1","checker","1 · Sans cadre","Plus aucun bord : le damier s'efface en douceur dans la page, sur toute la largeur de l'écran. Les murs et les personnages semblent posés directement sur le fond.",
+    ["Le plus ouvert : on comprend que le plateau continue au-delà (cohérent avec les bords ouverts).","Le plateau gagne environ 8 % de taille.","Risque : sur un niveau très vide, on voit moins où s'arrête la grille."]],
+  ["p2","tiles","2 · Pastilles","Chaque case est une petite tuile arrondie, détachée de ses voisines. Pas de bord extérieur : la forme du plateau est dessinée par les cases elles-mêmes.",
+    ["Même langage que les blocs en relief et les boutons du jeu.","Les cases restent très lisibles pour compter les coups.","Un peu plus chargé visuellement que le damier."]],
+  ["p3","dots","3 · Grille de points","Le sol disparaît : les petits points du fond de page deviennent la grille. Les murs flottent, les rayons du décor passent derrière.",
+    ["La plus intégrée : le plateau et la page ne font qu'un.","Très léger, très « papier ».","Demande d'aligner précisément le motif de fond sur la grille dans le jeu."]],
+  ["p4","checker","4 · Polaroïd géant","Le plateau est la photo d'un grand polaroïd. Le nom du niveau et le compteur de coups passent dans la légende, sous la photo : l'en-tête disparaît.",
+    ["Continuité directe avec la carte de profil : c'est la même carte, agrandie.","Libère le haut de l'écran.","Reste un cadre, mais fin, blanc et de travers."]],
+  ["p5","paper","5 · Feuille scotchée","Une feuille quadrillée posée sur la table, tenue par deux bouts de scotch, avec une petite note manuscrite dans la marge.",
+    ["Très cohérent avec le scotch et l'écriture à la main de la DA.","Le quadrillage fin remplace le damier : plus calme.","Moins « jeu », plus « carnet »."]],
+  ["p6","checker","6 · Île en relief","Le plateau devient un objet épais vu légèrement d'en haut, avec une tranche et une ombre portée. Aucun contour dessiné.",
+    ["Donne du volume et de la présence sans enfermer.","La rotation du plateau serait spectaculaire.","Le plus coûteux : les personnages devront rester droits malgré l'inclinaison."]]
+];
+
+function phone(cls,floor,map,name,sub){
+  const w=document.createElement("div");w.className="pw "+cls;
+  w.innerHTML='<div class="phone">'+(cls==="p3"?'<div class="rays"></div>':'')+
+    '<div class="hd"><span class="round">II</span><span class="ttl">'+name+'<small>'+sub+'</small></span><span class="pips">coups<i class="on"></i><i></i><i></i></span></div>'+
+    '<div class="mid"><div class="board">'+(cls==="p5"?'<span class="doodle">par ici ♥</span>':'')+'<span class="grav">↓</span></div></div>'+
+    '<div class="foot"><div class="react"><span class="mini"></span><p>Encore 2 coups pour le sans-faute.</p></div><div class="thumb"><span class="reset">↺ reset</span><span class="arc"><b>⟲</b><i></i><b>⟳</b></span></div></div></div>';
+  const board=w.querySelector(".board");
+  board.insertBefore(boardSvg(map,floor),board.firstChild);
+  if(cls==="p4"){
+    const cap=document.createElement("div");cap.className="cap";
+    cap.innerHTML='<b>'+name+'<small>'+sub+'</small></b><span class="pips">coups<i class="on"></i><i></i><i></i></span>';
+    board.appendChild(cap);
+  }
+  const mini=el("svg",{viewBox:"-4 -7.5 48 48",width:"100%",height:"100%"});
+  mini.appendChild(asset("date_girl",0,0));
+  w.querySelector(".mini").appendChild(mini);
+  return w;
+}
+
+Promise.all([fetch("../vector_assets_runtime.json").then(r=>r.json()),fetch("../levels.json").then(r=>r.json())]).then(([pack,data])=>{
+  PACK=pack;
+  const lv=data.levels;
+  const closed=lv.find(l=>l.chapter==="w01"&&l.gridSize===7&&l.maxMoves>=3)||lv[3];
+  const open=lv.find(l=>l.chapter==="w03"&&l.gridSize===9&&l.map.join("").includes("S")&&l.maxMoves>=3)||lv.find(l=>l.chapter==="w03");
+  const grid=document.getElementById("grid");
+  LIST.forEach(d=>{
+    const card=document.createElement("div");card.className="card";
+    card.innerHTML='<div class="num">'+(d[0]==="p0"?"RÉFÉRENCE":"PROPOSITION")+'</div><h2>'+d[2]+'</h2><p>'+d[3]+'</p>'+(d[4].length?'<ul>'+d[4].map(x=>"<li>"+x+"</li>").join("")+'</ul>':'<ul></ul>')+'<div class="phones"></div>';
+    const ph=card.querySelector(".phones");
+    const a=phone(d[0],d[1],closed.map,closed.name,"chapitre 1 · niveau fermé");
+    const b=phone(d[0],d[1],open.map,open.name,"chapitre 3 · niveau ouvert");
+    [a,b].forEach((p,i)=>{const s=document.createElement("small");s.textContent=i?"niveau ouvert":"niveau fermé";p.appendChild(s);ph.appendChild(p);});
+    grid.appendChild(card);
+  });
+}).catch(e=>{document.getElementById("grid").textContent="Ouvre cette page via le serveur local (http://localhost:8123/Mockup/da_plateau.html) : "+e;});
+</script>
+</body>
+</html>

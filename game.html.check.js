@@ -1,63 +1,8 @@
 window.CG_EDITOR_MODE=new URLSearchParams(location.search).get("editor")==="1";document.documentElement.classList.toggle("editor-enabled",window.CG_EDITOR_MODE);
-
-/* V36: force gameplay mode, bypass old embedded face menu from previous single-page build. */
-(function(){
-  window.__skipMainMenu = true;
-  window.__forceGameMode = true;
-
-  function hideEmbeddedMenu(){
-    const selectors = [
-      "#mainMenu",".mainMenu","#startMenu",".startMenu","#homeMenu",".homeMenu",
-      "#menu",".menu","#playFace",".faceButton",".click",".subtitle",".links",
-      "[aria-label='Menu principal']","[aria-label='Lancer le jeu']"
-    ];
-    selectors.forEach(sel => {
-      document.querySelectorAll(sel).forEach(el => {
-        el.style.setProperty("display","none","important");
-        el.style.setProperty("visibility","hidden","important");
-        el.style.setProperty("opacity","0","important");
-        el.style.setProperty("pointer-events","none","important");
-      });
-    });
-
-    // Common game containers, make sure they are visible if present.
-    ["game","gameRoot","app","hud","stage","boardWrap"].forEach(id => {
-      const el = document.getElementById(id);
-      if(el){
-        el.style.removeProperty("display");
-        el.style.setProperty("visibility","visible");
-        el.style.setProperty("opacity","1");
-        el.style.setProperty("pointer-events","auto");
-      }
-    });
-
-    document.body.classList.add("force-game-start");
-  }
-
-  function tryStartGame(){
-    hideEmbeddedMenu();
-    const fns = ["startGame","enterGame","beginGame","showGame","startLevel","initGame","resumeGame"];
-    fns.forEach(name => {
-      try {
-        if (typeof window[name] === "function") window[name]();
-      } catch(e) {}
-    });
-  }
-
-  if(document.readyState === "loading"){
-    document.addEventListener("DOMContentLoaded", tryStartGame);
-  } else {
-    tryStartGame();
-  }
-  window.addEventListener("load", tryStartGame);
-  let n = 0;
-  const timer = setInterval(() => {
-    tryStartGame();
-    n++;
-    if(n > 20) clearInterval(timer);
-  }, 100);
-})();
-
+;
+/* arrivée depuis une autre page du jeu : les rubans sont déjà fermés, on les ouvrira une fois prêt */
+try{if(sessionStorage.getItem("dg_tx")==="1"){sessionStorage.removeItem("dg_tx");document.documentElement.classList.add("tx-in");}}catch(e){}
+;
 
 const BOARD=520; let W=11,H=11,T=BOARD/W,HALF=T/2;
 
@@ -173,13 +118,13 @@ function normalizeLevelMapSize(map){
   return out.map(r=>r.join(""));
 }
 
-const grid=document.getElementById("grid"),rot=document.getElementById("rot"),stage=document.getElementById("stage"),svg=document.querySelector("svg");
+const grid=document.getElementById("grid"),rot=document.getElementById("rot"),stage=document.getElementById("stage"),svg=document.querySelector(".boardWrap svg");
 const modeLabel=document.getElementById("modeLabel"),status=document.getElementById("status"),tool=document.getElementById("tool");
 const editPanel=document.getElementById("editPanel"),levelNameInput=document.getElementById("levelName"),playStats=document.getElementById("playStats");
 const banner=document.getElementById("banner"),bannerTitle=document.getElementById("bannerTitle"),bannerText=document.getElementById("bannerText"),starsEl=document.getElementById("stars"),bannerAction=document.getElementById("bannerAction");
 
 let levels=[];
-const GAME_VERSION="V43.21-inclusive-shared";
+const GAME_VERSION="V49-neon-circuit";
 setTimeout(()=>{const v=document.getElementById("gameVersionBadge"); if(v)v.textContent=GAME_VERSION;},0);
 let gameSettings={fallDelayMs:135,rotationDurationMs:320};
 let fallbackLevels=[]; // V57: aucun niveau de gameplay en dur. levels.json est obligatoire.
@@ -204,7 +149,7 @@ let activeSwitchHeld=false;
 
 function E(n,a){let e=document.createElementNS("http://www.w3.org/2000/svg",n);for(let k in a)e.setAttribute(k,a[k]);return e}
 function rect(x,y,w,h,f,s,sw=4){grid.appendChild(E("rect",{x,y,width:w,height:h,fill:f,stroke:s,"stroke-width":sw,"pointer-events":"none"}))}
-function text(x,y,t,f,sz=22){let a=E("text",{x,y,fill:f,"font-size":sz,"font-weight":900,"text-anchor":"middle","font-family":"monospace","pointer-events":"none"});a.textContent=t;grid.appendChild(a)}
+function text(x,y,t,f,sz=22){let a=E("text",{x,y,fill:f,"font-size":sz,"font-weight":900,"text-anchor":"middle","font-family":"Rubik,Arial,sans-serif","pointer-events":"none"});a.textContent=t;grid.appendChild(a)}
 
 /* ===== V51 ASSET RUNTIME ===== */
 let assetPack=null;
@@ -356,12 +301,15 @@ function baseDoorOpen(){
   // La porte ouverte est maintenant une tuile O, pas un booléen planqué dans un coin. Civilisation.
   return false;
 }
+let fallToken=0;
 function resetPlay(){
+  fallToken++;
   setBoardSizeFromLevel(levels[currentLevel]);
   normalize();
   levels[currentLevel].map=map();
   b=arr(levels[currentLevel].map);
   door=baseDoorOpen();
+  dgFallAnim=null;dgImpact=null;dgRot=null;dgMelody=[];dgWhoosh(0);
   moves=0;busy=false;gameOver=false;deadPlayer=false;rotatorCooldown=false;teleporterCooldownType=null;eternalFallWraps=0;gamePaused=false;activeSwitchKey=null;activeSwitchHeld=false;resetPlayerTrail();hideBanner();
   rot.setAttribute("transform",`rotate(0 ${BOARD/2} ${BOARD/2})`);visualOri=0;
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){
@@ -369,7 +317,7 @@ function resetPlay(){
     if(b[y][x]=="B")exit={x,y}
   }
   draw(); updateStats();
-  if(!edit){if(musicOn)startElevatorMusic();busy=true;setTimeout(fall,getFallDelayMs());scheduleCompanion(false)}
+  if(!edit){if(musicOn)startElevatorMusic();busy=true;const token=fallToken;setTimeout(()=>{if(token===fallToken)fall();},getFallDelayMs());scheduleCompanion(false)}
 }
 
 function cleanLevelDisplayName(raw, fallbackIndex){
@@ -381,24 +329,28 @@ function cleanLevelDisplayName(raw, fallbackIndex){
 }
 
 function updateStats(){
-  const max=levels[currentLevel].maxMoves||"?";
-  const rawName=levels[currentLevel].name||("Niveau "+(currentLevel+1));
-  const name=cleanLevelDisplayName(rawName,currentLevel);
+  const l=levels[currentLevel];
+  if(!l)return;
+  const info=dgLevelPos(currentLevel);
   const titleEl=document.getElementById("title");
-  if(edit){
-    playStats.textContent="";
-    if(titleEl)titleEl.innerHTML='<span class="t-mark">▣</span> <span class="t-gravity">GRAVITY</span> <span class="t-cube">CUBE</span> <span class="t-mark">▣</span> <span id="modeLabel"></span>';
+  titleEl.textContent=l.name||("Niveau "+info.pos);
+  // le nom se réduit selon sa longueur pour tenir entre pause et compteur
+  titleEl.style.fontSize=Math.max(.95,Math.min(1.7,15.5/Math.max(8,titleEl.textContent.length))).toFixed(2)+"rem";
+  const sub=document.createElement("small");
+  sub.textContent="chapitre "+info.number+" · niveau "+info.pos;
+  titleEl.appendChild(sub);
+  // jusqu'à 6 coups d'objectif : une pastille par coup ; au-delà, un compteur
+  const max=Number(l.maxMoves)||0;
+  let html="<em>coups</em>";
+  if(max>0&&max<=6){
+    for(let n=1;n<=max;n++)html+='<i class="'+(n<=moves?"on":"")+(n===moves?" last":"")+'"></i>';
+    if(moves>max)html+="<b>+"+(moves-max)+"</b>";
   }else{
-    if(titleEl)titleEl.textContent=(currentLevel+1)+" - "+name;
-    playStats.innerHTML =
-      '<div class="objectiveLine" title="Résumé du niveau">'+
-        '<span class="metric metricMoves"><i>⟳</i><small>Coups</small><b>'+moves+'</b></span>'+
-        '<span class="metric metricGoal"><i>★</i><small>Objectif 3♥</small><b>'+max+'</b></span>'+
-        '<span class="metric metricDiff"><i>✦</i><small>Difficulté</small><b>'+(levels[currentLevel].difficulty||1)+'</b></span>'+
-      '</div>';
+    html+=(moves>max&&max?"<b>"+moves+"</b>":moves)+" / "+(max||"?");
   }
-  const badge=document.getElementById("levelBadge");
-  if(badge)badge.textContent=name;
+  playStats.innerHTML=html;
+  dgTint(info.ci);
+  if(!dgTutoActive)dgSetReact(dgReactLine(),false);
 }
 
 function isLocked(){return !!levels[currentLevel].locked}
@@ -527,9 +479,10 @@ function setPaused(v){
 }
 function soundMove(){beep(210,.045,"square",.012,"sfx")}
 function soundRotate(d){
-  if(d>0){beep(260,.055,"triangle",.026,"sfx");setTimeout(()=>beep(360,.07,"sine",.022,"sfx"),65)}
-  else{beep(360,.055,"triangle",.026,"sfx");setTimeout(()=>beep(240,.07,"sine",.022,"sfx"),65)}
+  // discret : la mélodie, ce sont les murs qui la jouent
+  beep(d>0?330:294,.05,"sine",.012,"sfx");
 }
+
 function soundLand(d=1){
   const now=performance.now();
   if(now-lastWallSoundAt<110)return;
@@ -560,14 +513,38 @@ function toggleSound(){
   if(soundOn){userAudioGesture();status.textContent="Son activé.";}else{stopElevatorMusic();status.textContent="Son coupé.";}
 }
 
-function hideBanner(){banner.classList.add("hidden");banner.classList.remove("lose");svg.style.filter="none";stopConfetti()}
-function showBanner(title,msg,stars,kind){hideCompanion(false);stopElevatorMusic();
-  bannerTitle.textContent=title; bannerText.textContent=msg; starsEl.textContent=stars||"";
-  bannerAction.textContent=kind==="win"?"NEXT LEVEL":"RESTART LEVEL";
-  bannerAction.onclick=()=>{ if(kind==="win"){goLevel((currentLevel+1)%levels.length)} else resetPlay(); };
-  if(kind==="lose"){svg.style.filter="grayscale(1) brightness(.55)";banner.classList.add("lose")}
-  else banner.classList.remove("lose");
-  banner.classList.remove("hidden");
+function hideBanner(){
+  banner.classList.add("hidden");
+  banner.classList.remove("lose");
+  document.getElementById("winScreen").classList.add("hidden");
+  stopConfetti();
+}
+
+function showBanner(title,msg,stars,kind){
+  hideCompanion(false);stopElevatorMusic();
+  const level=currentLevel, token=fallToken;
+  const stillThere=()=>gameOver&&level===currentLevel&&token===fallToken; // le joueur a pu relancer pendant le tampon
+  if(kind==="win"||kind==="final"){
+    const ch=dgChapterOfLevel(currentLevel);
+    const chapterDone=!!ch&&ch.levelIds[ch.levelIds.length-1]===currentLevel;
+    dgTampon(kind==="final"||chapterDone?"BRAVO !":"MATCH !",()=>{if(stillThere())dgShowWin(kind,msg);});
+    return;
+  }
+  // défaite : le date fait la tête, on propose de réessayer ou de voir la solution
+  dgTampon("OUPS !",()=>{
+    if(!stillThere())return;
+    dgPortrait("bannerArt",dgCurPerson().kind,dgDateSex(),{eye:"sad",mouth:"sad"});
+    bannerTitle.textContent=title;
+    bannerText.textContent=msg;
+    starsEl.textContent="";
+    bannerAction.textContent="Réessayer";
+    bannerAction.onclick=()=>resetPlay();
+    const alt=document.getElementById("bannerAlt");
+    alt.innerHTML=levels[currentLevel]?.solution?'💡 Voir la solution<span class="adtag">PUB</span>':"";
+    alt.onclick=()=>dgRequestSolution();
+    banner.classList.add("lose");
+    banner.classList.remove("hidden");
+  },true);
 }
 function starScore(){
   const max=levels[currentLevel].maxMoves||999;
@@ -586,7 +563,8 @@ function setVectorStatus(text,kind=""){ /* debug disabled */ }
 
 function validateVectorAssetsData(data){
   if(!data || !data.assets)throw new Error("vector_assets.json invalide : assets manquant");
-  const required=["player","destination","button_off","button_on","block_up","block_down","wall","danger","rotator_left","rotator_right"];
+  // les personnages (spirits.js) et les murs (tubes) sont dessinés par le jeu : seuls les blocs viennent du fichier
+  const required=["button_off","button_on","block_up","block_down","danger","rotator_left","rotator_right","teleporter_1","teleporter_2","teleporter_3"];
   const missing=required.filter(k=>!data.assets[k]);
   if(missing.length)throw new Error("vector_assets.json incomplet : "+missing.join(", "));
   return true;
@@ -611,7 +589,6 @@ async function loadVectorAssets(){
       window.__vectorDrawCount=0;
       const counts=Object.entries(data.assets).map(([k,v])=>k+":"+(v.layers?v.layers.length:0)).join(" | ");
       console.log("[VECTOR_ASSETS] OK",path,counts);
-      setVectorStatus("SVG ON\\n"+path+"\\nplayer:"+(data.assets.player.layers||[]).length+" layers\\nexpected:3563ce4af1","ok");
       return true;
     }catch(e){
       lastErr=e;
@@ -635,27 +612,8 @@ function readCharacterGender(key,fallback){
     return (v==="boy"||v==="girl") ? v : fallback;
   }catch(e){return fallback;}
 }
-function selectedCharacterAsset(role){
-  const meGender=readCharacterGender("dcg_me_gender","boy");
-  const dateGender=readCharacterGender("dcg_date_gender","girl");
-  const candidate=role==="player" ? "player_"+meGender : "date_"+dateGender;
-  const fallback=role==="player" ? "player" : "destination";
-  return vectorAssetExists(candidate) ? candidate : fallback;
-}
-function applyVectorThemeToGame(){
-  const th=vectorAssetPack?.themePreview||{};
-  const root=document.documentElement;
-  if(th.background)root.style.setProperty('--gc-bg',th.background);
-  if(th.board)root.style.setProperty('--gc-board',th.board);
-  if(th.border)root.style.setProperty('--gc-border',th.border);
-  if(th.grid)root.style.setProperty('--gc-grid',th.grid);
-  const stage=document.getElementById('stage');
-  const boardSvg=document.querySelector('.boardWrap svg');
-  const wrap=document.querySelector('.boardWrap');
-  if(stage && th.background)stage.style.background=th.background;
-  if(boardSvg && th.board)boardSvg.style.background=th.board;
-  if(wrap && th.border)wrap.style.boxShadow=`0 22px 44px rgba(0,0,0,.45), 0 0 0 3px ${th.border}`;
-}
+function applyVectorThemeToGame(){}
+
 function vectorGridStroke(){return vectorAssetPack?.themePreview?.grid || 'rgba(255,255,255,.10)';}
 function vectorAnimTransform(l,t){
   const a=l.anim;if(!a||!a.type)return "";
@@ -689,6 +647,8 @@ function appendVectorLayer(parent,l,t){
       g.appendChild(wrap);
     });
     const trParts=[];
+    const tx=Number(l.tx||0), ty=Number(l.ty||0);
+    if(tx||ty)trParts.push(`translate(${tx} ${ty})`);
     const hasScale=Number.isFinite(Number(l.scaleX))||Number.isFinite(Number(l.scaleY));
     const hasRot=Number.isFinite(Number(l.rotation));
     if(hasScale||hasRot){
@@ -705,6 +665,8 @@ function appendVectorLayer(parent,l,t){
     }
     const tr=vectorAnimTransform(l,t); if(tr)trParts.push(tr);
     if(trParts.length)g.setAttribute("transform",trParts.join(" "));
+    const op=vectorAnimOpacity(l,t);
+    if(op!==1)g.setAttribute("opacity",op);
     g.setAttribute("pointer-events","none");
     parent.appendChild(g);
     return;
@@ -717,9 +679,9 @@ function appendVectorLayer(parent,l,t){
     el=E("polygon",{points:pts});
   }else if(shape==="path"){
     const d=l.d || (Array.isArray(l.points) ? pointsToPath(l.points,l.curveMode||"smooth") : "");
-    el=E("path",{d:d});
+    el=E("path",{d:d,"stroke-linecap":"round","stroke-linejoin":"round"});
   }else if(shape==="text"){
-    el=E("text",{x:l.x??20,y:l.y??20,"font-size":l.fontSize??12,"font-weight":900,"font-family":"monospace","text-anchor":"middle"});
+    el=E("text",{x:l.x??20,y:l.y??20,"font-size":l.fontSize??12,"font-weight":900,"font-family":"Rubik,Arial,sans-serif","text-anchor":"middle"});
     el.textContent=l.text??"?";
   }else{
     el=E("rect",{x:l.x??0,y:l.y??0,width:l.w??10,height:l.h??10,rx:l.rx??0,ry:l.ry??l.rx??0});
@@ -796,6 +758,11 @@ function vectorGroupStaticTransform(g,bb){
 function appendVectorAssetLayers(parent,a,t){
   const layersList=Array.isArray(a.layers)?a.layers:[];
   const groupsList=Array.isArray(a.groups)?a.groups:[];
+  // V43.49 : table stable id -> layer. Le rendu des enfants de groupe
+  // utilise maintenant group.children, pas l'ordre global des layers.
+  // Sinon un layer créé dans un groupe peut passer devant/derrière en jeu
+  // alors que l'éditeur affiche autre chose. Petite trahison visuelle, donc non.
+  const layerById=new Map(layersList.filter(Boolean).map(layer=>[layer.id,layer]));
   const childToGroup=new Map();
   groupsList.forEach(g=>(g.children||[]).forEach(id=>childToGroup.set(id,g)));
   const renderedGroups=new Set();
@@ -810,8 +777,12 @@ function appendVectorAssetLayers(parent,a,t){
       const trParts=[];const st=vectorGroupStaticTransform(gr,bb);if(st)trParts.push(st);
       const tr=vectorAnimTransform({...bb,pivotX:gr.anim?.pivotX??gr.pivotX,pivotY:gr.anim?.pivotY??gr.pivotY,anim:gr.anim},t);if(tr)trParts.push(tr);
       if(trParts.length)ge.setAttribute("transform",trParts.join(" "));
-      layersList.forEach(child=>{
-        if(child && child.visible!==false && (gr.children||[]).includes(child.id))appendVectorLayer(ge,child,t);
+      // V43.49 : ordre interne fidèle. Si le groupe dit [A,B,C], le jeu dessine A puis B puis C.
+      // Avant, le runtime reprenait l'ordre global layersList, donc l'ordre réglé dans le groupe
+      // pouvait être ignoré, surtout après création d'une forme directement dans le groupe.
+      (gr.children||[]).forEach(childId=>{
+        const child=layerById.get(childId);
+        if(child && child.visible!==false)appendVectorLayer(ge,child,t);
       });
       parent.appendChild(ge);
     }else{
@@ -859,9 +830,9 @@ function drawVectorAsset(name,X,Y,parent=grid,opts={}){
 */
 const TELEPORTER_TYPES=["1","2","3"];
 const TELEPORTER_STYLES={
-  "1":{name:"cyan",label:"I",main:"#29e7ff",dark:"#073168",light:"#dffcff"},
-  "2":{name:"rose",label:"II",main:"#ff4f93",dark:"#5a1238",light:"#ffe0f0"},
-  "3":{name:"vert",label:"III",main:"#52f28a",dark:"#063b24",light:"#e1ffe9"}
+  "1":{name:"cyan",label:"A",main:"#19e3ff",dark:"#0d1230",light:"#ffffff"},
+  "2":{name:"rose",label:"B",main:"#ff4fd8",dark:"#0d1230",light:"#ffffff"},
+  "3":{name:"vert",label:"C",main:"#7dff6a",dark:"#0d1230",light:"#ffffff"}
 };
 
 function isTeleporterChar(c){
@@ -995,150 +966,223 @@ function pushPlayerTrailCell(x,y,fallDistance=1){
   prunePlayerTrail();
 }
 
+/* ===== V49 rendu du plateau =====
+   Deux calques : le décor (damier, tubes) n'est reconstruit que lorsque le plateau change ;
+   les blocs, les personnages et les effets sont redessinés à chaque image.
+   Les murs ne sont pas des cases : ce sont des tubes continus, à la couleur du chapitre. */
+let dgStaticG=null,dgDynG=null;
+function dgBoardAngle(){
+  const m=/rotate\(([-\d.e]+)/.exec(rot.getAttribute("transform")||"");
+  return m?Number(m[1])||0:0;
+}
+function dgDrawStatic(cell){
+  let key=(edit?"E":"P")+W+dgC1+dgC2;
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++)key+=cell(x,y)==="#"?"#":".";
+  if(!edit&&key===dgStaticKey&&dgStaticG&&dgStaticG.parentNode===grid)return;
+  dgStaticKey=key;
+  grid.innerHTML="";
+  dgStaticG=E("g",{"pointer-events":"none"});
+  dgDynG=E("g",{"pointer-events":"none"});
+  grid.appendChild(dgStaticG);grid.appendChild(dgDynG);
+  const defs=E("defs",{});
+  defs.innerHTML='<linearGradient id="dgTube" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="'+BOARD+'" y2="'+BOARD+'"><stop offset="0" stop-color="'+dgC1+'"/><stop offset="1" stop-color="'+dgC2+'"/></linearGradient>'+
+    '<linearGradient id="dgStreak" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#ffd23f" stop-opacity="0"/><stop offset="1" stop-color="#ffd23f" stop-opacity=".8"/></linearGradient>'+
+    '<radialGradient id="dgHalo"><stop offset="0" stop-color="#ff4f8b" stop-opacity=".6"/><stop offset="1" stop-color="#ff4f8b" stop-opacity="0"/></radialGradient>';
+  // motif très léger à l'intérieur des murs, différent selon le chapitre : hachures, pois, chevrons, croix
+  const u=T*.26,pw=Math.max(.6,T*.028),ps=' fill="none" stroke="#fff" stroke-width="'+pw+'" stroke-linecap="round"';
+  const motifs=[
+    '<path d="M'+(-u*.25)+' '+(u*.25)+'L'+(u*.25)+' '+(-u*.25)+'M0 '+u+'L'+u+' 0M'+(u*.75)+' '+(u*1.25)+'L'+(u*1.25)+' '+(u*.75)+'"'+ps+'/>',
+    '<circle cx="'+(u*.25)+'" cy="'+(u*.25)+'" r="'+(pw*1.1)+'" fill="#fff"/><circle cx="'+(u*.75)+'" cy="'+(u*.75)+'" r="'+(pw*1.1)+'" fill="#fff"/>',
+    '<path d="M0 '+(u*.65)+'L'+(u*.5)+' '+(u*.35)+'L'+u+' '+(u*.65)+'"'+ps+'/>',
+    '<path d="M'+(u*.5)+' '+(u*.28)+'V'+(u*.72)+'M'+(u*.28)+' '+(u*.5)+'H'+(u*.72)+'"'+ps+'/>'
+  ];
+  defs.innerHTML+='<pattern id="dgPat" patternUnits="userSpaceOnUse" width="'+u+'" height="'+u+'">'+motifs[dgChapterIndexOfLevel(currentLevel||0)%motifs.length]+'</pattern>';
+  dgStaticG.appendChild(defs);
+  // damier discret en tuiles arrondies, teinté par le chapitre
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+    dgStaticG.appendChild(E("rect",{x:x*T+T*.08,y:y*T+T*.08,width:T*.84,height:T*.84,rx:T*.2,fill:(x+y)%2?dgC2:dgC1,opacity:(x+y)%2?.07:.035,stroke:edit?"rgba(255,255,255,.16)":"none","stroke-width":1}));
+  }
+  // murs : chaque mur remplit sa case, et deux murs voisins se soudent. On lit d'un coup d'œil où l'on va se poser.
+  const wall=(x,y)=>x>=0&&y>=0&&x<W&&y<H&&cell(x,y)==="#";
+  const m=T*.2,s=T-2*m,r=T*.3;
+  const box=(x,y,w,h)=>"M"+x+" "+y+"h"+w+"v"+h+"h"+(-w)+"Z";
+  let d="";
+  for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+    if(!wall(x,y))continue;
+    const X=x*T+m,Y=y*T+m,cx=x*T+HALF,cy=y*T+HALF,rt=wall(x+1,y),dn=wall(x,y+1);
+    d+="M"+(X+r)+" "+Y+"h"+(s-2*r)+"a"+r+" "+r+" 0 0 1 "+r+" "+r+"v"+(s-2*r)+"a"+r+" "+r+" 0 0 1 "+(-r)+" "+r+"h"+(-(s-2*r))+"a"+r+" "+r+" 0 0 1 "+(-r)+" "+(-r)+"v"+(-(s-2*r))+"a"+r+" "+r+" 0 0 1 "+r+" "+(-r)+"Z";
+    if(rt)d+=box(cx,Y,T,s);
+    if(dn)d+=box(X,cy,s,T);
+    if(rt&&dn&&wall(x+1,y+1))d+=box(cx,cy,T,T);
+  }
+  dgTubeD=d;
+  if(d){
+    const P=a=>dgStaticG.appendChild(E("path",Object.assign({"stroke-linecap":"round","stroke-linejoin":"round"},a)));
+    // un tube creux : le contour lumineux est tracé puis l'intérieur est rebouché (ce qui efface aussi les soudures)
+    P({d,fill:"none",stroke:"url(#dgTube)","stroke-width":T*.46,opacity:.15});  // halo (pas de filtre de flou : trop coûteux sur mobile)
+    P({d,fill:"none",stroke:"url(#dgTube)","stroke-width":T*.2});
+    P({d,fill:"#0d1230",stroke:"none"});
+    P({d,fill:"url(#dgTube)",stroke:"none",opacity:.1});
+    P({d,fill:"url(#dgPat)",stroke:"none",opacity:.13});
+  }
+}
+/* un esprit dans une case, ancré par les pieds : l'écrasement et l'étirement partent du sol */
+function dgDrawSpirit(parent,kind,sex,X,Y,o){
+  o=o||{};
+  const s=T/40*.84,cx=X+HALF,cy=Y+HALF;
+  const el=E("g",{transform:"rotate("+(o.rot||0)+" "+cx+" "+cy+") translate("+(cx+(o.dx||0))+" "+(Y+T*.97+(o.dy||0))+") scale("+(s*(o.sx||1))+" "+(s*(o.sy||1))+") translate(-20 -39)"});
+  el.innerHTML=DGSpirit.svg(kind,sex,o.state);
+  parent.appendChild(el);
+}
 function drawPlayerSpeedTrail(){
   if(edit||deadPlayer||!playerTrail.length)return;
   const now=Date.now();
   prunePlayerTrail(now);
-
-  for(let i=0;i<playerTrail.length;i++){
-    const t=playerTrail[i];
-    const age=now-t.time;
-    const life=1-age/PLAYER_TRAIL_LIFE_MS;
+  for(const t of playerTrail){
+    const life=1-(now-t.time)/PLAYER_TRAIL_LIFE_MS;
     if(life<=0)continue;
-
-    const X=t.x*T;
-    const Y=t.y*T;
-    const alpha=Math.max(0,Math.min(.30,life*.28));
-    const scale=0.82+life*.12;
-
-    // Silhouette jaune du cube : lisible, mais assez transparente pour ne pas
-    // confondre le joueur avec sa traînée. Oui, on évite de mentir au joueur.
-    const g=E("g",{
-      transform:`translate(${X+HALF} ${Y+HALF}) scale(${scale}) translate(${-HALF} ${-HALF})`,
-      opacity:alpha,
-      "pointer-events":"none"
-    });
-
-    g.appendChild(E("rect",{
-      x:7,y:7,width:T-14,height:T-14,rx:Math.max(2,T*.08),ry:Math.max(2,T*.08),
-      fill:"#ffd640",
-      stroke:"#fff0a8",
-      "stroke-width":Math.max(1,T*.045),
-      "pointer-events":"none"
-    }));
-
-    // Petit trait vertical pour accentuer la chute sans ajouter un effet cartoon
-    // trop bruyant. La gravité reste celle du jeu, le trail ne décide de rien.
-    g.appendChild(E("rect",{
-      x:HALF-Math.max(2,T*.045),
-      y:T*.14,
-      width:Math.max(3,T*.09),
-      height:T*.68,
-      rx:Math.max(1,T*.04),
-      fill:"rgba(255,255,255,.55)",
-      "pointer-events":"none"
-    }));
-
-    grid.appendChild(g);
+    dgDynG.appendChild(E("circle",{cx:t.x*T+HALF,cy:t.y*T+HALF,r:T*.13*life,fill:"#ffd23f",opacity:(life*.55).toFixed(3)}));
   }
 }
-
 function draw(){
-  grid.innerHTML="";
+  const now=performance.now();
+  const cell=(x,y)=>edit?baseMap[y][x]:b[y][x];
+  dgDrawStatic(cell);
+  const g=dgDynG,ang=dgBoardAngle();
+  g.textContent="";
+  // 1) blocs : pendant une rotation ils restent à l'endroit, les pictos se lisent toujours
+  let dateCell=null;
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){
-    grid.appendChild(E("rect",{x:x*T,y:y*T,width:T,height:T,fill:"none",stroke:vectorGridStroke(),"stroke-width":1,"pointer-events":"none"}));
-    let c=edit?baseMap[y][x]:b[y][x],X=x*T,Y=y*T;
-    if(c=="#"){
-      if(drawVectorAsset("wall",X,Y)){}else if(!drawPixelAsset("wall",X,Y)){
-        grid.appendChild(E("rect",{x:X+2,y:Y+7,width:T-4,height:T-7,rx:2,ry:2,fill:"#6d2aa8",stroke:"#301447","stroke-width":3,"pointer-events":"none"}));
-        grid.appendChild(E("rect",{x:X+2,y:Y+2,width:T-4,height:T-10,rx:2,ry:2,fill:"#c775ff",stroke:"#7d36bf","stroke-width":3,"pointer-events":"none"}));
+    const c=cell(x,y);
+    if(c==="."||c==="#")continue;
+    if(c==="B"){dateCell={x,y};continue;}
+    if(c==="A"){if(edit)dgDrawSpirit(g,"flamme",dgMeSex(),x*T,y*T);continue;}
+    let name=null;
+    if(c==="S")name=buttonIsPressed(x,y)?"button_on":"button_off";
+    else if(c==="R")name="rotator_right";
+    else if(c==="L")name="rotator_left";
+    else if(isTeleporterChar(c))name=teleporterAssetName(c);
+    else if(c==="X")name="danger";
+    else if(c==="D")name="block_up";
+    else if(c==="O")name="block_down";
+    if(!name)continue;
+    if(ang){
+      const tg=E("g",{transform:"rotate("+(-ang)+" "+(x*T+HALF)+" "+(y*T+HALF)+")"});
+      drawVectorAsset(name,x*T,y*T,tg);
+      g.appendChild(tg);
+    }else drawVectorAsset(name,x*T,y*T,g);
+  }
+  const lean=dgRot?dgRot.dir*14*Math.sin(Math.PI*dgRot.k):0;
+  const imp=dgImpact?dgImpact.imp:0, idt=dgImpact?now-dgImpact.t:1e9;
+  const won=gameOver&&!deadPlayer&&p.x===exit.x&&p.y===exit.y, lost=gameOver&&!won;
+  const hop=t0=>-Math.abs(Math.sin((now+t0)/170))*T*.13;
+  // 2) la personne à rejoindre : halo, regard qui suit le joueur, sursaut quand il se prend un mur
+  if(dateCell){
+    const X=dateCell.x*T,Y=dateCell.y*T,person=dgCurPerson();
+    if(edit)dgDrawSpirit(g,person.kind,dgDateSex(),X,Y);
+    else{
+      const k=.5+.5*Math.sin(now*.0042);
+      g.appendChild(E("circle",{cx:X+HALF,cy:Y+HALF,r:T*(.85+.18*k),fill:"url(#dgHalo)",opacity:(.95-.35*k).toFixed(3)}));
+      const o={rot:-ang,state:{t:now}};
+      if(won){o.state.eye="happy";o.state.mouth="grin";o.dy=hop(260);o.dx=-T*.25;}
+      else if(lost){o.state.eye="sad";o.state.mouth="sad";}
+      else{
+        const dx=p.x-dateCell.x,dy=p.y-dateCell.y,n=Math.hypot(dx,dy)||1;
+        o.state.ex=dx/n*1.5;o.state.ey=dy/n*1.2;
+        if((now+900)%3700<130)o.state.eye="blink";
+        if(idt<300&&imp>.25){o.dy=-imp*T*.16*Math.sin(Math.PI*idt/300);o.state.mouth="o";}
       }
-    }
-    if(c=="B"){
-      if(drawVectorAsset(selectedCharacterAsset("date"),X,Y)){}else if(!drawPixelAsset("destination",X,Y)){
-        rect(X+4,Y+4,T-8,T-8,"#ff4f93","#8a1745");
-      }
-    }
-    if(c=="A"&&edit){
-      if(drawVectorAsset(selectedCharacterAsset("player"),X,Y)){}else if(!drawPixelAsset("player",X,Y)){
-        rect(X+4,Y+4,T-8,T-8,"#ffd640","#a56500");
-        text(X+HALF,Y+34,"A","#111",12);
-      }
-    }
-    if(c=="S"){
-      const pressed=(typeof buttonIsPressed==="function") ? buttonIsPressed(x,y) : false;
-      const assetName=pressed ? "button_on" : "button_off";
-      if(drawVectorAsset(assetName,X,Y)){}else if(!drawPixelAsset(assetName,X,Y)){
-        const ring=pressed?"#ffd1eb":"#ccb8c7";
-        const core=pressed?"#ff4f93":"#9a7d92";
-        grid.appendChild(E("rect",{x:X+12,y:Y+12,width:T-24,height:T-24,rx:4,ry:4,fill:"#171a2d",stroke:ring,"stroke-width":3,"pointer-events":"none"}));
-        grid.appendChild(E("rect",{x:X+16,y:Y+16,width:T-32,height:T-32,rx:3,ry:3,fill:core,stroke:ring,"stroke-width":2,"pointer-events":"none"}));
-      }
-    }
-    if(c=="R"||c=="L"){
-      const right=c=="R";
-      const assetName=right ? "rotator_right" : "rotator_left";
-      if(drawVectorAsset(assetName,X,Y)){}else if(!drawPixelAsset(assetName,X,Y)){
-        grid.appendChild(E("rect",{x:X+5,y:Y+5,width:T-10,height:T-10,rx:3,ry:3,fill:"#073168",stroke:"#29e7ff","stroke-width":4,"pointer-events":"none"}));
-        text(X+HALF,Y+29,right?"↻":"↺","#eefcff",28);
-      }
-    }
-    if(isTeleporterChar(c)){
-      // Téléporteur : même silhouette pour les 3 couleurs.
-      // On tente l'asset vectoriel d'abord, puis un fallback SVG autonome.
-      const assetName=teleporterAssetName(c);
-      if(drawVectorAsset(assetName,X,Y)){}else if(!drawPixelAsset(assetName,X,Y)){
-        drawTeleporterFallback(c,X,Y);
-      }
-    }
-    if(c=="X"){
-      if(drawVectorAsset("danger",X,Y)){}else if(!drawPixelAsset("danger",X,Y)){
-        grid.appendChild(E("rect",{x:X+6,y:Y+6,width:T-12,height:T-12,rx:2,ry:2,fill:"#ff304f",stroke:"#5a0010","stroke-width":3,"pointer-events":"none"}));
-      }
-    }
-    if(c=="D"||c=="O"){
-      const assetName=c=="D" ? "block_up" : "block_down";
-      if(drawVectorAsset(assetName,X,Y)){}else if(!drawPixelAsset(assetName,X,Y)){
-        if(c=="D"){
-          grid.appendChild(E("rect",{x:X+7,y:Y+7,width:T-14,height:T-20,rx:2,ry:2,fill:"#ff4f93",stroke:"#ffd1eb","stroke-width":3,"pointer-events":"none"}));
-        }else{
-          grid.appendChild(E("rect",{x:X+11,y:Y+18,width:T-22,height:T-28,rx:1,ry:1,fill:"#404552",stroke:"#737987","stroke-width":2,"pointer-events":"none"}));
-        }
+      dgDrawSpirit(g,person.kind,dgDateSex(),X,Y,o);
+      if(!gameOver){
+        const ph=(now%1800)/1800;
+        const h=E("text",{x:X+T*.86+ph*T*.1,y:Y+T*.12-ph*T*.5,fill:"#ff4f8b","font-size":T*(.2+.14*ph),"text-anchor":"middle",opacity:Math.sin(Math.PI*ph).toFixed(3),transform:"rotate("+(-ang)+" "+(X+HALF)+" "+(Y+HALF)+")"});
+        h.textContent="♥";
+        g.appendChild(h);
       }
     }
   }
   drawPlayerSpeedTrail();
-
+  // 3) le joueur : il s'étire en tombant, s'écrase à l'impact, puis rebondit
   if(!edit&&!deadPlayer){
-    let X=p.x*T,Y=p.y*T;
-    let idle=(!busy&&!gameOver)?Math.sin(idleTick*.12)*1.4:0;
-    let sx=1+squash*.22, sy=1-squash*.18;
-    let inv=-visualOri*90;
-    let grp=E("g",{transform:`translate(${X+HALF} ${Y+HALF+idle}) rotate(${inv}) scale(${sx} ${sy}) translate(${-HALF} ${-HALF})`,"pointer-events":"none"});
-    if(drawVectorAsset(selectedCharacterAsset("player"),0,0,grp)){}else if(!drawPixelAsset("player",0,0,grp)){
-      grp.appendChild(E("rect",{x:4,y:4,width:T-8,height:T-8,rx:2,ry:2,fill:"#ffd640",stroke:"#a56500","stroke-width":4}));
+    let py=p.y,fv=0;
+    const fa=dgFallAnim;
+    if(fa&&fa.x===p.x&&fa.to===p.y){
+      const k=Math.min(1,(now-fa.t0)/fa.dur);
+      py=fa.from+(fa.to-fa.from)*k;fv=fa.v;
     }
-    grid.appendChild(grp);
+    const X=p.x*T,Y=py*T;
+    const o={rot:-ang+lean,state:{t:now}};
+    if(fv>.12){
+      const len=T*(.5+fv*1.6);
+      g.appendChild(E("rect",{x:X+T*.27,y:Y+T*.55-len,width:T*.46,height:len,rx:T*.2,fill:"url(#dgStreak)",opacity:Math.min(1,fv*1.2).toFixed(3)}));
+    }
+    if(won){o.state.eye="happy";o.state.mouth="grin";o.dy=hop(0);o.dx=T*.25;}
+    else if(lost){o.state.eye="sad";o.state.mouth="sad";}
+    else if(fa&&fv>0){
+      o.sx=1-fv*.2;o.sy=1+fv*.38;
+      o.state.stretch=fv;o.state.ey=1.5;
+      if(fv>.35)o.state.mouth="o";
+    }else{
+      if(idt<420){
+        const s=imp*Math.exp(-idt/85)*Math.cos(idt/36);
+        o.sx=1+s*.42;o.sy=1-s*.36;
+        if(idt<170&&imp>.3)o.state.eye="hit";
+        if(idt<220&&imp>.2)o.state.mouth="o";
+      }
+      if(!o.state.eye){
+        if(now%3400<130)o.state.eye="blink";
+        else if(dateCell){
+          const dx=dateCell.x-p.x,dy=dateCell.y-p.y,n=Math.hypot(dx,dy)||1;
+          o.state.ex=dx/n*1.5;o.state.ey=dy/n*1.2;
+        }
+      }
+      if(!busy)o.dy=Math.sin(now/420)*T*.012;
+    }
+    dgDrawSpirit(g,"flamme",dgMeSex(),X,Y,o);
+    // l'écho de la chute : une onde lumineuse part du point d'impact et court dans les murs
+    if(dgImpact&&dgImpact.flash&&idt<520&&dgTubeD){
+      const k=idt/520,ex=dgImpact.x*T+HALF,ey=((dgImpact.y+1)%H)*T,R=T*(.3+k*(2.2+3.2*imp));
+      const mk=E("mask",{id:"dgEcho",maskUnits:"userSpaceOnUse",x:-T,y:-T,width:BOARD+2*T,height:BOARD+2*T});
+      mk.appendChild(E("circle",{cx:ex,cy:ey,r:R,fill:"none",stroke:"#ffffff","stroke-width":T*(.9+.8*imp)}));
+      g.appendChild(mk);
+      const eg=E("g",{mask:"url(#dgEcho)",opacity:(Math.pow(1-k,1.4)*(.45+.55*imp)).toFixed(3)});
+      eg.appendChild(E("path",{d:dgTubeD,fill:"none",stroke:"#ffffff","stroke-width":T*.24,"stroke-linejoin":"round"}));
+      eg.appendChild(E("path",{d:dgTubeD,fill:"#0d1230",stroke:"none"}));
+      eg.appendChild(E("path",{d:dgTubeD,fill:"url(#dgTube)",stroke:"none",opacity:.55}));
+      g.appendChild(eg);
+    }
+    if(dgImpact&&dgImpact.flash&&idt<300){
+      const k=idt/300,fx=dgImpact.x*T;
+      const rx=T*(.3+k*(.35+.75*imp));
+      g.appendChild(E("ellipse",{cx:fx+HALF,cy:(dgImpact.y+1)*T-T*.03,rx,ry:rx*.26,fill:"none",stroke:"#ffffff","stroke-width":Math.max(.5,T*.06*(1-k)),opacity:(1-k).toFixed(3)}));
+    }
   }
-  for(let y=0;y<H;y++)for(let x=0;x<W;x++){
-    let c=E("rect",{x:x*T,y:y*T,width:T,height:T,fill:"rgba(0,0,0,0.001)",stroke:"transparent",class:"hitcell"});
-    c.dataset.x=x;c.dataset.y=y;
-    c.addEventListener("pointerdown",startPaint);
-    c.addEventListener("pointerenter",paintEnter);
-    c.addEventListener("pointermove",paintMove);
-    grid.appendChild(c);
+  if(edit){
+    for(let y=0;y<H;y++)for(let x=0;x<W;x++){
+      let c=E("rect",{x:x*T,y:y*T,width:T,height:T,fill:"rgba(0,0,0,0.001)",stroke:"transparent",class:"hitcell"});
+      c.dataset.x=x;c.dataset.y=y;
+      c.addEventListener("pointerdown",startPaint);
+      c.addEventListener("pointerenter",paintEnter);
+      c.addEventListener("pointermove",paintMove);
+      grid.appendChild(c);
+    }
   }
   if(!window.CG_EDITOR_MODE && edit){ edit=false; }
-  document.body.classList.toggle("editing",edit && window.CG_EDITOR_MODE);
-  modeLabel.textContent=(edit && window.CG_EDITOR_MODE ? "EDIT" : "PLAY");
+  const editing=edit && window.CG_EDITOR_MODE;
+  document.body.classList.toggle("editing",editing);
   const editToggle=document.getElementById("toggleEdit");
-  editToggle.textContent=(edit && window.CG_EDITOR_MODE)?"ÉDITION":"⚙";
-  editToggle.title=(edit && window.CG_EDITOR_MODE)?"Quitter l’édition":"Ouvrir les outils";
-  editToggle.className=(edit && window.CG_EDITOR_MODE)?"active gearBtn":"gearBtn";
-  editPanel.className=(edit && window.CG_EDITOR_MODE)?"":"hidden";
+  editToggle.textContent=editing?"Quitter l’édition":"Éditer";
+  editToggle.className=editing?"active":"";
+  editPanel.className=editing?"":"hidden";
   document.getElementById("levelInput").value=currentLevel+1;updateLockUI();
 }
-
+/* la poussière du décor remonte quand on tombe : c'est elle qui donne la vitesse */
+function dgMotes(dt){
+  const v=dgFallAnim?dgFallAnim.v:0;
+  dgMoteY=(dgMoteY+dt*(.006+v*.55))%100000;
+  const m=document.getElementById("motes");
+  if(m)m.style.setProperty("--my",dgMoteY.toFixed(1));
+}
 
 let levelUndoStack=[];
 let paintSessionUndo=false;
@@ -1241,24 +1285,19 @@ function apply(d){resetPlayerTrail();visualOri=(visualOri+d+4)%4;if(d>0){b=cw(b)
 function toggleDoors(){
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){if(b[y][x]=="D")b[y][x]="O";else if(b[y][x]=="O")b[y][x]="D";}
 }
-function turn(d){
-  if(edit||busy||gameOver||gamePaused)return;
+function turn(d,fromAngle=0){
+  if(edit||busy||gameOver||gamePaused||dgUiOpen())return;
   hideCompanion(false);clearTimeout(companionTimer);clearTimeout(companionIdleTimer);
   busy=true;moves++;rotatorCooldown=false;userAudioGesture();soundRotate(d);updateStats();
-  const dur=getRotationDurationMs();
-  const interval=16;
-  const step=Math.max(2,90/(dur/interval));
-  let a=0,target=d*90,timer=setInterval(()=>{
-    a+=d*step;
-    rot.setAttribute("transform","rotate("+a+" 260 260)");
-    if(Math.abs(a)>=Math.abs(target)){
-      clearInterval(timer);
-      rot.setAttribute("transform",`rotate(0 ${BOARD/2} ${BOARD/2})`);
-      apply(d);draw();fall();
-    }
-  },interval);
+  dgSpin(d,(Math.sign(fromAngle)===d)?fromAngle:0,()=>{apply(d);draw();fall();});
 }
-function shake(dist){if(dist<=0)return;let amp=Math.min(7,1.5+dist*.7),s=[[amp,0],[-amp*.65,0],[amp*.35,0],[0,0]],i=0;(function tick(){let v=s[i++];stage.style.transform=`translate(${v[0]}px,${v[1]}px)`;if(i<s.length)setTimeout(tick,25);else stage.style.transform="translate(0,0)"})()}
+
+function shake(dist){
+  // le choc vient du bas : le plateau s'enfonce puis remonte
+  if(dist<=0||!stage.animate)return;
+  const amp=Math.min(9,2+dist*1.1);
+  stage.animate([{transform:"translate(0,0)"},{transform:"translate(0,"+amp+"px)"},{transform:"translate(0,"+(-amp*.45)+"px)"},{transform:"translate(0,"+(amp*.2)+"px)"},{transform:"translate(0,0)"}],{duration:190,easing:"ease-out"});
+}
 
 function buttonIsPressed(x,y){
   // V48 runtime fix: le bouton est "appuyé" quand le cube est sur la case.
@@ -1303,7 +1342,7 @@ function dissolvePlayer(){
   const scale=svgRect.width/BOARD;
   const cx=svgRect.left + (p.x*T+HALF)*scale;
   const cy=svgRect.top + (p.y*T+HALF)*scale;
-  const colors=["#f1c453","#ffd978","#5b3600","#ffffff","#111111"];
+  const colors=["#ff9a2e","#ffd23f","#ff4f6a","#ffffff","#19e3ff"];
   for(let i=0;i<38;i++){
     let d=document.createElement("div");
     d.className="deathPixel";
@@ -1330,7 +1369,7 @@ function floatingHearts(){
     h.textContent=hearts[i%hearts.length];
     h.style.left=(cx+(Math.random()*42-21))+"px";
     h.style.top=(cy+(Math.random()*18-9))+"px";
-    h.style.color=i%2?"#ff6b9b":"#ffd1df";
+    h.style.color=i%2?"#ff4f8b":"#ffe14a";
     h.style.animationDelay=(i*.08)+"s";
     document.body.appendChild(h);
     setTimeout(()=>h.remove(),1700);
@@ -1349,7 +1388,7 @@ function bigHeart(){
   h.textContent="♥";
   h.style.left=cx+"px";
   h.style.top=cy+"px";
-  h.style.color="#ff6b9b";
+  h.style.color="#ff4f8b";
   document.body.appendChild(h);
   setTimeout(()=>h.remove(),1600);
 }
@@ -1360,13 +1399,13 @@ function gravelFx(distance){
   const cx=svgRect.left + (p.x*T+HALF)*scale;
   const cy=svgRect.top + (p.y*T+T*.85)*scale;
   const count=Math.min(22,6+distance*3);
-  const colors=["#8aa0ff","#b8bddc","#74778b","#f1c453"];
+  const colors=[dgC1,dgC2,"#ffffff",dgC1];
   for(let i=0;i<count;i++){
     let d=document.createElement("div");
     d.className="gravel";
     d.style.left=(cx+(Math.random()*24-12))+"px";
     d.style.top=(cy+(Math.random()*8-4))+"px";
-    d.style.background=colors[Math.floor(Math.random()*colors.length)];
+    d.style.background=d.style.color=colors[Math.floor(Math.random()*colors.length)];
     d.style.setProperty("--dx",(Math.random()*70-35)+"px");
     d.style.setProperty("--dy",(-8-Math.random()*28)+"px");
     document.body.appendChild(d);
@@ -1384,49 +1423,40 @@ function rotatorDir(x,y){ return b[y][x] === "R" ? 1 : -1; }
 function autoRotateFromTile(dir){
   busy=true;
   rotatorCooldown=true;
-  const dur=getRotationDurationMs();
-  const interval=16;
-  const step=Math.max(2,90/(dur/interval));
-  let a=0,target=dir*90;
-  let timer=setInterval(()=>{
-    a+=dir*step;
-    rot.setAttribute("transform","rotate("+a+" 260 260)");
-    if(Math.abs(a)>=Math.abs(target)){
-      clearInterval(timer);
-      rot.setAttribute("transform",`rotate(0 ${BOARD/2} ${BOARD/2})`);
-      apply(dir);
-      draw();
-      setTimeout(()=>fall(),getFallDelayMs());
-    }
-  },interval);
+  const token=fallToken;
+  dgSpin(dir,0,()=>{apply(dir);draw();setTimeout(()=>{if(token===fallToken)fall();},getFallDelayMs());});
 }
 
 function triggerDeathTile(){
   gameOver=true;
   deadPlayer=true;
+  dgFallAnim=null;dgWhoosh(0);
   status.textContent="Mort : case ☠.";
   soundCrash();soundLose();
   dissolvePlayer();
   draw();
-  showBanner("MORT ☠","La tronche de la mort t'a pulvérisé.", "☆☆☆","lose");
+  showBanner("Oups… râteau","Tu as touché un cœur brisé. "+dgDateName()+" a levé les yeux au ciel.","","lose");
   busy=false;
 }
 
 function triggerEternalFall(){
   gameOver=true;
   busy=false;
+  dgWhoosh(0);
   status.textContent="Chute éternelle détectée.";
   soundEternalFall();
   soundLose();
-  showBanner("CHUTE ÉTERNELLE","Vous avez été pris dans une chute éternelle.","☆☆☆","lose");
+  showBanner("Perdu de vue","Tu es tombé dans le vide trois fois de suite. "+dgDateName()+" ne te voit plus.","","lose");
 }
 
 function fall(){
   if(edit||gameOver||gamePaused){busy=false;return;}
   let dist=0;
   let safety=0;
+  const token=fallToken;
 
   const step=()=>{
+    if(token!==fallToken)return;
     if(edit||gameOver||gamePaused){busy=false;return}
     if(safety++>160){
       busy=false;
@@ -1467,14 +1497,17 @@ function fall(){
       }
       const oldKey=p.x+","+p.y;
       pushPlayerTrailCell(p.x,p.y,dist);
+      // les règles avancent d'une case d'un coup ; l'image, elle, glisse entre les deux (voir draw)
+      const ms=dgStepDelay(dist);
+      dgFallAnim={x:nx,from:leavesBottom?-1:p.y,to:ny,t0:performance.now(),dur:ms,v:dgStepSpeed(ms)};
+      dgWhoosh(dgFallAnim.v);
       p.y=ny;
       p.x=nx;
       const newKey=p.x+","+p.y;
       if(newKey!==oldKey)rotatorCooldown=false;
       dist++;
       touchSwitch();
-      draw();
-      setTimeout(step,getFallDelayMs());
+      setTimeout(step,ms);
     }else{
       const switched=touchSwitch();
 
@@ -1486,11 +1519,7 @@ function fall(){
       }
 
       eternalFallWraps=0;
-      shake(dist);
-      soundLand(dist);
-      squash=Math.min(1,0.25+dist*.11);
-      setTimeout(()=>{squash=0;draw()},130);
-      gravelFx(dist);
+      dgLand(dist);
       draw();
       busy=false;
       if(p.x==exit.x&&p.y==exit.y){
@@ -1498,21 +1527,14 @@ function fall(){
         let s=starScore();
         let stars="♥".repeat(s)+"♡".repeat(3-s);
         status.textContent="Niveau gagné.";
-        soundLove();
-        soundWin();
         bigHeart();
         floatingHearts();
         startConfetti();
         saveWinProgress();
-        if(currentLevel>=49 || currentLevel===levels.length-1){
-          showBanner(
-            "DESTINÉE VALIDÉE 💖",
-            "Vous avez terminé les 50 niveaux. Votre date a enfin fonctionné. Il n’y a plus qu’à tenir les 3 prochaines années pour passer le cap. Tout au long du jeu, vous avez réussi à rencontrer différentes personnes, mais rien n’avait vraiment abouti. Cette fois, la dernière était la bonne — ou le bon.",
-            "💖 🌸 💋 ⭐ 💐",
-            "final"
-          );
+        if(currentLevel===levels.length-1){
+          showBanner("","Tu as terminé les "+levels.length+" niveaux. Après tous ces rendez-vous, cette fois c'était la bonne personne.","","final");
         }else{
-          showBanner("DESTINÉE RETROUVÉE","« "+levels[currentLevel].name+" » · "+moves+" coups · objectif 3♥ : "+levels[currentLevel].maxMoves,stars,"win");
+          showBanner("","",stars,"win");
         }
       }
     }
@@ -1520,100 +1542,32 @@ function fall(){
   step();
 }
 
-function spawnBgDots(clear=false, biomeOverride=null){
-  const bg=document.getElementById("pixelBg");
-  if(!bg)return;
-  if(clear)bg.innerHTML="";
-  const biome=biomeOverride || document.body.className.match(/biome-([a-z]+)/)?.[1] || localStorage.getItem("gravity_cube_biome") || "cosmic";
-  const palettes={
-    cosmic:["#00e5ff","#ff2bd6","#7c4dff","#fff000","#00e676"],
-    forest:["#00ff66","#b6ff00","#00c853","#ffea00","#31ffb7"],
-    desert:["#ff8a00","#ffd000","#ff3d00","#fff176","#ff6b00"],
-    ice:["#00d5ff","#d8fbff","#59f0ff","#ffffff","#7c9cff"],
-    rainbow:["#ff2bd6","#ff8a00","#fff000","#00e676","#00b8ff"],
-    love:["#ff4f93","#ffd1eb","#ff8fc2","#ffd640","#ffffff"],
-    garden:["#52f28a","#b6ff00","#ffd640","#ff8fc2","#ffffff"],
-    kiss:["#ff6b9b","#ffd1df","#ff304f","#ffd640","#ffffff"],
-    starry:["#405cff","#29e7ff","#ffe35a","#ffffff","#9b6cff"]
-  };
-  const types={
-    cosmic:["star","spark","cloud","plant","spark"],
-    forest:["plant","plant","rock","spark","cloud"],
-    desert:["rock","spark","cloud","rock","star"],
-    ice:["spark","cloud","rock","star","spark"],
-    rainbow:["star","spark","cloud","plant","spark"],
-    love:["heart","kiss","flower","star","heart"],
-    garden:["flower","heart","plant","star","kiss"],
-    kiss:["kiss","heart","star","flower","kiss"],
-    starry:["star","star","heart","spark","flower"]
-  };
-  const p=palettes[biome]||palettes.cosmic;
-  const t=types[biome]||types.cosmic;
-  const shapes=[
-    {x:"7%",y:"14%",s:78,c:p[0],t:t[0]},
-    {x:"82%",y:"13%",s:66,c:p[1],t:t[1]},
-    {x:"9%",y:"70%",s:90,c:p[2],t:t[2]},
-    {x:"82%",y:"68%",s:84,c:p[3],t:t[3]},
-    {x:"46%",y:"8%",s:62,c:p[4],t:t[4]},
-    {x:"17%",y:"42%",g:"♡",c:p[1]},
-    {x:"88%",y:"42%",g:"✦",c:p[4]},
-    {x:"27%",y:"84%",g:"🌸",c:p[2]},
-    {x:"72%",y:"84%",g:"💋",c:p[0]},
-    {x:"50%",y:"90%",g:"♥",c:p[1]}
-  ];
-  for(const sh of shapes){
-    const d=document.createElement("div");
-    if(sh.g){
-      d.className="biomeGlyph";
-      d.textContent=sh.g;
-      d.style.left=sh.x;
-      d.style.top=sh.y;
-      d.style.color=sh.c;
-      d.style.animationDelay=(-Math.random()*7)+"s";
-      bg.appendChild(d);
-      continue;
-    }
-    d.className="pxshape";
-    d.style.left=sh.x; d.style.top=sh.y; d.style.width=sh.s+"px"; d.style.height=sh.s+"px";
-    d.innerHTML=pixelShape(sh.c,sh.t);
-    bg.appendChild(d);
-  }
-}
-function pixelShape(c,t){
-  if(t==="heart")return `<svg viewBox="0 0 16 16"><rect x="4" y="3" width="3" height="3" fill="${c}"/><rect x="9" y="3" width="3" height="3" fill="${c}"/><rect x="3" y="5" width="10" height="4" fill="${c}"/><rect x="5" y="9" width="6" height="2" fill="${c}"/><rect x="7" y="11" width="2" height="2" fill="${c}"/></svg>`;
-  if(t==="flower")return `<svg viewBox="0 0 16 16"><rect x="7" y="7" width="2" height="2" fill="#ffd640"/><rect x="7" y="2" width="2" height="4" fill="${c}"/><rect x="7" y="10" width="2" height="4" fill="${c}"/><rect x="2" y="7" width="4" height="2" fill="${c}"/><rect x="10" y="7" width="4" height="2" fill="${c}"/><rect x="5" y="5" width="6" height="6" fill="rgba(255,255,255,.22)"/></svg>`;
-  if(t==="kiss")return `<svg viewBox="0 0 16 16"><rect x="3" y="6" width="10" height="2" fill="${c}"/><rect x="4" y="4" width="8" height="2" fill="${c}"/><rect x="4" y="8" width="8" height="2" fill="${c}"/><rect x="6" y="10" width="4" height="2" fill="${c}"/><rect x="5" y="5" width="2" height="1" fill="rgba(255,255,255,.55)"/></svg>`;
-  if(t==="star")return `<svg viewBox="0 0 16 16"><rect x="7" y="1" width="2" height="4" fill="${c}"/><rect x="7" y="11" width="2" height="4" fill="${c}"/><rect x="1" y="7" width="4" height="2" fill="${c}"/><rect x="11" y="7" width="4" height="2" fill="${c}"/><rect x="6" y="6" width="4" height="4" fill="${c}"/></svg>`;
-  if(t==="plant")return `<svg viewBox="0 0 16 16"><rect x="7" y="6" width="2" height="8" fill="${c}"/><rect x="4" y="8" width="3" height="2" fill="${c}"/><rect x="9" y="5" width="4" height="2" fill="${c}"/><rect x="5" y="3" width="2" height="3" fill="${c}"/><rect x="6" y="14" width="4" height="1" fill="${c}"/></svg>`;
-  if(t==="rock")return `<svg viewBox="0 0 16 16"><rect x="3" y="6" width="10" height="6" fill="${c}"/><rect x="5" y="4" width="6" height="2" fill="${c}"/><rect x="2" y="8" width="2" height="3" fill="${c}"/><rect x="12" y="7" width="2" height="4" fill="${c}"/><rect x="5" y="7" width="2" height="1" fill="rgba(255,255,255,.45)"/></svg>`;
-  if(t==="spark")return `<svg viewBox="0 0 16 16"><rect x="7" y="2" width="2" height="12" fill="${c}"/><rect x="2" y="7" width="12" height="2" fill="${c}"/><rect x="5" y="5" width="6" height="6" fill="${c}"/></svg>`;
-  return `<svg viewBox="0 0 16 16"><rect x="3" y="6" width="10" height="4" fill="${c}"/><rect x="5" y="4" width="6" height="2" fill="${c}"/><rect x="2" y="8" width="12" height="3" fill="${c}"/><rect x="5" y="7" width="2" height="1" fill="rgba(255,255,255,.45)"/></svg>`;
-}
+function spawnBgDots(){} // V47 : le décor est porté par la feuille de style, plus par des formes générées
+
 function confettiBurst(count=24){
-  const colors=["#ffd640","#52f28a","#3fc1ff","#ff6b9b","#9b6cff","#ff8fc2"];
-  const glyphs=["","♥","♡","🌸","💋","⭐","✦"];
+  const colors=[dgC1,dgC2,"#ffffff","#ff4f8b","#ffe14a"];
+  const glyphs=["","","♥","♥","✦"];
+  const host=document.getElementById("fxLayer");
   for(let i=0;i<count;i++){
     let c=document.createElement("div");
     c.className="confetti";
     const glyph=glyphs[Math.floor(Math.random()*glyphs.length)];
-    c.style.left=(Math.random()*100)+"vw";
+    const col=colors[Math.floor(Math.random()*colors.length)];
+    c.style.left=(Math.random()*100)+"%";
     c.style.animationDelay=(Math.random()*.18)+"s";
     c.style.animationDuration=(1.0+Math.random()*1.0)+"s";
-    c.style.transform=`translateY(-20px) rotate(${Math.random()*180}deg)`;
     if(glyph){
       c.textContent=glyph;
-      c.style.width='18px';
-      c.style.height='18px';
-      c.style.background='transparent';
-      c.style.color=colors[Math.floor(Math.random()*colors.length)];
+      c.style.color=col;
     }else{
-      c.style.background=colors[Math.floor(Math.random()*colors.length)];
-      c.style.borderRadius=(Math.random()>.6?'50%':'2px');
+      c.style.background=col;
+      c.style.borderRadius=(Math.random()>.6?"50%":"2px");
     }
-    stage.appendChild(c);
+    host.appendChild(c);
     setTimeout(()=>c.remove(),2600);
   }
 }
+
 function startConfetti(){
   stopConfetti();
   confettiBurst(52);
@@ -1624,11 +1578,11 @@ function stopConfetti(){
 }
 
 function applyBiomeVisual(name){
-  document.body.classList.remove("biome-cosmic","biome-forest","biome-desert","biome-ice","biome-rainbow","biome-love","biome-garden","biome-kiss","biome-starry");
-  document.body.classList.add("biome-"+name);
+  // V47 : l'ambiance vient du chapitre (teinte du décor), plus du biome du niveau.
+  // Le champ biome reste dans levels.json pour ne pas casser l'éditeur.
   try{localStorage.setItem("gravity_cube_biome",name)}catch(e){}
-  spawnBgDots(true,name);
 }
+
 function setBiome(name){
   levels[currentLevel].biome=name;
   applyBiomeVisual(name);
@@ -1723,7 +1677,7 @@ function generatedMap(){
   ];
   return normalizeLevelMapSize(templates[Math.floor(Math.random()*templates.length)]);
 }
-function addLevel(){writeCurrentLevel();levels.push({name:"Nouveau niveau "+(levels.length+1),maxMoves:999,locked:false,difficulty:1,gridSize:W,biome:document.getElementById("biomeSelect").value||"cosmic",map:generatedMap()});loadFromLevel(levels.length-1);edit=true;draw();calcMoves();status.textContent="Nouveau niveau ajouté avec une base."}
+function addLevel(){writeCurrentLevel();levels.push({id:"L"+Date.now().toString(36),chapter:levels[currentLevel]?.chapter,name:"Nouveau niveau "+(levels.length+1),maxMoves:999,locked:false,difficulty:1,gridSize:W,biome:document.getElementById("biomeSelect").value||"cosmic",map:generatedMap()});loadFromLevel(levels.length-1);edit=true;draw();calcMoves();status.textContent="Nouveau niveau ajouté avec une base."}
 function genLevel(){if(isLocked()){status.innerHTML='<span class="lockedWarn">Niveau verrouillé.</span>';return}pushLevelUndo("gen");baseMap=arr(generatedMap());normalize();levels[currentLevel].map=map();resetPlay();edit=true;draw();calcMoves();status.textContent="Base générée pour ce niveau."}
 function clearMap(){if(isLocked()){status.innerHTML='<span class="lockedWarn">Niveau verrouillé.</span>';return}pushLevelUndo("clear");baseMap=Array.from({length:H},()=>Array(W).fill("."));baseMap[1][1]="A";baseMap[H-2][W-2]="B";normalize();levels[currentLevel].map=map();resetPlay();edit=true;draw();status.textContent="Carte vidée."}
 function goLevel(i){writeCurrentLevel();loadFromLevel(i);saveCurrentProgress();status.textContent="Niveau "+(currentLevel+1)+" chargé : "+(levels[currentLevel].name||"sans nom")+"."}
@@ -2018,13 +1972,25 @@ function testCurrentLevel(){
 
 
 
-const PROGRESS_KEY="gravity_cube_player_progress_v1";
+// V45 : la progression est rangée par id de niveau. Avant elle l'était par position,
+// donc insérer ou réordonner un niveau décalait toute la sauvegarde du joueur.
+const PROGRESS_KEY="gravity_cube_player_progress_v2";
 
+function levelKey(idx){
+  const l=levels[idx];
+  return (l&&l.id) ? String(l.id) : ("i"+idx);
+}
+function levelIndexFromKey(key){
+  for(let i=0;i<levels.length;i++)if(levelKey(i)===key)return i;
+  return -1;
+}
 function loadProgress(){
   try{
-    return JSON.parse(localStorage.getItem(PROGRESS_KEY)||'{"currentLevel":0,"highestLevel":0,"best":{}}');
+    const pr=JSON.parse(localStorage.getItem(PROGRESS_KEY)||"{}")||{};
+    if(!pr.best)pr.best={};
+    return pr;
   }catch(e){
-    return {currentLevel:0,highestLevel:0,best:{}};
+    return {current:null,best:{}};
   }
 }
 function saveProgress(data){
@@ -2032,28 +1998,23 @@ function saveProgress(data){
 }
 function saveCurrentProgress(){
   const pr=loadProgress();
-  pr.currentLevel=currentLevel;
-  pr.highestLevel=Math.max(pr.highestLevel||0,currentLevel);
+  pr.current=levelKey(currentLevel);
   saveProgress(pr);
 }
 function saveWinProgress(){
   const pr=loadProgress();
   const stars=starScore();
-  const best=pr.best||{};
-  const old=best[currentLevel];
+  const key=levelKey(currentLevel);
+  const old=pr.best[key];
   if(!old || moves<old.moves || stars>old.stars){
-    best[currentLevel]={moves:moves,stars:stars};
+    pr.best[key]={moves:moves,stars:stars};
   }
-  pr.best=best;
-  pr.currentLevel=Math.min(currentLevel+1,levels.length-1);
-  pr.highestLevel=Math.max(pr.highestLevel||0,currentLevel+1);
+  pr.current=levelKey(Math.min(currentLevel+1,levels.length-1));
   saveProgress(pr);
 }
 function savedStartLevel(){
-  const pr=loadProgress();
-  let idx=parseInt(pr.currentLevel||0,10);
-  if(!Number.isFinite(idx))idx=0;
-  return Math.max(0,Math.min(levels.length-1,idx));
+  const idx=levelIndexFromKey(loadProgress().current);
+  return idx<0 ? 0 : idx;
 }
 
 let companionTimer=null, companionIdleTimer=null;
@@ -2073,6 +2034,7 @@ function companionStage(){
   if(m.rot)return "rotator";
   if(m.death)return "death";
   if(m.button)return "button";
+  if(typeof dgChapterOfLevel==="function" && dgChapterOfLevel(currentLevel)?.mechanic==="wrap")return "wrap";
   return currentLevel===0 ? "core" : "";
 }
 function companionSeenKey(stage){
@@ -2081,27 +2043,32 @@ function companionSeenKey(stage){
 function companionMessage(kind="intro"){
   const stage=companionStage();
   if(stage==="core"){
-    return "Tourne le plateau pour me déplacer. Je tombe seulement après la rotation. Cherche surtout où je vais m'arrêter.";
+    return "Glisse à droite ou à gauche pour tourner le plateau. Je tombe, et je m'arrête au premier obstacle.";
+  }
+  if(stage==="wrap"){
+    return kind==="hint"
+      ? "Indice : un bord ouvert n'est pas un mur. Regarde où je réapparais de l'autre côté."
+      : "Nouveauté : les bords sont ouverts. Si je sors d'un côté, je reviens par l'autre. Mais trois tours dans le vide, et c'est la chute éternelle.";
   }
   if(stage==="button"){
     return kind==="hint"
-      ? "Indice : le bouton inverse les portes. Le bon moment compte plus que la vitesse."
-      : "Nouvelle brique : le bouton. Quand je passe dessus, les portes ouvertes se ferment et les portes fermées s'ouvrent.";
+      ? "Indice : la clé inverse tous les cadenas. Le bon moment compte plus que la vitesse."
+      : "Nouveauté : la clé. Quand je passe dessus, les cadenas fermés s'ouvrent et les cadenas ouverts se referment.";
   }
   if(stage==="death"){
     return kind==="hint"
       ? "Indice : vise d'abord une case sûre où atterrir. La sortie vient après."
-      : "Nouvelle brique : la mort. Si je touche la tête de mort, je me désintègre en pixels. Dramatique, mais clair.";
+      : "Nouveauté : le cœur brisé. Si je le touche, c'est le râteau assuré. On l'évite.";
   }
   if(stage==="rotator"){
     return kind==="hint"
       ? "Indice : le rotateur tourne le monde à ta place. Prévois ma chute après cette rotation forcée."
-      : "Nouvelle brique : le rotateur. Quand je le touche, le plateau tourne automatiquement puis la gravité reprend.";
+      : "Nouveauté : le rotateur. Quand je le touche, le plateau tourne tout seul, puis je retombe.";
   }
   if(stage==="teleporter"){
     return kind==="hint"
-      ? "Indice : une couleur mène à la même couleur. Après la sortie, je continue à tomber dans le même sens."
-      : "Nouvelle brique : le téléporteur. J'entre dans une couleur, je ressors par l'autre de la même couleur. Le plateau ne tourne pas.";
+      ? "Indice : A mène à A, B mène à B. Après la sortie, je continue à tomber dans le même sens."
+      : "Nouveauté : les portails. J'entre par une lettre, je ressors par la même lettre. Le plateau ne tourne pas.";
   }
   return kind==="hint"
     ? "Indice : pense en étapes : rotation, chute, arrêt, prochaine rotation."
@@ -2115,16 +2082,7 @@ function persistentTipText(){
 
 function showCompanion(msg, markSeen=false){
   if(edit||gameOver||!msg)return;
-  const dock=document.getElementById("companionDock");
-  const help=document.getElementById("companionHelp");
-  const txt=document.getElementById("companionText");
-  const skip=document.getElementById("companionSkip");
-  if(!dock||!txt)return;
-  txt.textContent=msg;
-  dock.classList.remove("hidden");
-  dock.classList.remove("tipVisible");
-  if(skip)skip.textContent="Passer";
-  if(help)help.classList.add("hidden");
+  dgSetReact(msg,true);
   if(markSeen){
     const stage=companionStage();
     if(stage){
@@ -2132,18 +2090,11 @@ function showCompanion(msg, markSeen=false){
     }
   }
 }
+
 function hideCompanion(showHelp=true){
-  const dock=document.getElementById("companionDock");
-  const help=document.getElementById("companionHelp");
-  if(dock){
-    dock.classList.add("hidden");
-    dock.classList.remove("tipVisible");
-  }
-  if(help){
-    if(showHelp&&!edit&&!gameOver)help.classList.remove("hidden");
-    else help.classList.add("hidden");
-  }
+  if(levels[currentLevel])dgSetReact(dgReactLine(),false);
 }
+
 function scheduleCompanion(forceIntro=false){
   clearTimeout(companionTimer);
   clearTimeout(companionIdleTimer);
@@ -2221,12 +2172,14 @@ document.getElementById("sfxVolumeSlider")?.addEventListener("input",e=>{
   updatePauseButtons();
 });
 document.getElementById("pauseRestart")?.addEventListener("click",()=>{setPaused(false);resetPlay();});
-document.getElementById("pauseMainMenu")?.addEventListener("click",()=>{setPaused(false);stopElevatorMusic();window.location.href="index.html";});
+document.getElementById("pauseMainMenu")?.addEventListener("click",()=>{setPaused(false);stopElevatorMusic();dgLeaveTo("index.html");});
+document.getElementById("pauseSolution")?.addEventListener("click",()=>{setPaused(false);showLevelRecap();});
+if(window.DGAds){
+  DGAds.onStart=()=>stopElevatorMusic();
+  DGAds.onEnd=()=>{if(musicOn&&!edit&&!gameOver&&!gamePaused)startElevatorMusic();};
+}
 applyAudioVolumes();
 updatePauseButtons();
-document.getElementById("title")?.addEventListener("click",showLevelRecap);
-document.getElementById("playStats")?.addEventListener("click",showLevelRecap);
-document.getElementById("levelBadge")?.addEventListener("click",showLevelRecap);
 document.getElementById("sideLeft").onclick=()=>turn(-1);document.getElementById("sideRight").onclick=()=>turn(1);document.getElementById("reset").onclick=()=>{userAudioGesture();resetPlay();};
 document.getElementById("saveLocal").onclick=saveLocal;document.getElementById("loadLocal").onclick=loadLocal;
 document.getElementById("exportJson").onclick=exportJson;document.getElementById("importBtn").onclick=()=>document.getElementById("importFile").click();
@@ -2246,7 +2199,7 @@ document.getElementById("rotationDurationInput").oninput=()=>{writeGlobalSetting
 document.getElementById("sortDifficulty").onclick=sortByDifficulty;
 document.getElementById("resetProgress").onclick=()=>{localStorage.removeItem(PROGRESS_KEY);status.textContent="Progression joueur remise à zéro.";};
 document.getElementById("resetTutorial").onclick=()=>{
-  ["core","button","death","rotator","teleporter"].forEach(s=>{
+  ["core","wrap","button","death","rotator","teleporter"].forEach(s=>{
     try{localStorage.removeItem(companionSeenKey(s))}catch(e){}
   });
   status.textContent="Tutoriel compagnon remis à zéro.";
@@ -2273,28 +2226,20 @@ function setLoadingText(msg){
 function hideLoadingOverlay(){
   const el=document.getElementById("loadingOverlay");
   if(el)el.classList.add("hidden");
+  dgBootReveal();
 }
 function showInfoBanner(title,html){
-  if(!banner)return;
+  document.getElementById("bannerArt").innerHTML="";
   bannerTitle.textContent=title;
   bannerText.innerHTML=html;
   starsEl.textContent="";
   bannerAction.textContent="OK";
   bannerAction.onclick=()=>banner.classList.add("hidden");
+  document.getElementById("bannerAlt").textContent="";
   banner.classList.remove("lose");
   banner.classList.remove("hidden");
 }
-function showLevelRecap(){
-  if(edit || !levels[currentLevel])return;
-  const l=levels[currentLevel];
-  const best=loadProgress().best?.[currentLevel] || null;
-  const solution=l.solution ? String(l.solution).replaceAll("L","↺ ").replaceAll("R","↻ ").trim() : "Non calculée";
-  showInfoBanner((currentLevel+1)+" - "+(l.name||"Niveau"),
-    "Objectif 3♥ : <b>"+(l.maxMoves||"?")+" coup(s)</b><br>"+
-    "Difficulté : <b>"+(l.difficulty||1)+"</b><br>"+
-    (best?"Meilleur score : <b>"+best.moves+" coup(s)</b><br>":"")+
-    "Solution connue : <b>"+solution+"</b>");
-}
+
 function solverPopup(title,html,ok){
   status.innerHTML='<span class="'+(ok?'testOk':'testBad')+'">'+html.replace(/<br>/g,' ')+'</span>';
   if(edit)showInfoBanner(title,html);
@@ -2343,7 +2288,7 @@ function applyLevelsData(data,source){
   setLoadingText("Préparation du niveau…");
   requestAnimationFrame(()=>setTimeout(hideLoadingOverlay,120));
 
-  status.style.display="block";
+  
   status.textContent="OK : niveaux chargés depuis "+source+" ("+levels.length+" niveau(x)).";
 }
 
@@ -2351,7 +2296,7 @@ function showLevelsJsonError(err){
   hideLoadingOverlay();
   console.error("[LEVELS] ECHEC CHARGEMENT levels.json", err);
   levels=[];
-  status.style.display="block";
+  
   const proto=location.protocol || "";
   const localHint=proto==="file:" ? " Tu ouvres le jeu en file:// : lance run_local_server.bat ou importe le fichier manuellement." : "";
   status.textContent="ERREUR : levels.json non chargé. Vérifie que levels.json est à côté de index.html."+localHint;
@@ -2362,7 +2307,7 @@ function showLevelsJsonError(err){
     "Fichiers attendus au même niveau : <b>index.html</b>, <b>levels.json</b>, <b>assets.json</b>.<br>"+
     "Protocole actuel : <b>"+proto+"</b><br>"+
     (proto==="file:" ? "En local, utilise <b>run_local_server.bat</b> ou le bouton Importer levels.json.<br>" : "")+
-    "<button id='manualLevelsImport' style='margin-top:12px;background:#52f28a;color:#051407;font-size:16px;padding:12px 18px;border-radius:12px'>Importer levels.json</button>";
+    "<button id='manualLevelsImport' class='btn sm' style='margin-top:1rem'>Importer levels.json</button>";
   starsEl.textContent="";
   bannerAction.textContent="Fermer";
   bannerAction.onclick=()=>banner.classList.add("hidden");
@@ -2412,7 +2357,30 @@ async function loadStaticLevels(){
   }
 }
 
-setInterval(()=>{idleTick++; if(!edit&&!busy&&!gameOver){draw()}},120);
+/* ===== V43.49 IN-GAME ANIMATION LOOP =====
+   Avant, les animations vectorielles du jeu étaient rafraîchies environ toutes les
+   120 ms quand le cube ne bougeait pas. Résultat : pulse/look/spin visibles dans
+   l'éditeur, mais plus saccadés en jeu. Là on passe par requestAnimationFrame,
+   avec un cap à 60 fps et un garde-fou pour ne rien dessiner avant le chargement.
+*/
+const INGAME_ANIM_FPS=60;
+let lastIngameAnimTs=0;
+function ingameAnimationLoop(ts){
+  if(!lastIngameAnimTs)lastIngameAnimTs=ts;
+  const minDt=1000/INGAME_ANIM_FPS;
+  const dt=ts-lastIngameAnimTs;
+  if(dt>=minDt){
+    idleTick+=dt/120; // garde la vitesse d'idle d'origine malgré le FPS plus élevé.
+    lastIngameAnimTs=ts;
+    // après la victoire ou la défaite on continue de dessiner : les personnages réagissent encore
+    if(levels.length && Array.isArray(b) && b.length && !edit && !gamePaused && !document.querySelector(".screen.show")){
+      dgMotes(dt);
+      draw();
+    }
+  }
+  requestAnimationFrame(ingameAnimationLoop);
+}
+requestAnimationFrame(ingameAnimationLoop);
 
 function updateGlobalScale(){
   const w=window.innerWidth||document.documentElement.clientWidth||1280;
@@ -2429,8 +2397,657 @@ function updateGlobalScale(){
 window.addEventListener("resize",updateGlobalScale);
 window.addEventListener("orientationchange",()=>setTimeout(updateGlobalScale,80));
 updateGlobalScale();
-loadAssets()
-  .then(()=>loadVectorAssets())
+
+
+/* ===== V44 CHAPTER CAMPAIGN / RELEASE PROGRESSION UI ===== */
+const DG_CHAPTER_UNLOCK_PERCENT=70;
+let dgChapters=[];
+let dgSelectedChapter=0;
+let dgLastIntroChapterId="";
+
+function dgPad2(n){return String(n).padStart(2,"0");}
+function dgDataLevels(data){return Array.isArray(data?.levels)?data.levels:(Array.isArray(data)?data:[]);}
+let dgRawChapters=null;
+function dgBuildChapters(data){
+  const list=dgDataLevels(data);
+  const raw=Array.isArray(data?.chapters)?data.chapters:null;
+  dgRawChapters=raw&&raw.length?raw:null;
+  const norm=(c,i)=>({
+    ...c,
+    id:c.id||("chapter_"+(i+1)),
+    number:c.number||i+1,
+    name:c.name||("Chapitre "+dgPad2(i+1)),
+    subtitle:c.subtitle||c.title||"",
+    levelIds:Array.isArray(c.levelIds)?c.levelIds.slice():[],
+    unlockPercent:Number(c.unlockPercent||DG_CHAPTER_UNLOCK_PERCENT)
+  });
+  if(dgRawChapters&&list.some(l=>l&&l.chapter)){
+    // V45 : chaque niveau porte son chapitre (level.chapter). L'ordre du fichier fait
+    // l'ordre dans le chapitre, donc ajouter ou supprimer un niveau ne casse plus rien.
+    dgChapters=dgRawChapters.map((c,i)=>({...norm(c,i),levelIds:[]}));
+    const byId=new Map(dgChapters.map(c=>[c.id,c]));
+    list.forEach((l,i)=>{(byId.get(l&&l.chapter)||dgChapters[dgChapters.length-1]).levelIds.push(i);});
+    dgChapters=dgChapters.filter(c=>c.levelIds.length);
+  }else if(dgRawChapters){
+    dgChapters=dgRawChapters.map(norm);
+  }else{
+    const titles=["Premier pas","Boutons du cœur","Zones dangereuses","Rotations","Rendez-vous","Dernier choix","Master dates"];
+    const size=9;
+    dgChapters=[];
+    for(let i=0;i<list.length;i+=size){
+      const idx=dgChapters.length;
+      dgChapters.push({
+        id:"c"+dgPad2(idx+1),
+        number:idx+1,
+        name:"Chapitre "+dgPad2(idx+1),
+        subtitle:titles[idx]||("Progression "+dgPad2(idx+1)),
+        levelIds:list.slice(i,i+size).map((_,j)=>i+j),
+        unlockPercent:DG_CHAPTER_UNLOCK_PERCENT
+      });
+    }
+  }
+  if(!dgChapters.length&&list.length){
+    dgChapters=[{id:"c01",number:1,name:"Chapitre 01",subtitle:"Premier pas",levelIds:list.map((_,i)=>i),unlockPercent:DG_CHAPTER_UNLOCK_PERCENT}];
+  }
+}
+function dgChapterOfLevel(idx){
+  return dgChapters.find(c=>(c.levelIds||[]).includes(idx)) || dgChapters[0] || null;
+}
+function dgChapterIndexOfLevel(idx){
+  return Math.max(0,dgChapters.findIndex(c=>(c.levelIds||[]).includes(idx)));
+}
+function dgProgress(){return loadProgress ? loadProgress() : {best:{},highestLevel:0,currentLevel:0};}
+function dgLevelCompleted(idx){const pr=dgProgress();return !!(pr.best&&pr.best[levelKey(idx)]);}
+function dgChapterProgress(ch){
+  const ids=(ch&&ch.levelIds)||[];
+  if(!ids.length)return {done:0,total:0,percent:0,stars:0};
+  const pr=dgProgress();
+  let done=0,stars=0;
+  ids.forEach(id=>{const b=pr.best&&pr.best[levelKey(id)]; if(b){done++; stars+=Number(b.stars||0);}});
+  return {done,total:ids.length,percent:Math.round(done/ids.length*100),stars};
+}
+function dgChapterUnlocked(chIndex){
+  if(window.CG_EDITOR_MODE)return true;
+  if(chIndex<=0)return true;
+  const prev=dgChapters[chIndex-1];
+  const p=dgChapterProgress(prev);
+  const need=Number(dgChapters[chIndex]?.unlockPercent||DG_CHAPTER_UNLOCK_PERCENT);
+  return p.percent>=need;
+}
+function dgLevelUnlocked(idx){
+  if(window.CG_EDITOR_MODE)return true;
+  const ci=dgChapterIndexOfLevel(idx);
+  if(!dgChapterUnlocked(ci))return false;
+  const ch=dgChapters[ci];
+  if(!ch)return idx===0;
+  const pos=ch.levelIds.indexOf(idx);
+  if(pos<=0)return true;
+  return dgLevelCompleted(ch.levelIds[pos-1]);
+}
+function dgFirstPlayableLevel(){
+  for(const ch of dgChapters){
+    for(const id of ch.levelIds){ if(dgLevelUnlocked(id)&&!dgLevelCompleted(id)) return id; }
+  }
+  for(let i=0;i<levels.length;i++) if(dgLevelUnlocked(i)) return i;
+  return 0;
+}
+function dgSafeStartLevel(){
+  let idx=levelIndexFromKey(dgProgress().current);
+  if(idx<0)idx=0;
+  return dgLevelUnlocked(idx)?idx:dgFirstPlayableLevel();
+}
+function dgStarsForLevel(idx){const b=dgProgress().best?.[levelKey(idx)];return b?"★".repeat(Math.max(1,Math.min(3,Number(b.stars||1)))):"";}
+/* ===== V49 NÉON CIRCUIT : interface et sensations =====
+   Tout ce qui s'affiche ou s'entend en dehors des règles du jeu passe par ici :
+   écrans (chapitres, niveaux, rencontres), fenêtres (victoire, défaite, indice), transitions,
+   notes de musique, effets de chute et d'impact. Les règles (turn / fall / blocs) ne changent pas. */
+const DG_WORLDS=DGSpirit.WORLDS; // deux couleurs par chapitre, partagées avec le menu
+const DG_MECH_LABEL={base:"tourner, tomber",wrap:"bords ouverts",button:"clés et cadenas",danger:"cœurs brisés",rotator:"rotateurs",teleporter:"téléporteurs",mix:"tout mélangé"};
+let dgC1=DG_WORLDS[0][0],dgC2=DG_WORLDS[0][1];
+let dgTutoActive=false;
+let dgSkipProfileOnce=false;
+let dgFallAnim=null;   // case en cours de franchissement : {x,from,to,t0,dur,v,n}
+let dgImpact=null;     // dernier atterrissage : {t,imp,x,y,flash}
+let dgRot=null;        // rotation en cours : {dir,angle,k}
+let dgMelody=[];       // les notes jouées depuis le début du niveau
+let dgMoteY=0,dgLastDraw=0,dgTubeD="",dgStaticKey="";
+
+function setStatus(t){status.textContent=t;}
+function showVectorAssetsError(err){console.error("[VECTOR_ASSETS]",err);}
+function dgUpdateHud(){}
+function dgShowChapterIntro(){}
+
+/* --- qui est qui */
+function dgMeSex(){return readCharacterGender("dcg_me_gender","boy")==="girl"?"f":"m";}
+function dgDateSex(){return readCharacterGender("dcg_date_gender","girl")==="boy"?"m":"f";}
+function dgCurPerson(){return DGSpirit.person(dgChapterIndexOfLevel(currentLevel||0));}
+function dgDateName(){return dgCurPerson().name;}
+function dgPortrait(el,kind,sex,state){
+  if(typeof el==="string")el=document.getElementById(el);
+  if(el)el.innerHTML=DGSpirit.portrait(kind,sex,state);
+}
+function dgLevelPos(idx){
+  const ch=dgChapterOfLevel(idx), ci=dgChapterIndexOfLevel(idx);
+  return {ch,ci,number:(ch&&ch.number)||ci+1,pos:ch?ch.levelIds.indexOf(idx)+1:idx+1};
+}
+function dgTint(ci){
+  const w=DG_WORLDS[ci%DG_WORLDS.length];
+  if(w[0]===dgC1&&w[1]===dgC2)return;
+  dgC1=w[0];dgC2=w[1];
+  document.documentElement.style.setProperty("--c1",dgC1);
+  document.documentElement.style.setProperty("--c2",dgC2);
+}
+/* ce que la rencontre du chapitre est devenue (voir DGSpirit.status) */
+function dgRelation(ci){
+  const ch=dgChapters[ci];
+  const p=ch?dgChapterProgress(ch):{done:0,total:1,stars:0};
+  return Object.assign({done:p.done,total:p.total,stars:p.stars},DGSpirit.status(p.done,p.total,p.stars));
+}
+
+/* --- transitions
+   Règle : les RUBANS pour tout ce qui est navigation, le TAMPON pour les moments de jeu,
+   et un DÉFILEMENT du plateau entre deux niveaux d'un même chapitre. */
+const dgTx={busy:false};
+const DG_BAND_IN=[{transform:"translateX(-130%) skewX(-18deg)"},{transform:"translateX(0) skewX(-18deg)"}];
+const DG_BAND_OUT=[{transform:"translateX(0) skewX(-18deg)"},{transform:"translateX(130%) skewX(-18deg)"}];
+function dgReducedMotion(){return !!(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches);}
+function dgBandsOut(layer,bands){
+  let last;
+  bands.forEach((b,i)=>{last=b.animate(DG_BAND_OUT,{duration:300,delay:60+i*60,easing:"cubic-bezier(.6,0,.4,1)",fill:"forwards"});});
+  return last.finished.then(()=>{bands.forEach(b=>b.remove());layer.classList.remove("block");dgTx.busy=false;});
+}
+function dgRubans(swap,opts={}){
+  const layer=document.getElementById("txLayer");
+  if(!layer||dgTx.busy||dgReducedMotion()){if(swap)swap();return Promise.resolve();}
+  dgTx.busy=true;
+  layer.classList.add("block");
+  const bands=[dgC1,dgC2,"#0d1230"].map(c=>{const b=document.createElement("div");b.className="band";b.style.background=c;layer.appendChild(b);return b;});
+  let last;
+  bands.forEach((b,i)=>{last=b.animate(DG_BAND_IN,{duration:280,delay:i*60,easing:"cubic-bezier(.6,0,.4,1)",fill:"forwards"});});
+  return last.finished.then(()=>{
+    try{if(swap)swap();}catch(e){console.error("[TX]",e);}
+    if(opts.stay)return; // on quitte la page : les rubans restent fermés, la page suivante les ouvrira
+    return dgBandsOut(layer,bands);
+  });
+}
+function dgLeaveTo(url){
+  try{sessionStorage.setItem("dg_tx","1");}catch(e){}
+  dgRubans(()=>{window.location.href=url;},{stay:true});
+}
+function dgBootReveal(){
+  const root=document.documentElement, layer=document.getElementById("txLayer");
+  if(!layer||!root.classList.contains("tx-in"))return;
+  const bands=[...layer.querySelectorAll(".band.boot")];
+  dgTx.busy=true;
+  layer.classList.add("block");
+  dgBandsOut(layer,bands).then(()=>root.classList.remove("tx-in"));
+}
+function dgTampon(word,swap,dark){
+  const layer=document.getElementById("txLayer");
+  if(!layer||dgTx.busy||dgReducedMotion()){if(swap)swap();return Promise.resolve();}
+  dgTx.busy=true;
+  layer.classList.add("block");
+  const st=document.createElement("div");
+  st.className="stamp"+(dark?" dark":"");
+  const sp=document.createElement("span");sp.textContent=word;st.appendChild(sp);
+  layer.appendChild(st);
+  const base="translate(-50%,-50%) rotate(-10deg) ";
+  return st.animate([{opacity:0,transform:base+"scale(3.4)"},{opacity:1,transform:base+"scale(1)"}],{duration:170,easing:"cubic-bezier(.3,0,.2,1)",fill:"forwards"}).finished.then(()=>{
+    dgThump(.8);
+    document.getElementById("app").animate([{transform:"translate(0,0)"},{transform:"translate(-.5rem,.3rem)"},{transform:"translate(.4rem,-.3rem)"},{transform:"translate(-.3rem,.2rem)"},{transform:"none"}],{duration:180});
+    return new Promise(r=>setTimeout(r,280));
+  }).then(()=>{
+    try{if(swap)swap();}catch(e){console.error("[TX]",e);}
+    return st.animate([{opacity:1,transform:base+"scale(1)"},{opacity:0,transform:base+"scale(5)"}],{duration:260,easing:"ease-in",fill:"forwards"}).finished;
+  }).then(()=>{st.remove();layer.classList.remove("block");dgTx.busy=false;});
+}
+/* Niveau suivant : l'ancien plateau sort du cadre, le nouveau entre en le suivant.
+   Le sens change à chaque niveau (bas, gauche, haut, droite), comme une carte qu'on parcourt. */
+function dgAdvance(target){
+  const info=dgLevelPos(target), pr=loadProgress();
+  const newPerson=info.pos===1 && !(pr.met&&info.ch&&pr.met[info.ch.id]);
+  const wrap=document.querySelector(".boardWrap");
+  if(newPerson||dgReducedMotion()||dgTx.busy||!wrap||!wrap.animate){dgRubans(()=>goLevel(target));return;}
+  const dv=[[0,1],[-1,0],[0,-1],[1,0]][target%4];
+  const r=wrap.getBoundingClientRect(), sr=stage.getBoundingClientRect();
+  const ghost=wrap.cloneNode(true);
+  ghost.querySelectorAll("[id]").forEach(e=>e.removeAttribute("id"));
+  ghost.classList.add("ghostBoard");
+  ghost.style.left=(r.left-sr.left)+"px";ghost.style.top=(r.top-sr.top)+"px";ghost.style.width=r.width+"px";
+  stage.appendChild(ghost);
+  dgTx.busy=true;
+  goLevel(target); // dessine déjà le niveau suivant, hors champ
+  const dist=Math.max(sr.width,sr.height)*1.15;
+  const opt={duration:500,easing:"cubic-bezier(.65,0,.25,1)",fill:"both"};
+  ghost.animate([{transform:"none"},{transform:"translate("+(dv[0]*dist)+"px,"+(dv[1]*dist)+"px)"}],opt);
+  const a=wrap.animate([{transform:"translate("+(-dv[0]*dist)+"px,"+(-dv[1]*dist)+"px)"},{transform:"none"}],opt);
+  dgPluck(dgNoteAt(1,target%7),.014);
+  a.finished.then(()=>{ghost.remove();a.cancel();dgTx.busy=false;resetPlay();});
+}
+
+/* --- écrans pleins */
+function dgShowScreen(id){
+  const el=document.getElementById(id);
+  if(!el)return;
+  el.classList.add("show");
+  el.setAttribute("aria-hidden","false");
+}
+function dgHideScreen(id){
+  const el=document.getElementById(id);
+  if(!el)return;
+  el.classList.remove("show");
+  el.setAttribute("aria-hidden","true");
+}
+function dgUiOpen(){
+  return !!document.querySelector(".screen.show") || !banner.classList.contains("hidden") || !document.getElementById("winScreen").classList.contains("hidden");
+}
+
+/* --- bulle : tutoriel, indice, ou petite phrase selon l'avancée */
+function dgReactLine(){
+  const max=Number(levels[currentLevel]?.maxMoves)||0;
+  if(moves===0)return "Je t'attends, viens !";
+  const left=max-moves;
+  if(left>1)return "Encore "+left+" coups pour le sans-faute.";
+  if(left===1)return "Plus qu'un coup pour le sans-faute !";
+  if(left===0)return "C'était le dernier coup du sans-faute…";
+  return "Prends ton temps, je ne bouge pas.";
+}
+function dgSetReact(text,tuto){
+  const t=document.getElementById("companionText");
+  const bubble=document.getElementById("reactBubble");
+  const skip=document.getElementById("companionSkip");
+  if(!t)return;
+  if(t.textContent!==text){
+    t.textContent=text;
+    if(bubble){bubble.classList.remove("pop");void bubble.offsetWidth;bubble.classList.add("pop");}
+  }
+  if(skip)skip.classList.toggle("hidden",!tuto);
+  dgTutoActive=!!tuto;
+}
+
+/* --- musique du plateau
+   Chaque mur a sa note, toujours la même : en avançant dans le niveau on compose une petite phrase,
+   rejouée à la victoire. Gamme pentatonique (aucune fausse note possible), une tonalité par chapitre. */
+const DG_SCALES=[[60,[0,2,4,7,9]],[62,[0,2,4,7,9]],[57,[0,3,5,7,10]],[64,[0,2,4,7,9]],[55,[0,2,4,7,9]],[58,[0,3,5,7,10]],[65,[0,2,4,7,9]],[60,[0,3,5,7,10]]];
+const dgHz=midi=>440*Math.pow(2,(midi-69)/12);
+function dgNoteAt(cx,cy){
+  // le plateau a tourné : on ramène la case dans le repère d'origine pour qu'un mur garde sa note
+  let q={x:cx,y:cy};
+  for(let i=0;i<visualOri;i++)q={x:q.y,y:W-1-q.x};
+  const sc=DG_SCALES[dgChapterIndexOfLevel(currentLevel||0)%DG_SCALES.length];
+  const i=(((q.x*2+q.y*3)%10)+10)%10;
+  return dgHz(sc[0]+sc[1][i%5]+12*Math.floor(i/5));
+}
+function dgGain(g){
+  if(!soundOn||!sfxOn||sfxVolume<=0)return 0;
+  return Math.min(SFX_MAX_GAIN,g*sfxVolume*SFX_GAIN_BOOST);
+}
+function dgPluck(freq,gain=.03,when=0){
+  const vol=dgGain(gain);
+  if(!vol||!audioCtx)return;
+  const ac=audioCtx,t=ac.currentTime+when;
+  [[1,"triangle",1],[2,"sine",.32]].forEach(v=>{
+    const o=ac.createOscillator(),g=ac.createGain();
+    o.type=v[1];o.frequency.value=freq*v[0];
+    g.gain.setValueAtTime(.0001,t);
+    g.gain.exponentialRampToValueAtTime(vol*v[2],t+.012);
+    g.gain.exponentialRampToValueAtTime(.0001,t+.52);
+    o.connect(g);g.connect(ac.destination);o.start(t);o.stop(t+.56);
+  });
+}
+function dgThump(imp){
+  const vol=dgGain(.02+imp*.05);
+  if(!vol||!audioCtx)return;
+  const ac=audioCtx,t=ac.currentTime,o=ac.createOscillator(),g=ac.createGain();
+  o.type="sine";o.frequency.setValueAtTime(150+imp*40,t);o.frequency.exponentialRampToValueAtTime(42,t+.13);
+  g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.0001,t+.16+imp*.12);
+  o.connect(g);g.connect(ac.destination);o.start(t);o.stop(t+.36);
+}
+let dgNoise=null;
+function dgWhoosh(v){
+  if(!audioCtx)return;
+  const ac=audioCtx;
+  if(!dgNoise){
+    if(v<=0)return;
+    const buf=ac.createBuffer(1,ac.sampleRate,ac.sampleRate),d=buf.getChannelData(0);
+    for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+    const src=ac.createBufferSource();src.buffer=buf;src.loop=true;
+    const f=ac.createBiquadFilter();f.type="bandpass";f.Q.value=1.2;
+    const g=ac.createGain();g.gain.value=0;
+    src.connect(f);f.connect(g);g.connect(ac.destination);src.start();
+    dgNoise={f,g};
+  }
+  dgNoise.g.gain.setTargetAtTime(dgGain(.006)*v,ac.currentTime,.03);
+  dgNoise.f.frequency.setTargetAtTime(500+v*2600,ac.currentTime,.03);
+}
+/* à la victoire : on rejoue la phrase du niveau, puis l'accord de la tonalité */
+function dgPlayMelody(){
+  const notes=dgMelody.slice(-14), bars=[...document.querySelectorAll("#winMelody i")];
+  notes.forEach((f,i)=>{
+    dgPluck(f,.024,i*.095);
+    setTimeout(()=>{if(bars[i])bars[i].classList.add("on");},i*95);
+  });
+  const sc=DG_SCALES[dgChapterIndexOfLevel(currentLevel||0)%DG_SCALES.length], end=notes.length*.095+.06;
+  [0,sc[1][2],7,12].forEach((semi,i)=>dgPluck(dgHz(sc[0]+semi),.02,end+i*.03));
+}
+
+/* --- chute et impact */
+function dgStepDelay(n){return Math.max(18,getFallDelayMs()*1.9*(Math.sqrt(n+1)-Math.sqrt(n)));}
+function dgStepSpeed(ms){return Math.max(0,Math.min(1,(getFallDelayMs()*1.9/Math.max(1,ms)-1)/3.6));}
+function dgLand(dist){
+  dgFallAnim=null;
+  dgWhoosh(0);
+  const imp=Math.min(1,dist/6);
+  dgImpact={t:performance.now(),imp:Math.max(.1,imp),x:p.x,y:p.y,flash:dist>0};
+  if(dist>0){shake(dist);gravelFx(dist);dgThump(imp);}
+  if(dist===0&&moves===0)return; // posé au départ du niveau : pas encore de note
+  const f=dgNoteAt(wrapX(p.x),wrapY(p.y+1));
+  if(!document.querySelector(".screen.show"))dgPluck(f,.022+imp*.02);
+  dgMelody.push(f);
+  if(dgMelody.length>32)dgMelody.shift();
+}
+/* rotation du plateau : il dépasse un peu les 90° puis revient */
+function dgSpin(d,from,done){
+  const dur=Math.max(200,getRotationDurationMs()*1.9),token=fallToken,t0=performance.now();
+  dgRot={dir:d,angle:from,k:0};
+  if(dgImpact)dgImpact.flash=false;
+  (function tick(now){
+    if(token!==fallToken){dgRot=null;return;}
+    const k=Math.min(1,(now-t0)/dur),e=1+2.9*Math.pow(k-1,3)+1.9*Math.pow(k-1,2);
+    const a=from+(d*90-from)*e;
+    rot.setAttribute("transform","rotate("+a+" "+(BOARD/2)+" "+(BOARD/2)+")");
+    dgRot.angle=a;dgRot.k=k;
+    if(k<1){requestAnimationFrame(tick);return;}
+    rot.setAttribute("transform","rotate(0 "+(BOARD/2)+" "+(BOARD/2)+")");
+    dgRot=null;
+    done();
+  })(t0);
+}
+
+/* --- victoire : un bandeau bas, le plateau reste visible */
+function dgShowWin(kind,finalText){
+  const l=levels[currentLevel], s=starScore(), info=dgLevelPos(currentLevel);
+  const last=currentLevel===levels.length-1;
+  const chapterDone=!!info.ch && info.ch.levelIds[info.ch.levelIds.length-1]===currentLevel;
+  document.getElementById("winTitle").textContent=last?"Fin de l'histoire":(chapterDone?"Chapitre terminé":"Match !");
+  document.getElementById("winHearts").innerHTML="<span>♥</span>".repeat(s)+"<u>"+"♥".repeat(3-s)+"</u>";
+  document.getElementById("winMoves").textContent=(last&&finalText?finalText+" ":"")+moves+" coup"+(moves>1?"s":"")+" · objectif "+(l.maxMoves||"?");
+  // la phrase composée pendant le niveau
+  const notes=dgMelody.slice(-14), lo=Math.min(...notes,9999), hi=Math.max(...notes,0);
+  document.getElementById("winMelody").innerHTML=notes.map(f=>'<i style="height:'+(30+70*(hi>lo?(f-lo)/(hi-lo):.5))+'%"></i>').join("");
+  // fin de chapitre : ce que la rencontre est devenue
+  const relEl=document.getElementById("winRel");
+  relEl.innerHTML="";
+  if(chapterDone||last){
+    const person=DGSpirit.person(info.ci), rel=dgRelation(info.ci);
+    relEl.innerHTML='<div class="art">'+DGSpirit.portrait(person.kind,dgDateSex(),{eye:"happy",mouth:"grin"})+'</div><div><b></b><span></span></div>';
+    relEl.querySelector("b").textContent=person.name+" · "+rel.label;
+    relEl.querySelector("span").textContent=rel.stars+" / "+(rel.total*3)+" ♥"+(rel.rank<5?" · rejoue pour aller plus loin":"");
+  }
+  const next=document.getElementById("winNext"), replay=document.getElementById("winReplay");
+  next.disabled=false;
+  if(last){
+    next.textContent="Mes rencontres";
+    next.onclick=()=>dgRubans(()=>{hideBanner();dgShowCollection();});
+  }else{
+    next.textContent=chapterDone?"Chapitre suivant":"Suivant";
+    next.onclick=()=>{
+      // Un interstitiel peut s'intercaler ici, jamais ailleurs. DGAds décide de la fréquence.
+      const target=currentLevel+1;
+      next.disabled=true;
+      const ad=window.DGAds?DGAds.maybeInterstitial({chapterIndex:info.ci}):Promise.resolve();
+      ad.finally(()=>{next.disabled=false;dgAdvance(target);});
+    };
+  }
+  replay.onclick=()=>resetPlay();
+  document.getElementById("winScreen").classList.remove("hidden");
+  dgPlayMelody();
+}
+
+/* --- solution contre pub récompensée */
+const dgSolutionSeen=new Set(); // solutions déjà débloquées pendant cette session
+async function dgRequestSolution(){
+  if(edit || !levels[currentLevel])return;
+  const key=levelKey(currentLevel);
+  if(!levels[currentLevel].solution){showInfoBanner("Pas de solution","Ce niveau n'a pas encore de solution enregistrée.");return;}
+  if(!(window.CG_EDITOR_MODE || dgSolutionSeen.has(key))){
+    const ok=await (window.DGAds?DGAds.showRewarded("solution"):Promise.resolve(true));
+    if(!ok || levelKey(currentLevel)!==key)return;
+    dgSolutionSeen.add(key);
+  }
+  dgShowSolution();
+}
+function showLevelRecap(){return dgRequestSolution();}
+function dgShowSolution(){
+  const l=levels[currentLevel];
+  const seq=String(l.solution||"");
+  const helper=DGSpirit.person(dgChapterIndexOfLevel(currentLevel)+3);
+  dgPortrait("bannerArt",helper.kind,dgDateSex()==="f"?"m":"f",{eye:"happy"});
+  bannerTitle.textContent="Le coup de pouce";
+  bannerText.textContent=helper.name+" te souffle la solution, depuis le début du niveau :";
+  starsEl.innerHTML='<div class="seq">'+seq.split("").map(c=>c==="R"?'<b class="r">⟳</b>':'<b>⟲</b>').join("")+'</div>'+
+    '<p>'+seq.length+' coup'+(seq.length>1?'s':'')+' · ⟳ glisse à droite, ⟲ glisse à gauche</p>';
+  const alt=document.getElementById("bannerAlt");
+  bannerAction.textContent="Recommencer";
+  bannerAction.onclick=()=>resetPlay();
+  alt.textContent=gameOver?"":"Fermer";
+  alt.onclick=()=>banner.classList.add("hidden");
+  banner.classList.remove("lose");
+  banner.classList.remove("hidden");
+}
+
+/* --- nouvelle rencontre : affichée une seule fois, au premier niveau de chaque chapitre */
+function dgShowIntro(){
+  const info=dgLevelPos(currentLevel), person=DGSpirit.person(info.ci);
+  document.getElementById("pfWhere").textContent="chapitre "+info.number;
+  document.getElementById("pfBest").textContent=(info.ch?info.ch.levelIds.length:0)+" niveaux";
+  dgPortrait("pfArt",person.kind,dgDateSex());
+  document.getElementById("pfName").textContent=person.name;
+  document.getElementById("pfBio").textContent=person.line;
+  const tg=document.getElementById("pfTags");
+  tg.innerHTML="";
+  [info.ch&&info.ch.subtitle,DG_MECH_LABEL[info.ch&&info.ch.mechanic]].filter(Boolean).forEach(t=>{const sp=document.createElement("span");sp.textContent=t;tg.appendChild(sp);});
+  dgShowScreen("profileScreen");
+}
+function dgOnLevelLoaded(){
+  const info=dgLevelPos(currentLevel), person=DGSpirit.person(info.ci);
+  dgPortrait("companionHelp",person.kind,dgDateSex());
+  if(edit||dgSkipProfileOnce)return;
+  const pr=loadProgress();
+  if(info.ch && info.pos===1 && !(pr.met&&pr.met[info.ch.id]))dgShowIntro();
+}
+
+/* --- chapitres, niveaux, rencontres */
+function dgTotalStars(){
+  const best=dgProgress().best||{};
+  return Object.values(best).reduce((n,b)=>n+(Number(b&&b.stars)||0),0);
+}
+function dgRenderChapterList(){
+  const host=document.getElementById("dgChapterRows");
+  if(!host)return;
+  host.innerHTML="";
+  const current=dgChapterIndexOfLevel(dgFirstPlayableLevel());
+  dgChapters.forEach((ch,i)=>{
+    const p=dgChapterProgress(ch), open=dgChapterUnlocked(i), person=DGSpirit.person(i), w=DG_WORLDS[i%DG_WORLDS.length];
+    const row=document.createElement("button");
+    row.type="button";
+    row.className="row"+(open?(i===current?" cur":""):" lock");
+    row.style.setProperty("--rc1",w[0]);row.style.setProperty("--rc2",w[1]);
+    row.innerHTML='<div class="av"></div><div class="tx"><b></b><span></span><em class="bar"><i></i></em></div><div class="st"></div>';
+    dgPortrait(row.querySelector(".av"),person.kind,dgDateSex(),p.done>=p.total&&p.total?{eye:"happy",mouth:"grin"}:null);
+    row.querySelector("b").textContent=ch.subtitle||ch.name;
+    row.querySelector("span").textContent=(open?person.name:"???")+" · "+(DG_MECH_LABEL[ch.mechanic]||"");
+    row.querySelector(".bar i").style.width=p.percent+"%";
+    row.querySelector(".st").textContent=open?(p.done+"/"+p.total+(p.done>=p.total?" ✓":"")):"🔒";
+    row.onclick=()=>{
+      userAudioGesture();
+      if(open)dgRubans(()=>dgShowChapterScreen(i));
+    };
+    host.appendChild(row);
+  });
+}
+function dgShowChapterList(){
+  setPaused(false);
+  dgRenderChapterList();
+  ["chapterScreen","profileScreen","collection"].forEach(dgHideScreen);
+  dgShowScreen("chapterList");
+}
+function dgRenderChapterScreen(chapterIndex=dgSelectedChapter){
+  if(!dgChapters.length)return;
+  chapterIndex=Math.max(0,Math.min(dgChapters.length-1,chapterIndex));
+  dgSelectedChapter=chapterIndex;
+  const ch=dgChapters[chapterIndex], p=dgChapterProgress(ch), ids=ch.levelIds||[], person=DGSpirit.person(chapterIndex);
+  document.getElementById("dgChapterSub").textContent=ch.subtitle||ch.name;
+  document.getElementById("dgChapterMeter").textContent=person.name+" · "+p.done+" / "+p.total+" · "+p.stars+" ♥";
+  document.getElementById("dgChapterTitle").textContent=p.percent+" %";
+  const gridEl=document.getElementById("dgLevelGrid");
+  const nextPlayable=dgFirstPlayableLevel();
+  gridEl.innerHTML="";
+  ids.forEach((id,pos)=>{
+    const locked=!dgLevelUnlocked(id), done=dgLevelCompleted(id), boss=pos===ids.length-1;
+    const btn=document.createElement("button");
+    btn.type="button";
+    btn.className="tile"+(locked?" lock":done?" done":"")+(id===nextPlayable&&!done?" cur":"");
+    btn.style.animationDelay=(pos*22)+"ms";
+    btn.innerHTML=(pos+1)+'<div class="ic"></div><span class="stars"></span>';
+    const ic=btn.querySelector(".ic");
+    if(locked)ic.textContent=boss?"👑":"🔒";
+    else if(done)dgPortrait(ic,person.kind,dgDateSex(),{eye:"happy",mouth:"grin"});
+    else dgPortrait(ic,"flamme",dgMeSex());
+    const st=dgProgress().best?.[levelKey(id)];
+    btn.querySelector(".stars").textContent=st?"♥".repeat(Math.max(0,Math.min(3,Number(st.stars)||0))):"";
+    btn.onclick=()=>{
+      userAudioGesture();
+      if(locked)return;
+      dgRubans(()=>{dgHideChapterScreen();loadFromLevel(id);});
+    };
+    gridEl.appendChild(btn);
+  });
+  const nextUnlocked=dgChapterUnlocked(chapterIndex+1);
+  const prev=document.getElementById("dgPrevChapter"), next=document.getElementById("dgNextChapter");
+  prev.disabled=chapterIndex<=0;
+  prev.onclick=()=>{ if(chapterIndex>0)dgRenderChapterScreen(chapterIndex-1); };
+  next.disabled=chapterIndex>=dgChapters.length-1 || !nextUnlocked;
+  next.onclick=()=>{ if(chapterIndex<dgChapters.length-1 && nextUnlocked)dgRenderChapterScreen(chapterIndex+1); };
+  const where=(chapterIndex+1)+" / "+dgChapters.length;
+  const need=Number(dgChapters[chapterIndex+1]?.unlockPercent||DG_CHAPTER_UNLOCK_PERCENT);
+  document.getElementById("dgNextCaption").textContent=(chapterIndex>=dgChapters.length-1||nextUnlocked)?where:(where+" · suite à "+need+" %");
+}
+function dgShowChapterScreen(chapterIndex=dgChapterIndexOfLevel(currentLevel||0)){
+  setPaused(false);
+  dgRenderChapterScreen(chapterIndex);
+  ["profileScreen","collection"].forEach(dgHideScreen);
+  dgShowScreen("chapterScreen");
+}
+function dgHideChapterScreen(){
+  ["chapterScreen","chapterList","collection"].forEach(dgHideScreen);
+}
+/* la collection : une carte par personne rencontrée, avec ce qu'elle est devenue pour toi */
+function dgRenderCollection(){
+  const host=document.getElementById("colGrid");
+  let met=0;
+  host.innerHTML="";
+  dgChapters.forEach((ch,i)=>{
+    const person=DGSpirit.person(i), rel=dgRelation(i), w=DG_WORLDS[i%DG_WORLDS.length];
+    if(rel.rank>0)met++;
+    const card=document.createElement("button");
+    card.type="button";
+    card.className="pcard "+rel.key;
+    card.style.setProperty("--pc1",w[0]);card.style.setProperty("--pc2",w[1]);
+    card.innerHTML='<div class="art"></div><b></b><em></em><span class="bar"><i></i></span><small></small>';
+    dgPortrait(card.querySelector(".art"),person.kind,dgDateSex(),rel.rank>=3?{eye:"happy",mouth:"grin"}:null);
+    card.querySelector("b").textContent=rel.rank?person.name:"???";
+    card.querySelector("em").textContent=rel.label;
+    card.querySelector(".bar i").style.width=(rel.total?Math.round(rel.stars/(rel.total*3)*100):0)+"%";
+    card.querySelector("small").textContent=rel.rank?(rel.stars+" / "+(rel.total*3)+" ♥"):("chapitre "+(i+1));
+    card.onclick=()=>{ if(dgChapterUnlocked(i))dgRubans(()=>dgShowChapterScreen(i)); };
+    host.appendChild(card);
+  });
+  document.getElementById("colCount").textContent=met+" / "+dgChapters.length;
+}
+function dgShowCollection(){
+  setPaused(false);
+  dgRenderCollection();
+  ["chapterScreen","profileScreen"].forEach(dgHideScreen);
+  dgShowScreen("collection");
+}
+
+document.getElementById("dgListBack").onclick=()=>dgLeaveTo("index.html");
+document.getElementById("dgOpenCollection").onclick=()=>dgRubans(()=>dgShowCollection());
+document.getElementById("colBack").onclick=()=>dgRubans(()=>dgShowChapterList());
+document.getElementById("dgBackMenu").onclick=()=>dgRubans(()=>dgShowChapterList());
+document.getElementById("pfBack").onclick=()=>dgRubans(()=>dgShowChapterScreen(dgChapterIndexOfLevel(currentLevel||0)));
+document.getElementById("pfGo").onclick=()=>{
+  userAudioGesture();
+  const info=dgLevelPos(currentLevel), pr=loadProgress();
+  pr.met=pr.met||{};
+  if(info.ch)pr.met[info.ch.id]=true;
+  saveProgress(pr);
+  dgTampon("GO !",()=>{
+    dgHideScreen("profileScreen");
+    resetPlay(); // on rejoue la chute d'entrée, maintenant que le plateau est visible
+  });
+};
+document.getElementById("pauseChapters").onclick=()=>{setPaused(false);dgRubans(()=>dgShowChapterList());};
+document.getElementById("pauseFullscreen").onclick=async()=>{
+  const target=document.documentElement;
+  try{
+    if(target.requestFullscreen){await target.requestFullscreen({navigationUI:"hide"});return;}
+    if(target.webkitRequestFullscreen){target.webkitRequestFullscreen();return;}
+  }catch(e){console.warn("[FULLSCREEN]",e);}
+  setPaused(false);
+  showInfoBanner("Plein écran","Sur iPhone, Safari ne propose pas le plein écran par bouton. Fais <b>Partager → Sur l'écran d'accueil</b>, puis lance le jeu depuis son icône.");
+};
+
+const dgOldApplyLevelsData=applyLevelsData;
+applyLevelsData=function(data,source){
+  dgBuildChapters(data);
+  // Arrivée par "Chapitres" ou "Rencontres" du menu : on ouvre cet écran, pas la carte de rencontre du niveau en cours.
+  const dgQuery=new URLSearchParams(location.search);
+  const dgOpen=dgQuery.get("collection")==="1"?"collection":(dgQuery.get("chapters")==="1"?"chapters":"");
+  dgSkipProfileOnce=!!dgOpen;
+  dgOldApplyLevelsData(data,source);
+  dgSkipProfileOnce=false;
+  if(dgOpen==="collection")dgShowCollection();
+  else if(dgOpen==="chapters")dgShowChapterList();
+};
+
+savedStartLevel=function(){return dgSafeStartLevel();};
+
+const dgOldLoadFromLevel=loadFromLevel;
+loadFromLevel=function(idx){
+  idx=Math.max(0,Math.min(levels.length-1,parseInt(idx,10)||0));
+  if(dgRawChapters)dgBuildChapters({chapters:dgRawChapters,levels}); // suit les ajouts/suppressions de l'éditeur
+  if(!dgLevelUnlocked(idx)){
+    dgShowChapterScreen(dgChapterIndexOfLevel(idx));
+    return;
+  }
+  dgOldLoadFromLevel(idx);
+  dgOnLevelLoaded();
+};
+
+
+const dgOldSaveWinProgress=saveWinProgress;
+saveWinProgress=function(){
+  dgOldSaveWinProgress();
+};
+
+const dgOldExportJson=exportJson;
+exportJson=function(){
+  writeCurrentLevel();
+  const perLevel=levels.some(l=>l&&l.chapter);
+  const chapters=dgChapters.map(c=>{const o={...c};if(perLevel)delete o.levelIds;return o;});
+  const data={version:6,settings:gameSettings,chapters,levels};
+  const blob=new Blob([JSON.stringify(data,null,2)],{type:"application/json"});
+  const a=document.createElement("a");
+  a.href=URL.createObjectURL(blob);
+  a.download="levels.json";
+  a.click();
+  URL.revokeObjectURL(a.href);
+  status.textContent="levels.json exporté avec chapitres.";
+};
+
+loadVectorAssets()
   .then(()=>loadStaticLevels())
   .catch(err=>{
     console.error("[BOOT] arrêt volontaire : vector_assets.json obligatoire",err);
@@ -2446,263 +3063,84 @@ loadAssets()
   });
 
 
-// V33 main menu: click/tap the big face to enter the game.
+/* ===== V46 SWIPE ROTATION =====
+   Glisser vers la droite = rotation horaire (comme l'ancien bouton ⟳), vers la gauche = anti-horaire.
+   Pendant le geste le plateau suit le doigt de quelques degrés ; au-delà du seuil, lâcher valide le coup,
+   en dessous le plateau revient à plat et aucun coup n'est compté. Les flèches du clavier marchent toujours. */
 (function(){
-  const menu=document.getElementById("mainMenu");
-  const head=document.getElementById("mainMenuHead");
-  function closeMainMenu(){
-    if(!menu)return;
-    menu.classList.add("hidden");
-    setPaused(false); userAudioGesture();
-    try{ if(typeof scheduleCompanion === "function") scheduleCompanion(false); }catch(e){}
+  const MAX_TILT=24;
+  const SWIPE_KEY="dg_swipe_count";
+  const hint=document.getElementById("swipeHint");
+  let sw=null;
+  let learned=0;
+  try{learned=Number(localStorage.getItem(SWIPE_KEY))||0;}catch(e){}
+
+  function threshold(){return Math.max(36,Math.min(90,window.innerWidth*0.14));}
+  function blocked(t){
+    return !!(t&&t.closest&&t.closest("button,a,input,select,textarea,label,.screen,.overlay,#confirmBox,#top,#companionDock,#dgAdOverlay,#loadingOverlay"));
   }
-  if(menu) menu.addEventListener("pointerdown", closeMainMenu, {passive:true});
-  if(head) head.addEventListener("keydown", e=>{
-    if(e.key==="Enter"||e.key===" "){
-      e.preventDefault();
-      closeMainMenu();
+  function canSwipe(){return !edit&&!busy&&!gameOver&&!gamePaused&&levels.length>0;}
+  function setTilt(a){rot.setAttribute("transform","rotate("+a+" "+(BOARD/2)+" "+(BOARD/2)+")");}
+  function syncHint(dir){
+    if(!hint)return;
+    hint.classList.toggle("learned",learned>=3);
+    hint.classList.toggle("left",dir<0);
+    hint.classList.toggle("right",dir>0);
+  }
+  function springBack(from){
+    const t0=performance.now();
+    (function step(now){
+      if(busy||sw)return; // un vrai coup ou un nouveau geste a pris la main
+      const k=Math.min(1,(now-t0)/130);
+      setTilt(from*(1-k)*(1-k));
+      if(k<1)requestAnimationFrame(step);
+    })(t0);
+  }
+
+  document.addEventListener("pointerdown",e=>{
+    if(e.pointerType==="mouse"&&e.button!==0)return;
+    if(sw||blocked(e.target)||!canSwipe())return;
+    sw={id:e.pointerId,x:e.clientX,y:e.clientY,tilt:0,active:false};
+  },{passive:true});
+
+  document.addEventListener("pointermove",e=>{
+    if(!sw||e.pointerId!==sw.id)return;
+    if(!canSwipe()){sw=null;stage.classList.remove("swiping");syncHint(0);return;}
+    const dx=e.clientX-sw.x,dy=e.clientY-sw.y;
+    if(!sw.active){
+      if(Math.abs(dx)<8)return;
+      if(Math.abs(dy)>Math.abs(dx)*1.2){sw=null;return;} // geste vertical : pas un swipe
+      sw.active=true;
+      stage.classList.add("swiping");
     }
-  });
-})();
+    sw.tilt=Math.max(-MAX_TILT,Math.min(MAX_TILT,dx/threshold()*14));
+    setTilt(sw.tilt);
+    syncHint(Math.abs(dx)>=threshold()?Math.sign(dx):0);
+  },{passive:true});
 
-
-
-
-/* ===== V77 mobile fullscreen behavior ===== */
-(function(){
-  const btn = document.getElementById("fullscreenBtn");
-  if(!btn) return;
-
-  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-    (navigator.platform === "MacIntel" && navigator.maxTouchPoints > 1);
-
-  const isStandalone = () =>
-    window.navigator.standalone === true ||
-    window.matchMedia("(display-mode: standalone)").matches ||
-    window.matchMedia("(display-mode: fullscreen)").matches;
-
-  function showFullscreenHelp(){
-    const msg = isIOS
-      ? "Sur iPhone, Safari ne permet pas toujours le vrai plein écran par bouton. Pour avoir le rendu plein écran : bouton Partager → Ajouter à l’écran d’accueil → lance le jeu depuis l’icône."
-      : "Ton navigateur bloque le plein écran. Lance le jeu depuis Chrome/Edge et appuie sur le bouton plein écran.";
-
-    if(typeof banner !== "undefined" && banner && typeof bannerTitle !== "undefined"){
-      bannerTitle.textContent = "Plein écran";
-      bannerText.textContent = msg;
-      if(typeof starsEl !== "undefined") starsEl.textContent = "";
-      bannerAction.textContent = "OK";
-      bannerAction.onclick = () => banner.classList.add("hidden");
-      banner.classList.remove("hidden");
+  function end(e,cancelled){
+    if(!sw||e.pointerId!==sw.id)return;
+    const s=sw;
+    sw=null;
+    stage.classList.remove("swiping");
+    syncHint(0);
+    if(!s.active)return;
+    const dx=e.clientX-s.x;
+    if(!cancelled&&Math.abs(dx)>=threshold()&&canSwipe()){
+      learned++;
+      try{localStorage.setItem(SWIPE_KEY,String(learned));}catch(err){}
+      syncHint(0);
+      turn(dx>0?1:-1,s.tilt);
     }else{
-      alert(msg);
+      springBack(s.tilt);
     }
   }
-
-  async function requestFullscreenSafe(){
-    if(isStandalone()){
-      btn.style.display = "none";
-      return;
-    }
-
-    const target = document.documentElement;
-
-    try{
-      if(target.requestFullscreen){
-        await target.requestFullscreen({navigationUI:"hide"});
-        btn.style.display = "none";
-        return;
-      }
-      if(target.webkitRequestFullscreen){
-        target.webkitRequestFullscreen();
-        btn.style.display = "none";
-        return;
-      }
-
-      showFullscreenHelp();
-    }catch(err){
-      console.warn("[FULLSCREEN] impossible", err);
-      showFullscreenHelp();
-    }
-  }
-
-  btn.addEventListener("click", requestFullscreenSafe);
-
-  document.addEventListener("fullscreenchange", () => {
-    btn.style.display = document.fullscreenElement ? "none" : "";
-  });
-  document.addEventListener("webkitfullscreenchange", () => {
-    btn.style.display = document.webkitFullscreenElement ? "none" : "";
-  });
-
-  if(isStandalone()){
-    btn.style.display = "none";
-  }
+  document.addEventListener("pointerup",e=>end(e,false),{passive:true});
+  document.addEventListener("pointercancel",e=>end(e,true),{passive:true});
+  syncHint(0);
 })();
 
-
-
-
-/* ===== V78 force fullscreen button visible on mobile browser ===== */
-(function(){
-  const btn=document.getElementById("fullscreenBtn");
-  if(!btn)return;
-
-  const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent) ||
-    (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
-
-  const isStandalone=()=>window.navigator.standalone===true ||
-    window.matchMedia("(display-mode: standalone)").matches ||
-    window.matchMedia("(display-mode: fullscreen)").matches;
-
-  function forceButtonVisibility(){
-    if(isStandalone()){
-      btn.style.display="none";
-      return;
-    }
-    btn.style.display="flex";
-    btn.style.visibility="visible";
-    btn.style.opacity="1";
-  }
-
-  forceButtonVisibility();
-  window.addEventListener("resize", forceButtonVisibility);
-  window.addEventListener("orientationchange", forceButtonVisibility);
-
-  btn.addEventListener("click", async ()=>{
-    if(isIOS){
-      const msg="Sur iPhone : bouton Partager → Ajouter à l’écran d’accueil → relance le jeu depuis l’icône pour avoir le vrai plein écran.";
-      if(typeof banner!=="undefined" && banner && typeof bannerTitle!=="undefined"){
-        bannerTitle.textContent="Plein écran iPhone";
-        bannerText.textContent=msg;
-        if(typeof starsEl!=="undefined")starsEl.textContent="";
-        bannerAction.textContent="OK";
-        bannerAction.onclick=()=>banner.classList.add("hidden");
-        banner.classList.remove("hidden");
-      }else alert(msg);
-      return;
-    }
-
-    try{
-      const target=document.documentElement;
-      if(target.requestFullscreen) await target.requestFullscreen({navigationUI:"hide"});
-      else if(target.webkitRequestFullscreen) target.webkitRequestFullscreen();
-    }catch(e){
-      console.warn("[FULLSCREEN]",e);
-    }
-  }, {capture:true});
-})();
-
-
-
-
-/* ===== V78 clamp bottom gameplay controls ===== */
-(function(){
-  function clampControls(){
-    const candidates=[...document.querySelectorAll("button")].filter(b=>{
-      const t=(b.textContent||"").toLowerCase();
-      const id=(b.id||"").toLowerCase();
-      const cl=(b.className||"").toString().toLowerCase();
-      return t.includes("reset") || id.includes("reset") || cl.includes("reset");
-    });
-    const reset=candidates[0];
-    if(!reset || !reset.parentElement)return;
-    const row=reset.parentElement;
-    const buttons=[...row.querySelectorAll("button")];
-    if(buttons.length<3)return;
-
-    row.style.boxSizing="border-box";
-    row.style.maxWidth="100vw";
-    row.style.width="100%";
-    row.style.paddingLeft="10px";
-    row.style.paddingRight="10px";
-    row.style.display="grid";
-    row.style.gridTemplateColumns="minmax(0,1fr) minmax(74px,.46fr) minmax(0,1fr)";
-    row.style.gap="8px";
-    row.style.overflow="visible";
-
-    buttons.forEach(b=>{
-      b.style.minWidth="0";
-      b.style.maxWidth="100%";
-      b.style.boxSizing="border-box";
-    });
-  }
-  window.addEventListener("load", clampControls);
-  window.addEventListener("resize", clampControls);
-  window.addEventListener("orientationchange", clampControls);
-  setTimeout(clampControls, 250);
-})();
-
-
-
-/* V35: bypass old internal menu because index.html is now the real menu. */
-(function(){
-  function forceGameStart(){
-    document.body.classList.add("force-game-start");
-    ["mainMenu","startMenu","homeMenu"].forEach(id=>{
-      const el=document.getElementById(id);
-      if(el){ el.style.display="none"; el.style.pointerEvents="none"; }
-    });
-    document.querySelectorAll(".mainMenu,.menuOverlay").forEach(el=>{
-      el.style.display="none";
-      el.style.pointerEvents="none";
-    });
-    try {
-      window.__skipMainMenu = true;
-      localStorage.setItem("gravity_cube_skip_embedded_menu","1");
-    } catch(e) {}
-  }
-  if(document.readyState==="loading") document.addEventListener("DOMContentLoaded", forceGameStart);
-  else forceGameStart();
-  window.addEventListener("load", forceGameStart);
-})();
-
-if(window.CG_EDITOR_MODE){console.log("Editor mode enabled");}
-
-/* ===== V43.29 fullscreen moved into pause menu ===== */
-(function(){
-  const btn=document.getElementById("pauseFullscreen");
-  if(!btn)return;
-
-  function isIOS(){
-    return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
-      (navigator.platform==="MacIntel" && navigator.maxTouchPoints>1);
-  }
-
-  function showFullscreenHelp(){
-    const msg=isIOS()
-      ? "Sur iPhone, Safari ne donne pas toujours le vrai plein écran par bouton. Pour le rendu plein écran : Partager → Ajouter à l’écran d’accueil, puis lance le jeu depuis l’icône."
-      : "Ton navigateur bloque le plein écran. Essaie depuis Chrome/Edge ou lance le jeu en mode application.";
-    if(typeof banner!=="undefined" && banner && typeof bannerTitle!=="undefined"){
-      bannerTitle.textContent="Plein écran";
-      bannerText.textContent=msg;
-      if(typeof starsEl!=="undefined")starsEl.textContent="";
-      bannerAction.textContent="OK";
-      bannerAction.onclick=()=>banner.classList.add("hidden");
-      banner.classList.remove("hidden");
-    }else{
-      alert(msg);
-    }
-  }
-
-  btn.addEventListener("click",async()=>{
-    try{
-      const target=document.documentElement;
-      if(target.requestFullscreen){
-        await target.requestFullscreen({navigationUI:"hide"});
-        return;
-      }
-      if(target.webkitRequestFullscreen){
-        target.webkitRequestFullscreen();
-        return;
-      }
-      showFullscreenHelp();
-    }catch(e){
-      console.warn("[PAUSE FULLSCREEN]",e);
-      showFullscreenHelp();
-    }
-  });
-})();
-
+;
 
 /* ===== V43.31 audio slider safety: do not regress music volume on iPhone ===== */
 (function(){

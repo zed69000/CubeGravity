@@ -1,360 +1,195 @@
+/* retour depuis le jeu : les rubans sont déjà fermés, on les ouvrira une fois prêt */
+try{if(sessionStorage.getItem("dg_tx")==="1"){sessionStorage.removeItem("dg_tx");document.documentElement.classList.add("tx-in");}}catch(e){}
+;
 
+/* ===== V49 NÉON CIRCUIT : menu principal ===== */
+const PROGRESS_KEY="gravity_cube_player_progress_v2";
+const PROJECT_ZIP_NAME="date_gravity_project_pc.zip";
+const PROJECT_PASSWORD="Lulu69";
 const overlay=document.getElementById("optionsOverlay");
 const soundToggle=document.getElementById("soundToggle");
-const soundHint=document.getElementById("soundHint");
+let bandColors=["#f6ff3d","#19e3ff","#0d1230"];
 
-let audioCtx=null;
-let menuMusicTimer=null;
-let menuMusicOn=true;
-let audioUnlocked=false;
-let musicStep=0;
+/* --- plein écran : demandé au premier geste, avant de quitter la page (iOS perd le geste sinon) */
+const isIOS=()=>/iPad|iPhone|iPod/.test(navigator.userAgent)||(navigator.platform==="MacIntel"&&navigator.maxTouchPoints>1);
+const isStandalone=()=>window.navigator.standalone===true||window.matchMedia("(display-mode: standalone)").matches||window.matchMedia("(display-mode: fullscreen)").matches;
+async function requestMenuFullscreen(showHelp=false){
+  if(isStandalone())return true;
+  const target=document.documentElement;
+  try{
+    if(target.requestFullscreen){await target.requestFullscreen({navigationUI:"hide"});return true;}
+    if(target.webkitRequestFullscreen){target.webkitRequestFullscreen();return true;}
+  }catch(e){console.warn("[MENU FULLSCREEN]",e);}
+  if(showHelp&&isIOS())alert("Sur iPhone, pour le vrai plein écran : Partager → Sur l’écran d’accueil, puis lance Date Gravity depuis son icône.");
+  return false;
+}
+document.getElementById("fullscreenBtn").addEventListener("click",()=>requestMenuFullscreen(true));
+document.addEventListener("click",async e=>{
+  const link=e.target.closest&&e.target.closest('a[href^="game.html"]');
+  if(!link||e.defaultPrevented)return;
+  e.preventDefault();
+  playButtonSound();
+  await requestMenuFullscreen(false);
+  leaveTo(link.getAttribute("href"));
+},true);
 
+/* --- rubans : ils se ferment avant de partir vers le jeu, et s'ouvrent quand on en revient */
+const BAND_IN=[{transform:"translateX(-130%) skewX(-18deg)"},{transform:"translateX(0) skewX(-18deg)"}];
+const BAND_OUT=[{transform:"translateX(0) skewX(-18deg)"},{transform:"translateX(130%) skewX(-18deg)"}];
+const reducedMotion=()=>!!(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches);
+function leaveTo(url){
+  const layer=document.getElementById("txLayer");
+  if(!layer||reducedMotion()){window.location.href=url;return;}
+  try{sessionStorage.setItem("dg_tx","1");}catch(e){}
+  layer.classList.add("block");
+  let last;
+  bandColors.forEach((c,i)=>{
+    const b=document.createElement("div");b.className="band";b.style.background=c;layer.appendChild(b);
+    last=b.animate(BAND_IN,{duration:280,delay:i*60,easing:"cubic-bezier(.6,0,.4,1)",fill:"forwards"});
+  });
+  last.finished.then(()=>{window.location.href=url;});
+}
+function bootReveal(){
+  const root=document.documentElement, layer=document.getElementById("txLayer");
+  if(!layer||!root.classList.contains("tx-in"))return;
+  let last;
+  [...layer.querySelectorAll(".band.boot")].forEach((b,i)=>{last=b.animate(BAND_OUT,{duration:300,delay:60+i*60,easing:"cubic-bezier(.6,0,.4,1)",fill:"forwards"});});
+  last.finished.then(()=>root.classList.remove("tx-in"));
+}
+// retour arrière du navigateur : la page peut revenir du cache avec les rubans fermés
+window.addEventListener("pageshow",e=>{if(e.persisted){document.querySelectorAll("#txLayer .band:not(.boot)").forEach(b=>b.remove());document.getElementById("txLayer").classList.remove("block");}});
+
+/* --- petite musique et sons du menu (Web Audio, aucun fichier) : mêmes notes pincées que les murs du jeu */
+let audioCtx=null,menuMusicTimer=null,menuMusicOn=true,musicStep=0;
 function getAudio(){
   if(!menuMusicOn)return null;
-  if(!audioCtx){
-    audioCtx=new (window.AudioContext||window.webkitAudioContext)();
-  }
-  if(audioCtx.state==="suspended"){
-    audioCtx.resume().catch(()=>{});
-  }
-  audioUnlocked=true;
+  if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)();
+  if(audioCtx.state==="suspended")audioCtx.resume().catch(()=>{});
   return audioCtx;
 }
-
-function beep(freq=440,dur=.08,type="sine",gain=.04){
+function pluck(freq,gain=.03,when=0){
   const ac=getAudio();
   if(!ac)return;
-  const o=ac.createOscillator();
-  const g=ac.createGain();
-  const f=ac.createBiquadFilter();
-  o.type=type;
-  o.frequency.setValueAtTime(freq,ac.currentTime);
-  f.type="lowpass";
-  f.frequency.setValueAtTime(1450,ac.currentTime);
-  g.gain.setValueAtTime(Math.max(.0001,gain),ac.currentTime);
-  g.gain.exponentialRampToValueAtTime(.0001,ac.currentTime+dur);
-  o.connect(f);
-  f.connect(g);
-  g.connect(ac.destination);
-  o.start();
-  o.stop(ac.currentTime+dur+.02);
+  const t=ac.currentTime+when;
+  [[1,"triangle",1],[2,"sine",.32]].forEach(v=>{
+    const o=ac.createOscillator(),g=ac.createGain();
+    o.type=v[1];o.frequency.value=freq*v[0];
+    g.gain.setValueAtTime(.0001,t);
+    g.gain.exponentialRampToValueAtTime(gain*v[2],t+.012);
+    g.gain.exponentialRampToValueAtTime(.0001,t+.5);
+    o.connect(g);g.connect(ac.destination);o.start(t);o.stop(t+.54);
+  });
 }
-
-function playButtonSound(){
-  beep(740,.045,"triangle",.035);
-  setTimeout(()=>beep(980,.05,"sine",.018),45);
-}
-
-function playOpenSound(){
-  beep(420,.07,"triangle",.03);
-  setTimeout(()=>beep(640,.08,"sine",.02),70);
-}
-
-function playCloseSound(){
-  beep(330,.07,"triangle",.025);
-}
-
+function playButtonSound(){pluck(523.25,.06);pluck(783.99,.05,.06);}
+function playOpenSound(){pluck(392,.05);pluck(587.33,.04,.07);}
+function playCloseSound(){pluck(329.63,.045);}
 function startMenuMusic(){
-  if(!menuMusicOn || menuMusicTimer)return;
-  const ac=getAudio();
-  if(!ac)return;
-  const bass=[196,196,220,196,174.61,174.61,196,220];
-  const melody=[392,440,493.88,440,392,349.23,392,440];
+  if(!menuMusicOn||menuMusicTimer)return;
+  if(!getAudio())return;
+  const bass=[130.81,130.81,146.83,130.81,98,98,110,146.83];
+  const melody=[523.25,587.33,659.25,783.99,659.25,587.33,440,392];
   const tick=()=>{
     if(!menuMusicOn)return;
     const i=musicStep++%melody.length;
-    beep(bass[i],.42,"sine",.006);
-    setTimeout(()=>beep(melody[i],.16,"triangle",.009),90);
-    setTimeout(()=>beep(melody[(i+2)%melody.length],.14,"sine",.0045),260);
+    pluck(bass[i],.016);
+    pluck(melody[i],.012,.14);
+    if(i%2)pluck(melody[(i+3)%melody.length],.007,.3);
   };
   tick();
-  menuMusicTimer=setInterval(tick,560);
+  menuMusicTimer=setInterval(tick,480);
 }
-
-function stopMenuMusic(){
-  if(menuMusicTimer){
-    clearInterval(menuMusicTimer);
-    menuMusicTimer=null;
-  }
-}
-
+function stopMenuMusic(){if(menuMusicTimer){clearInterval(menuMusicTimer);menuMusicTimer=null;}}
 function setMusicState(v){
   menuMusicOn=!!v;
-  localStorage.setItem("dcg_menu_music_on",menuMusicOn?"1":"0");
-  soundToggle.textContent=menuMusicOn?"♪ Musique menu : ON":"♪ Musique menu : OFF";
-  soundHint.textContent=menuMusicOn?"♪ Menu":"♪ Off";
-  if(menuMusicOn)startMenuMusic();
-  else stopMenuMusic();
+  try{localStorage.setItem("dcg_menu_music_on",menuMusicOn?"1":"0");}catch(e){}
+  soundToggle.textContent="♪ Musique du menu : "+(menuMusicOn?"oui":"non");
+  if(menuMusicOn)startMenuMusic();else stopMenuMusic();
 }
+try{const saved=localStorage.getItem("dcg_menu_music_on");if(saved!==null)menuMusicOn=saved==="1";}catch(e){}
+soundToggle.textContent="♪ Musique du menu : "+(menuMusicOn?"oui":"non");
+["pointerdown","keydown"].forEach(evt=>window.addEventListener(evt,()=>{if(menuMusicOn)startMenuMusic();},{once:true,passive:true}));
+soundToggle.addEventListener("click",()=>setMusicState(!menuMusicOn));
 
-try{
-  const saved=localStorage.getItem("dcg_menu_music_on");
-  if(saved!==null)menuMusicOn=saved==="1";
-}catch(e){}
-
-setMusicState(menuMusicOn);
-
-["pointerdown","mousedown","touchstart","keydown"].forEach(evt=>{
-  window.addEventListener(evt,()=>{
-    if(menuMusicOn)startMenuMusic();
-  },{once:true,passive:true});
-});
-
-document.querySelectorAll(".jsReactive").forEach(el=>{
-  const press=()=>{
-    el.classList.add("isPressed");
-    if(el.tagName!=="A")playButtonSound();
-  };
-  const release=()=>el.classList.remove("isPressed");
-  el.addEventListener("pointerdown",press);
-  el.addEventListener("mousedown",press);
-  el.addEventListener("touchstart",press,{passive:true});
-  el.addEventListener("pointerup",release);
-  el.addEventListener("pointercancel",release);
-  el.addEventListener("mouseleave",release);
-  el.addEventListener("mouseup",release);
-  el.addEventListener("touchend",release);
-  el.addEventListener("click",()=>{
-    if(menuMusicOn)startMenuMusic();
-    if(el.tagName==="A")playButtonSound();
-  });
-});
-
-document.getElementById("openOptions").addEventListener("click",()=>{
-  playOpenSound();
-  overlay.classList.add("show");
-  overlay.setAttribute("aria-hidden","false");
-});
-document.getElementById("closeOptions").addEventListener("click",()=>{
-  playCloseSound();
-  overlay.classList.remove("show");
-  overlay.setAttribute("aria-hidden","true");
-});
-soundToggle.addEventListener("click",()=>{
-  setMusicState(!menuMusicOn);
-});
-overlay.addEventListener("click",e=>{
-  if(e.target===overlay){
-    playCloseSound();
-    overlay.classList.remove("show");
-    overlay.setAttribute("aria-hidden","true");
-  }
-});
-document.addEventListener("keydown",e=>{
-  if(e.key==="Escape"){
-    overlay.classList.remove("show");
-    overlay.setAttribute("aria-hidden","true");
-  }
-});
-
-const SVG_NS="http://www.w3.org/2000/svg";
-
-function svgEl(tag,attrs={}){
-  const e=document.createElementNS(SVG_NS,tag);
-  Object.entries(attrs).forEach(([k,v])=>{
-    if(v!==undefined && v!==null && v!=="") e.setAttribute(k,String(v));
-  });
-  return e;
-}
-
-function layerOpacity(layer){
-  if(layer.visible===false)return 0;
-  if(layer.opacity===undefined || layer.opacity===null)return 1;
-  return Number(layer.opacity);
-}
-
-function normalizeStroke(v){
-  return (!v || v==="transparent" || v==="rgba(0,0,0,0)") ? "none" : v;
-}
-
-function applyCommon(el,layer){
-  el.setAttribute("fill",layer.fill || "none");
-  el.setAttribute("stroke",normalizeStroke(layer.stroke));
-  if(layer.strokeWidth!==undefined)el.setAttribute("stroke-width",String(layer.strokeWidth));
-  const op=layerOpacity(layer);
-  if(op!==1)el.setAttribute("opacity",String(op));
-
-  const px=Number(layer.pivotX ?? 20);
-  const py=Number(layer.pivotY ?? 20);
-  const tx=Number(layer.tx ?? 0);
-  const ty=Number(layer.ty ?? 0);
-  const sx=Number(layer.scaleX ?? 1);
-  const sy=Number(layer.scaleY ?? 1);
-  const rot=Number(layer.rotation ?? layer.rot ?? 0);
-  const transforms=[];
-  if(tx||ty)transforms.push(`translate(${tx} ${ty})`);
-  if(rot)transforms.push(`rotate(${rot} ${px} ${py})`);
-  if(sx!==1 || sy!==1)transforms.push(`translate(${px} ${py}) scale(${sx} ${sy}) translate(${-px} ${-py})`);
-  if(transforms.length)el.setAttribute("transform",transforms.join(" "));
-  return el;
-}
-
-function pointsToString(points){
-  return (points||[]).map(p=>`${Number(p[0])},${Number(p[1])}`).join(" ");
-}
-
-function makePathD(points){
-  if(!points || !points.length)return "";
-  const first=points[0];
-  let d=`M ${Number(first[0])} ${Number(first[1])}`;
-  for(let i=1;i<points.length;i++)d+=` L ${Number(points[i][0])} ${Number(points[i][1])}`;
-  return d;
-}
-
-function drawLayer(layer){
-  if(!layer || layer.visible===false)return null;
-  const shape=layer.shape;
-  let el=null;
-
-  if(shape==="rect"){
-    el=svgEl("rect",{
-      x:layer.x ?? 0,
-      y:layer.y ?? 0,
-      width:layer.w ?? layer.width ?? 1,
-      height:layer.h ?? layer.height ?? 1,
-      rx:layer.rx ?? 0,
-      ry:layer.ry ?? layer.rx ?? 0
-    });
-  }else if(shape==="circle"){
-    el=svgEl("circle",{
-      cx:layer.cx ?? layer.x ?? 20,
-      cy:layer.cy ?? layer.y ?? 20,
-      r:layer.r ?? 1
-    });
-  }else if(shape==="ellipse"){
-    el=svgEl("ellipse",{
-      cx:layer.cx ?? layer.x ?? 20,
-      cy:layer.cy ?? layer.y ?? 20,
-      rx:layer.rx ?? layer.w ?? 1,
-      ry:layer.ry ?? layer.h ?? 1
-    });
-  }else if(shape==="polygon"){
-    el=svgEl("polygon",{points:pointsToString(layer.points)});
-  }else if(shape==="path"){
-    const d=layer.d || makePathD(layer.points);
-    if(!d)return null;
-    el=svgEl("path",{d});
-  }else if(shape==="line"){
-    el=svgEl("line",{
-      x1:layer.x1 ?? layer.x ?? 0,
-      y1:layer.y1 ?? layer.y ?? 0,
-      x2:layer.x2 ?? 40,
-      y2:layer.y2 ?? 40
-    });
-  }else if(shape==="text"){
-    el=svgEl("text",{
-      x:layer.x ?? 20,
-      y:layer.y ?? 20,
-      "font-size":layer.fontSize ?? 16,
-      "font-weight":layer.fontWeight ?? 900,
-      "text-anchor":layer.textAnchor ?? "middle",
-      "font-family":layer.fontFamily ?? "Arial, sans-serif"
-    });
-    el.textContent=layer.text || "";
-  }
-
-  if(!el)return null;
-  return applyCommon(el,layer);
-}
-
-
-let menuVectorPack=null;
-const CHARACTER_KEYS={
-  me:{boy:"player_boy",girl:"player_girl",fallback:"player"},
-  date:{boy:"date_boy",girl:"date_girl",fallback:"destination"}
-};
-const CHARACTER_LABELS={boy:"garçon",girl:"fille"};
-
-function getStoredGender(key, fallback){
+/* --- options */
+function openOptions(){playOpenSound();overlay.classList.remove("hidden");overlay.setAttribute("aria-hidden","false");}
+function closeOptions(){playCloseSound();overlay.classList.add("hidden");overlay.setAttribute("aria-hidden","true");}
+document.getElementById("gearBtn").addEventListener("click",openOptions);
+document.getElementById("closeOptions").addEventListener("click",closeOptions);
+overlay.addEventListener("click",e=>{if(e.target===overlay)closeOptions();});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!overlay.classList.contains("hidden"))closeOptions();});
+document.getElementById("downloadProjectBtn").addEventListener("click",async()=>{
+  playButtonSound();
+  const code=window.prompt("Code d’accès pour télécharger le projet PC :");
+  if(code===null)return;
+  if(code!==PROJECT_PASSWORD){alert("Code incorrect.");return;}
   try{
-    const v=localStorage.getItem(key);
-    return (v==="boy"||v==="girl") ? v : fallback;
-  }catch(e){return fallback;}
-}
-function setStoredGender(key,value){
-  try{localStorage.setItem(key,value);}catch(e){}
-}
-function toggleGender(value){return value==="boy" ? "girl" : "boy";}
+    const res=await fetch(PROJECT_ZIP_NAME,{method:"HEAD",cache:"no-store"});
+    if(!res.ok)throw new Error("missing");
+    const a=document.createElement("a");
+    a.href=PROJECT_ZIP_NAME+"?t="+Date.now();
+    a.download=PROJECT_ZIP_NAME;
+    document.body.appendChild(a);a.click();a.remove();
+  }catch(err){
+    alert("Fichier non disponible sur le site. Place un zip nommé '"+PROJECT_ZIP_NAME+"' à la racine du projet.");
+  }
+});
 
+/* --- les personnages : moi (la flamme) et la personne du chapitre en cours, chacun en lui ou en elle */
+function getStoredGender(key,fallback){
+  try{const v=localStorage.getItem(key);return (v==="boy"||v==="girl")?v:fallback;}catch(e){return fallback;}
+}
 let meGender=getStoredGender("dcg_me_gender","boy");
 let dateGender=getStoredGender("dcg_date_gender","girl");
-
-async function loadMenuVectorPack(){
-  const candidates=["vector_assets_runtime.json","./vector_assets_runtime.json","vector_assets.json","./vector_assets.json"];
-  for(const path of candidates){
-    try{
-      const res=await fetch(path+"?v="+Date.now(),{cache:"no-store"});
-      if(!res.ok)continue;
-      const data=await res.json();
-      if(data?.assets){
-        menuVectorPack=data;
-        console.log("[MAINMENU] vector assets loaded from",path);
-        return data;
-      }
-    }catch(err){console.warn("[MAINMENU] vector asset failed",path,err);}
-  }
-  return null;
-}
-
-function menuAsset(role,gender){
-  const keys=CHARACTER_KEYS[role];
-  const wanted=keys?.[gender];
-  if(menuVectorPack?.assets?.[wanted])return wanted;
-  if(menuVectorPack?.assets?.[keys?.fallback])return keys.fallback;
-  return null;
-}
-
-function drawMenuAsset(svgId,fallbackId,assetName,flip=false){
-  const svg=document.getElementById(svgId);
-  const fallback=document.getElementById(fallbackId);
-  if(!svg || !fallback)return;
-  const asset=assetName ? menuVectorPack?.assets?.[assetName] : null;
-  const layers=asset?.layers;
-  svg.innerHTML="";
-  if(Array.isArray(layers) && layers.length){
-    const root=svgEl("g", flip?{transform:"translate(40 0) scale(-1 1)"}:{});
-    layers.forEach(layer=>{
-      const el=drawLayer(layer);
-      if(el)root.appendChild(el);
-    });
-    svg.appendChild(root);
-    svg.classList.remove("assetHidden");
-    fallback.classList.add("assetHidden");
-  }else{
-    svg.classList.add("assetHidden");
-    fallback.classList.remove("assetHidden");
-  }
-}
-
+let chapterIndex=0;
 function updateMenuCharacters(){
-  const meAsset=menuAsset("me",meGender);
-  const dateAsset=menuAsset("date",dateGender);
-  drawMenuAsset("meChoiceSvg","meChoiceFallback",meAsset,false);
-  drawMenuAsset("dateChoiceSvg","dateChoiceFallback",dateAsset,true);
-  const meHint=document.getElementById("meChoiceHint");
-  const dateHint=document.getElementById("dateChoiceHint");
-  if(meHint)meHint.textContent=CHARACTER_LABELS[meGender]||meGender;
-  if(dateHint)dateHint.textContent=CHARACTER_LABELS[dateGender]||dateGender;
+  const person=DGSpirit.person(chapterIndex);
+  document.getElementById("mePic").innerHTML=DGSpirit.portrait("flamme",meGender==="girl"?"f":"m");
+  document.getElementById("datePic").innerHTML=DGSpirit.portrait(person.kind,dateGender==="boy"?"m":"f");
+  document.getElementById("meCap").textContent=(meGender==="girl"?"elle":"lui")+" · changer ↻";
+  document.getElementById("dateName").textContent=person.name;
+  document.getElementById("dateCap").textContent=(dateGender==="boy"?"lui":"elle")+" · changer ↻";
 }
-
-async function initMenuCharacters(){
-  await loadMenuVectorPack();
-  updateMenuCharacters();
-}
-
-const meChoiceBtn=document.getElementById("meChoice");
-const dateChoiceBtn=document.getElementById("dateChoice");
-if(meChoiceBtn)meChoiceBtn.addEventListener("click",()=>{
-  meGender=toggleGender(meGender);
-  setStoredGender("dcg_me_gender",meGender);
-  playOpenSound();
-  updateMenuCharacters();
+document.getElementById("meChoice").addEventListener("click",()=>{
+  meGender=meGender==="boy"?"girl":"boy";
+  try{localStorage.setItem("dcg_me_gender",meGender);}catch(e){}
+  playOpenSound();updateMenuCharacters();
 });
-if(dateChoiceBtn)dateChoiceBtn.addEventListener("click",()=>{
-  dateGender=toggleGender(dateGender);
-  setStoredGender("dcg_date_gender",dateGender);
-  playOpenSound();
-  updateMenuCharacters();
+document.getElementById("dateChoice").addEventListener("click",()=>{
+  dateGender=dateGender==="boy"?"girl":"boy";
+  try{localStorage.setItem("dcg_date_gender",dateGender);}catch(e){}
+  playOpenSound();updateMenuCharacters();
 });
 
-initMenuCharacters();
+/* --- où reprendre, cœurs gagnés, rencontres faites : lus dans la sauvegarde du jeu */
+async function showResume(){
+  let pr={};
+  try{pr=JSON.parse(localStorage.getItem(PROGRESS_KEY)||"{}")||{};}catch(e){}
+  const best=pr.best||{};
+  document.getElementById("starChip").textContent="♥ "+Object.values(best).reduce((n,b)=>n+(Number(b&&b.stars)||0),0);
+  const line=document.getElementById("resumeLine");
+  try{
+    const res=await fetch("levels.json?v="+Date.now(),{cache:"no-store"});
+    const data=await res.json();
+    const levels=data.levels||[], chapters=data.chapters||[];
+    let idx=levels.findIndex(l=>l.id===pr.current);
+    const started=idx>=0||Object.keys(best).length>0;
+    if(idx<0)idx=0;
+    const chId=levels[idx].chapter;
+    chapterIndex=Math.max(0,chapters.findIndex(c=>c.id===chId));
+    const pos=levels.slice(0,idx+1).filter(l=>l.chapter===chId).length;
+    line.textContent=(started?"reprendre · ":"")+"chapitre "+(chapterIndex+1)+", niveau "+pos;
+    const met=new Set(levels.filter(l=>best[l.id]).map(l=>l.chapter)).size;
+    document.getElementById("metCount").textContent=met+"/"+chapters.length;
+    // le menu prend les couleurs du chapitre en cours
+    const w=DGSpirit.WORLDS[chapterIndex%DGSpirit.WORLDS.length];
+    document.documentElement.style.setProperty("--c1",w[0]);
+    document.documentElement.style.setProperty("--c2",w[1]);
+    bandColors=[w[0],w[1],"#0d1230"];
+  }catch(e){
+    line.textContent="chapitre 1, niveau 1";
+  }
+  updateMenuCharacters();
+}
+
+updateMenuCharacters();
+showResume().then(bootReveal,bootReveal);

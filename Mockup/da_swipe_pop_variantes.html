@@ -1,0 +1,464 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Date Gravity – Swipe Pop, 3 variantes</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;700&family=Nunito:wght@600;800&family=Caveat:wght@700&family=Lilita+One&family=Sora:wght@600;800&family=Fraunces:ital,wght@1,700;1,900&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#14151c;color:#eef0f6;font-family:Nunito,Arial,sans-serif;line-height:1.45}
+header.page{max-width:1180px;margin:0 auto;padding:36px 20px 8px}
+header.page h1{margin:0 0 6px;font:700 34px/1.1 Fredoka,Arial,sans-serif}
+header.page p{margin:0;max-width:780px;color:#b9bdcc}
+section.da{max-width:1180px;margin:34px auto;padding:26px 20px 30px;border-radius:26px;background:#1d1f2a}
+.daHead{display:flex;flex-wrap:wrap;gap:18px 34px;align-items:flex-start;margin-bottom:20px}
+.daHead .txt{flex:1 1 380px}
+.daNum{font:800 13px/1 Nunito,Arial,sans-serif;letter-spacing:.16em;color:#9aa0b6}
+.daHead h2{margin:6px 0 8px;font-size:40px;line-height:1}
+.daHead p{margin:0 0 10px;color:#c9cddb}
+.daHead ul{margin:0;padding-left:18px;color:#c9cddb}
+.swatches{display:flex;gap:8px;flex-wrap:wrap}
+.sw{width:70px;border-radius:12px;overflow:hidden;background:#11121a;font:800 10px/1 Nunito,Arial,sans-serif;text-align:center;color:#aab}
+.sw i{display:block;height:42px}.sw span{display:block;padding:6px 0}
+.typo{margin-top:12px;color:#aab;font-size:13px}
+.cast{display:flex;gap:14px;flex-wrap:wrap;justify-content:center;margin:0 0 24px;padding:16px;border-radius:20px}
+.cast figure{margin:0;width:112px;text-align:center}
+.cast svg{width:96px;height:96px;overflow:visible}
+.cast figcaption{margin-top:4px;font-size:12px;line-height:1.25}
+.cast figcaption b{display:block;font-size:14px}
+.phones{display:flex;gap:22px;flex-wrap:wrap;justify-content:center}
+.phoneWrap{text-align:center}
+.phoneWrap small{display:block;margin-top:10px;font:800 12px/1 Nunito,Arial,sans-serif;letter-spacing:.1em;color:#9aa0b6;text-transform:uppercase}
+.phone{position:relative;width:270px;height:560px;border-radius:38px;border:8px solid #06070b;overflow:hidden;box-shadow:0 22px 50px rgba(0,0,0,.5);text-align:left}
+.scr{position:absolute;inset:0;display:flex;flex-direction:column;overflow:hidden}
+.board{display:grid;grid-template-columns:repeat(7,1fr);aspect-ratio:1;width:100%}
+.board i{display:block;position:relative}
+.board i svg{position:absolute;inset:-30% -27% -24%;width:154%;height:154%;overflow:visible}
+.top{display:flex;align-items:center;justify-content:space-between;padding:16px 16px 8px}
+.swipeBar{margin:auto 0 18px;display:flex;justify-content:center;align-items:center;gap:14px;font-size:12px;font-weight:800}
+.swipeBar b{width:50px;height:50px;border-radius:50%;display:grid;place-items:center;font-size:23px}
+@keyframes bob{50%{transform:translateY(-6px) rotate(2deg)}}
+@keyframes wig{50%{transform:rotate(3deg) scale(1.03)}}
+@keyframes dots{0%,80%,100%{opacity:.25}40%{opacity:1}}
+
+/* ============================================================ A. POP PORTRAITS */
+.va .daHead h2{font-family:Fredoka,Arial,sans-serif;color:#ff6b5e}
+.va .cast{background:#fbf3e7;color:#33261f}
+.va .scr{background:#fbf3e7;color:#33261f;background-image:radial-gradient(#33261f12 1px,transparent 1.2px);background-size:11px 11px}
+.va .logo{font:700 21px Fredoka,Arial,sans-serif;color:#ff6b5e}
+.va .pill{padding:6px 12px;border-radius:999px;background:#fff;font-weight:800;font-size:12px;box-shadow:0 3px 0 #33261f1a}
+.va .polaroid{position:relative;margin:12px 20px 0;padding:12px 12px 14px;background:#fff;border-radius:6px;box-shadow:0 14px 28px rgba(51,38,31,.22);transform:rotate(-3deg)}
+.va .polaroid::before{content:"";position:absolute;left:50%;top:-11px;width:74px;height:22px;margin-left:-37px;background:#ffd166cc;transform:rotate(2deg)}
+.va .photo{height:210px;border-radius:4px;display:grid;place-items:center;background:linear-gradient(180deg,#9be3d8,#5cc8c0)}
+.va .photo svg{width:168px;height:168px;animation:bob 2.4s ease-in-out infinite}
+.va .hand{margin-top:8px;font:700 25px/1 Caveat,cursive}
+.va .bio{font-size:12.5px;line-height:1.3;margin-top:3px;color:#6b574c}
+.va .prompt{margin:16px 20px 0;padding:10px 12px;border-radius:14px;background:#fff;font-size:12.5px;box-shadow:0 3px 0 #33261f14}
+.va .prompt b{display:block;font-size:10px;letter-spacing:.08em;color:#ff6b5e;text-transform:uppercase}
+.va .cta{margin:auto 20px 20px;padding:15px;border-radius:999px;text-align:center;color:#fff;font:700 19px Fredoka,Arial,sans-serif;background:#ff6b5e;box-shadow:0 7px 0 #c9443b}
+.va .boardWrap{margin:8px 12px;padding:8px;border-radius:20px;background:#fff;box-shadow:0 12px 26px rgba(51,38,31,.18)}
+.va .board{gap:3px;padding:3px;border-radius:14px;background:#f3e7d6}
+.va .board i{border-radius:7px}
+.va .w{background:#33261f;box-shadow:inset 0 -4px 0 #0005}
+.va .h{background:#ffd166}
+.va .swipeBar{color:#a08c7e}.va .swipeBar b{background:#fff;box-shadow:0 5px 0 #33261f1a;color:#5cc8c0}.va .swipeBar b:last-child{color:#ff6b5e}
+.va .match{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:#ff6b5e;color:#fff}
+.va .match .two{display:flex}
+.va .match .two div{width:104px;padding:7px 7px 10px;background:#fff;border-radius:5px;box-shadow:0 10px 20px #0003;transform:rotate(-7deg)}
+.va .match .two div+div{transform:rotate(6deg);margin-left:-14px}
+.va .match .two span{display:grid;place-items:center;height:86px;border-radius:3px;background:#9be3d8}
+.va .match .two div+div span{background:#ffd166}
+.va .match .two svg{width:76px;height:76px}
+.va .match h3{margin:18px 0 4px;font:700 44px/0.95 Caveat,cursive;transform:rotate(-4deg)}
+.va .match .cta{margin:16px 0 0;background:#fff;color:#ff6b5e;box-shadow:0 7px 0 #0002;padding:13px 28px}
+
+/* ============================================================ B. PAPIER CRUSH */
+.vb .daHead h2{font:italic 900 44px/1 Fraunces,Georgia,serif;color:#ffcf4a}
+.vb .cast{background:#f7f1e3;color:#232a5c}
+.vb .cast svg,.vb .phone svg{filter:drop-shadow(1.5px 2.5px 0 rgba(35,42,92,.16))}
+.vb .scr{background:#f7f1e3;color:#232a5c;font-family:Nunito,Arial,sans-serif}
+/* formes de papier découpé en fond */
+.vb .scr::before,.vb .scr::after{content:"";position:absolute;z-index:0;pointer-events:none}
+.vb .scr::before{width:210px;height:190px;right:-70px;top:-60px;background:#ffcf4a;border-radius:58% 42% 61% 39%/47% 60% 40% 53%;transform:rotate(-12deg)}
+.vb .scr::after{width:220px;height:170px;left:-90px;bottom:-50px;background:#8fd9c4;border-radius:40% 60% 36% 64%/58% 41% 59% 42%;transform:rotate(9deg)}
+.vb .scr>*{position:relative;z-index:1}
+.vb .logo{font:italic 900 21px/1 Fraunces,Georgia,serif;color:#232a5c}
+.vb .pill{padding:6px 11px;border-radius:999px;background:#fff;font-weight:800;font-size:12px;box-shadow:0 2px 0 rgba(35,42,92,.12)}
+.vb .sheet{position:relative;margin:14px 22px 0}
+.vb .sheet::before,.vb .sheet::after{content:"";position:absolute;inset:0;border-radius:10px}
+.vb .sheet::before{background:#ff6a55;transform:rotate(-5deg)}
+.vb .sheet::after{background:#f4a9c4;transform:rotate(3.5deg)}
+.vb .sheet .in{position:relative;z-index:1;padding:14px 14px 13px;background:#fff;border-radius:10px;box-shadow:0 10px 20px rgba(35,42,92,.14)}
+.vb .portrait{height:204px;display:grid;place-items:end center;overflow:hidden;border-radius:6px;background:#dfe6ff}
+.vb .portrait svg{width:208px;height:208px;margin-bottom:-14px;animation:bob 2.6s ease-in-out infinite}
+.vb .name{margin-top:9px;font:italic 900 25px/1 Fraunces,Georgia,serif}
+.vb .bio{margin-top:3px;font-size:12.5px;line-height:1.3;color:#59608c}
+.vb .tags{display:flex;gap:6px;margin-top:8px}
+.vb .tags span{padding:4px 9px;border-radius:5px;font-size:11px;font-weight:800;background:#ffcf4a}
+.vb .tags span+span{background:#8fd9c4;transform:rotate(-2deg)}
+.vb .cta{margin:auto 22px 20px;padding:15px;border-radius:12px;text-align:center;color:#f7f1e3;font:italic 900 20px/1 Fraunces,Georgia,serif;background:#232a5c;box-shadow:5px 6px 0 #ff6a55;transform:rotate(-1.2deg)}
+
+/* --- écran de jeu : une ligne d'en-tête, le plateau sur toute la largeur, le bas pour le pouce */
+.vb .gHead{display:flex;align-items:center;justify-content:space-between;height:52px;padding:8px 10px 0}
+.vb .gHead .who{font:italic 900 19px/1 Fraunces,Georgia,serif}
+.vb .gHead .who small{display:block;margin-top:3px;font:800 10px/1 Nunito,Arial,sans-serif;letter-spacing:.08em;color:#59608c;text-transform:none}
+.vb .round{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:#fff;font-weight:900;font-size:13px;box-shadow:0 2px 0 rgba(35,42,92,.14)}
+.vb .moves{padding:7px 11px;border-radius:8px;background:#232a5c;color:#f7f1e3;font-weight:800;font-size:13px;transform:rotate(2deg)}
+.vb .moves b{color:#ffcf4a}
+.vb .gMid{flex:1;display:grid;place-items:center;padding:0 7px}
+.vb .boardWrap{position:relative;width:100%}
+.vb .boardWrap::before{content:"";position:absolute;inset:-3px;border-radius:14px;background:#ff6a55;transform:rotate(-2.2deg)}
+.vb .board{position:relative;gap:2px;padding:6px;border-radius:12px;background:#fff;box-shadow:0 10px 22px rgba(35,42,92,.16);transition:transform .2s}
+.vb .board i{border-radius:5px}
+.vb .w{background:#232a5c}
+.vb .w:nth-child(3n){transform:rotate(2deg)}.vb .w:nth-child(4n+1){transform:rotate(-2.5deg)}.vb .w:nth-child(7n){background:#2d3a8c}
+.vb .h{background:#ffcf4a;clip-path:polygon(50% 4%,62% 36%,96% 38%,69% 59%,79% 93%,50% 73%,21% 93%,31% 59%,4% 38%,38% 36%)}
+.vb .gFoot{height:112px;padding:0 12px 14px;display:flex;flex-direction:column;justify-content:flex-end;gap:9px}
+.vb .react{display:flex;align-items:center;gap:8px}
+.vb .react .mini{flex:none;width:42px;height:42px;border-radius:50%;overflow:hidden;background:#dfe6ff;display:grid;place-items:end center}
+.vb .react .mini svg{width:50px;height:50px;margin-bottom:-6px;filter:none}
+.vb .react p{margin:0;padding:8px 11px;border-radius:14px 14px 14px 4px;background:#fff;font-size:12.5px;line-height:1.25;box-shadow:0 2px 0 rgba(35,42,92,.12)}
+.vb .thumb{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.vb .thumb .reset{padding:9px 11px;border-radius:8px;background:#fff;font-size:11px;font-weight:900;box-shadow:0 2px 0 rgba(35,42,92,.14)}
+.vb .thumb .arc{flex:1;display:flex;align-items:center;justify-content:center;gap:9px;height:38px;border-radius:999px;border:2px dashed #232a5c55;font-size:11px;font-weight:800;color:#59608c;white-space:nowrap}
+.vb .thumb .arc b{font-size:17px;color:#232a5c}
+/* variante "pendant le swipe" */
+.vb .swiping .board{transform:rotate(9deg) scale(.9)}
+.vb .swiping .boardWrap::before{transform:rotate(5deg) scale(.9)}
+.vb .swiping .arc{border-style:solid;border-color:#ff6a55;background:#ff6a55;color:#fff}
+.vb .swiping .arc b{color:#fff}
+.vb .finger{position:absolute;right:26px;bottom:150px;width:46px;height:46px;border-radius:50%;background:#232a5c33;border:3px solid #232a5c;z-index:3}
+.vb .finger::before{content:"";position:absolute;right:38px;top:50%;width:92px;height:10px;margin-top:-5px;border-radius:999px;background:linear-gradient(90deg,transparent,#232a5c44)}
+.vb .stamp{position:absolute;left:16px;top:70px;z-index:3;padding:6px 11px;border-radius:8px;background:#ffcf4a;font:italic 900 18px/1 Fraunces,Georgia,serif;transform:rotate(-10deg);box-shadow:3px 4px 0 #232a5c}
+
+.vb .match{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 16px}
+.vb .match .heart{position:absolute;top:92px;left:50%;width:240px;height:220px;margin-left:-120px;z-index:0}
+.vb .match .heart svg{width:100%;height:100%;filter:none;animation:wig 1.6s ease-in-out infinite}
+.vb .match .duo{position:relative;z-index:1;display:flex;align-items:flex-end;margin-top:6px}
+.vb .match .duo svg{width:128px;height:128px}
+.vb .match .duo svg+svg{margin-left:-30px}
+.vb .match h3{position:relative;z-index:1;margin:18px 0 4px;font:italic 900 40px/0.95 Fraunces,Georgia,serif}
+.vb .match .cta{margin:18px 0 0;align-self:stretch}
+.zones{max-width:600px;margin:14px auto 0;font-size:12.5px;color:#aab;text-align:center}
+.zones b{color:#ffcf4a}
+
+/* ============================================================ C. PETIT MESSAGE (clair) */
+.vc .daHead h2{font-family:Sora,Arial,sans-serif;font-weight:800;color:#ff8f7a}
+.vc .cast{background:linear-gradient(160deg,#fff1ea,#efe8ff);color:#43305c}
+.vc .scr{background:linear-gradient(170deg,#fff1ea 0,#ffe6ef 45%,#ece6ff 100%);color:#43305c;font-family:Sora,Arial,sans-serif}
+.vc .logo{font:800 17px Sora,Arial,sans-serif;color:#ff7a6b}
+.vc .pill{padding:6px 11px;border-radius:999px;background:#fff;font-size:11px;font-weight:800;box-shadow:0 4px 12px #b9a6ff40}
+.vc .card{margin:8px 14px 0;border-radius:26px;background:#fff;box-shadow:0 16px 34px #b9a6ff55;overflow:hidden}
+.vc .glow{position:relative;height:196px;display:grid;place-items:center;background:radial-gradient(circle at 50% 64%,#fff 0,#ffd9c9 40%,#ffc6dc 100%)}
+.vc .glow svg{width:150px;height:150px;animation:bob 2.6s ease-in-out infinite;filter:drop-shadow(0 10px 14px #ff7a6b40)}
+.vc .online{position:absolute;left:12px;top:12px;display:flex;align-items:center;gap:6px;padding:5px 9px;border-radius:999px;background:#fff;font-size:10px;font-weight:800}
+.vc .online::before{content:"";width:7px;height:7px;border-radius:50%;background:#2fd58a}
+.vc .info{padding:10px 14px 12px;font-size:12px}
+.vc .info b{font-size:19px;font-weight:800}
+.vc .chat{margin:10px 14px 0;display:flex;flex-direction:column;gap:6px;font-size:12px;line-height:1.3}
+.vc .chat span{align-self:flex-start;max-width:86%;padding:8px 11px;border-radius:16px 16px 16px 4px;background:#fff;box-shadow:0 4px 12px #b9a6ff33}
+.vc .chat span.me{align-self:flex-end;border-radius:16px 16px 4px 16px;background:linear-gradient(90deg,#ff8f7a,#ffb86b);color:#fff;font-weight:800}
+.vc .typing i{display:inline-block;width:6px;height:6px;margin:0 2px;border-radius:50%;background:#b9a6ff;animation:dots 1.2s infinite}
+.vc .typing i:nth-child(2){animation-delay:.2s}.vc .typing i:nth-child(3){animation-delay:.4s}
+.vc .cta{margin:auto 14px 18px;padding:15px;border-radius:18px;text-align:center;color:#fff;font-weight:800;font-size:16px;background:linear-gradient(90deg,#ff8f7a,#ffb86b);box-shadow:0 10px 22px #ff8f7a55}
+.vc .boardWrap{margin:6px 12px;padding:6px;border-radius:22px;background:#fff;box-shadow:0 16px 34px #b9a6ff55}
+.vc .board{gap:3px;padding:3px;border-radius:16px;background:#f6f1ff}
+.vc .board i{border-radius:7px}
+.vc .w{background:linear-gradient(180deg,#cbbcff,#b3a0f5)}
+.vc .h{background:radial-gradient(circle,#ffb86b 30%,transparent 34%)}
+.vc .swipeBar{color:#a892c8}.vc .swipeBar b{background:#fff;box-shadow:0 6px 14px #b9a6ff40;color:#ff8f7a}
+.vc .match{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;background:radial-gradient(circle at 50% 36%,#fff 0,#ffd9c9 34%,#ffc6dc 66%,#e6dcff 100%)}
+.vc .match .duo{display:flex}
+.vc .match .duo svg{width:112px;height:112px;filter:drop-shadow(0 10px 14px #ff7a6b40)}
+.vc .match .duo svg+svg{margin-left:-18px}
+.vc .match h3{margin:14px 0 6px;font:800 30px/1.05 Sora,Arial,sans-serif;color:#ff6b7f}
+.vc .match .chat{margin:8px 0 0;width:78%}
+.vc .match .cta{margin:16px 0 0;padding:13px 26px}
+</style>
+</head>
+<body>
+<header class="page">
+  <h1>Swipe Pop – 3 variantes</h1>
+  <p>Base commune : le jeu-appli de rencontre, les niveaux en cartes-profils, le swipe. Ce qui change d'une variante à l'autre, c'est la façon de rendre les personnages humains tout en gardant le cube très iconique : par le portrait, par le corps, ou par la voix.</p>
+</header>
+
+<section class="da va">
+  <div class="daHead">
+    <div class="txt">
+      <div class="daNum">VARIANTE A</div>
+      <h2>Pop Portraits</h2>
+      <p>L'humain passe par le <b>portrait</b>. Le cube reste un cube, mais chacun a une coiffure, un accessoire, des joues qui rougissent et une vraie fiche : une photo polaroïd, un prénom écrit à la main, une phrase qui dit qui il est.</p>
+      <ul>
+        <li>Une silhouette + 2 ou 3 signes distinctifs par personnage : on les reconnaît même en tout petit sur le plateau.</li>
+        <li>Papier crème, scotch, écriture manuscrite : plus chaleureux et moins « appli générique ».</li>
+        <li>Chaque date a une petite phrase d'accroche liée aux mécaniques du jeu.</li>
+      </ul>
+    </div>
+    <div>
+      <div class="swatches">
+        <div class="sw"><i style="background:#ff6b5e"></i><span>#FF6B5E</span></div>
+        <div class="sw"><i style="background:#5cc8c0"></i><span>#5CC8C0</span></div>
+        <div class="sw"><i style="background:#ffd166"></i><span>#FFD166</span></div>
+        <div class="sw"><i style="background:#33261f"></i><span>#33261F</span></div>
+        <div class="sw"><i style="background:#fbf3e7"></i><span>#FBF3E7</span></div>
+      </div>
+      <div class="typo">Titres : Fredoka · Manuscrit : Caveat · Texte : Nunito</div>
+    </div>
+  </div>
+  <div class="cast" data-cast="a"></div>
+  <div class="phones">
+    <div class="phoneWrap"><div class="phone"><div class="scr">
+      <div class="top"><span class="logo">date gravity</span><span class="pill">♥ 12</span></div>
+      <div class="polaroid"><div class="photo" data-chr="a1"></div><div class="hand">Léa, 27</div><div class="bio">à 3 coups de toi · Chapitre 1</div></div>
+      <div class="prompt"><b>Son red flag assumé</b>« Je tombe toujours du mauvais côté. »</div>
+      <div class="cta">Tenter ma chance</div>
+    </div></div><small>Profil</small></div>
+    <div class="phoneWrap"><div class="phone"><div class="scr">
+      <div class="top"><span class="pill">↻ 2 / 3</span><span class="logo">Léa</span><span class="pill">II</span></div>
+      <div class="boardWrap"><div class="board" data-theme="a" data-map="wwwwwww|w..h..w|w.ww..w|wp...dw|wwww..w|w.....w|wwwwwww"></div></div>
+      <div class="swipeBar"><b>⟲</b><span>swipe pour tourner</span><b>⟳</b></div>
+    </div></div><small>Jeu</small></div>
+    <div class="phoneWrap"><div class="phone"><div class="scr">
+      <div class="match"><div class="two"><div><span data-chr="a0h"></span></div><div><span data-chr="a1h"></span></div></div><h3>C'est un match !</h3><div>Léa accepte le date · ♥♥♥</div><div class="cta">Profil suivant</div></div>
+    </div></div><small>Victoire</small></div>
+  </div>
+</section>
+
+<section class="da vb">
+  <div class="daHead">
+    <div class="txt">
+      <div class="daNum">VARIANTE B</div>
+      <h2>Papier Crush</h2>
+      <p>L'humain passe par le <b>fait main</b>. Tout est en papier découpé : les cubes ne sont plus parfaitement carrés, ils ont un petit nez tracé au feutre, des sourcils, et surtout des épaules et un vêtement (col roulé, sweat, chemise). Une tête-cube sur un buste, cadrée comme une photo de profil : on voit quelqu'un, pas un pictogramme.</p>
+      <ul>
+        <li>Fond crème et grandes formes de papier coloré : clair, lumineux, et loin du dégradé corail des applis de rencontre.</li>
+        <li>Les cartes-profils sont des feuilles empilées légèrement de travers.</li>
+        <li><b>Écran de jeu</b> : une seule ligne d'en-tête, le plateau sur toute la largeur et centré dans la hauteur, le bas de l'écran réservé au pouce (swipe, réaction du date, reset).</li>
+        <li>Sur le plateau, seule la tête-cube est affichée, pour rester lisible en petit.</li>
+      </ul>
+    </div>
+    <div>
+      <div class="swatches">
+        <div class="sw"><i style="background:#f7f1e3"></i><span>#F7F1E3</span></div>
+        <div class="sw"><i style="background:#232a5c"></i><span>#232A5C</span></div>
+        <div class="sw"><i style="background:#ff6a55"></i><span>#FF6A55</span></div>
+        <div class="sw"><i style="background:#ffcf4a"></i><span>#FFCF4A</span></div>
+        <div class="sw"><i style="background:#8fd9c4"></i><span>#8FD9C4</span></div>
+      </div>
+      <div class="typo">Titres : Fraunces Black Italic · Texte : Nunito</div>
+    </div>
+  </div>
+  <div class="cast" data-cast="b"></div>
+  <div class="phones">
+    <div class="phoneWrap"><div class="phone"><div class="scr">
+      <div class="top"><span class="logo">date gravity</span><span class="pill">♥ 12</span></div>
+      <div class="sheet"><div class="in">
+        <div class="portrait" data-chr="b1"></div>
+        <div class="name">Léa, 27</div>
+        <div class="bio">À 3 coups de toi. Porte des cols roulés même en août.</div>
+        <div class="tags"><span>Chapitre 1</span><span>facile</span></div>
+      </div></div>
+      <div class="cta">Tenter ma chance</div>
+    </div></div><small>Profil</small></div>
+
+    <div class="phoneWrap"><div class="phone"><div class="scr">
+      <div class="gHead"><span class="round">II</span><span class="who">Léa<small>chapitre 1 · niveau 4</small></span><span class="moves"><b>2</b> / 3</span></div>
+      <div class="gMid"><div class="boardWrap"><div class="board" data-theme="b" data-map="wwwwwww|w..h..w|w.ww..w|wp...dw|wwww..w|w.....w|wwwwwww"></div></div></div>
+      <div class="gFoot">
+        <div class="react"><span class="mini" data-chr="b1"></span><p>Encore un tour et tu y es !</p></div>
+        <div class="thumb"><span class="reset">↺ reset</span><span class="arc"><b>⟲</b> glisse pour tourner <b>⟳</b></span></div>
+      </div>
+    </div></div><small>Jeu · au repos</small></div>
+
+    <div class="phoneWrap"><div class="phone"><div class="scr swiping">
+      <div class="gHead"><span class="round">II</span><span class="who">Léa<small>chapitre 1 · niveau 4</small></span><span class="moves"><b>2</b> / 3</span></div>
+      <div class="gMid"><div class="boardWrap"><div class="board" data-theme="b" data-map="wwwwwww|w..h..w|w.ww..w|wp...dw|wwww..w|w.....w|wwwwwww"></div></div></div>
+      <span class="stamp">↻ tourne !</span><span class="finger"></span>
+      <div class="gFoot">
+        <div class="react"><span class="mini" data-chr="b1h"></span><p>Oui, par là !</p></div>
+        <div class="thumb"><span class="reset">↺ reset</span><span class="arc">lâche pour tourner <b>⟳</b></span></div>
+      </div>
+    </div></div><small>Jeu · pendant le swipe</small></div>
+
+    <div class="phoneWrap"><div class="phone"><div class="scr">
+      <div class="match">
+        <div class="heart"><svg viewBox="0 0 100 92"><path d="M50 90 L8 46 Q-6 22 14 9 Q34 -2 50 20 Q66 -2 86 9 Q106 22 92 46Z" fill="#ff6a55"/></svg></div>
+        <div class="duo"><span data-chr="b0h" style="display:contents"></span><span data-chr="b1h" style="display:contents"></span></div>
+        <h3>C'est un match !</h3><div>Léa accepte le date · 3 coups ♥♥♥</div>
+        <div class="cta">Profil suivant</div>
+      </div>
+    </div></div><small>Victoire</small></div>
+  </div>
+  <p class="zones">Répartition de l'écran de jeu : <b>en-tête 52 px</b> · <b>plateau = 100 % de la largeur</b>, centré dans l'espace restant · <b>zone du pouce 112 px</b> en bas. Pendant le swipe, le plateau s'incline et se soulève comme une carte.</p>
+</section>
+
+<section class="da vc">
+  <div class="daHead">
+    <div class="txt">
+      <div class="daNum">VARIANTE C</div>
+      <h2>Petit Message</h2>
+      <p>L'humain passe par la <b>voix</b>. Les visages restent minimalistes, mais les personnages t'écrivent : un message avant le niveau, « est en train d'écrire… » pendant que tu réfléchis, une réaction quand tu rates. Ambiance dimanche matin : pastels pêche, rose et lilas, bulles blanches, beaucoup d'air. Doux et lumineux.</p>
+      <ul>
+        <li>Les émotions fortes sont très expressives et ponctuelles : yeux en cœur, goutte de stress, rougissement.</li>
+        <li>Le compagnon et les indices du jeu actuel deviennent naturellement des messages.</li>
+        <li>Fond clair en dégradé pêche → lilas, cartes blanches, ombres colorées très légères.</li>
+      </ul>
+    </div>
+    <div>
+      <div class="swatches">
+        <div class="sw"><i style="background:#ff7a6b"></i><span>#FF7A6B</span></div>
+        <div class="sw"><i style="background:#ffb86b"></i><span>#FFB86B</span></div>
+        <div class="sw"><i style="background:#ffc6dc"></i><span>#FFC6DC</span></div>
+        <div class="sw"><i style="background:#b9a6ff"></i><span>#B9A6FF</span></div>
+        <div class="sw"><i style="background:#fff1ea"></i><span>#FFF1EA</span></div>
+      </div>
+      <div class="typo">Titres et texte : Sora</div>
+    </div>
+  </div>
+  <div class="cast" data-cast="c"></div>
+  <div class="phones">
+    <div class="phoneWrap"><div class="phone"><div class="scr">
+      <div class="top"><span class="logo">date gravity</span><span class="pill">10:12</span></div>
+      <div class="card"><div class="glow"><span data-chr="c1" style="display:contents"></span><span class="online">en ligne</span></div>
+        <div class="info"><b>Léa, 27</b> · à 3 coups</div></div>
+      <div class="chat"><span>coucou… bien dormi ? 🙈</span><span>je suis juste derrière le mur du fond</span><span class="typing"><i></i><i></i><i></i></span></div>
+      <div class="cta">Répondre</div>
+    </div></div><small>Profil</small></div>
+    <div class="phoneWrap"><div class="phone"><div class="scr">
+      <div class="top"><span class="pill">↻ 2 / 3</span><span class="logo">Léa</span><span class="pill">II</span></div>
+      <div class="boardWrap"><div class="board" data-theme="c" data-map="wwwwwww|w..h..w|w.ww..w|wp...dw|wwww..w|w.....w|wwwwwww"></div></div>
+      <div class="chat"><span>presque ! encore un tour 👀</span></div>
+      <div class="swipeBar"><b>⟲</b><span>swipe pour tourner</span><b>⟳</b></div>
+    </div></div><small>Jeu</small></div>
+    <div class="phoneWrap"><div class="phone"><div class="scr">
+      <div class="match"><div class="duo" data-duo="c"></div><h3>Elle a dit oui.</h3><div style="font-size:12px">3 coups · ♥♥♥</div><div class="chat"><span>samedi 20h ? 💛</span><span class="me">j'y serai</span></div><div class="cta">Conversation suivante</div></div>
+    </div></div><small>Victoire</small></div>
+  </div>
+</section>
+
+<script>
+/* Petit générateur de personnages : même cube, mais coiffure, accessoire, expression et pose paramétrables. */
+function chr(o){
+  const ink=o.ink||"#33261f", st=o.outline?' stroke="'+ink+'" stroke-width="'+o.outline+'" stroke-linejoin="round"':"";
+  const hairC=o.hairC||ink;
+  let s='<svg viewBox="-6 -10 112 116" xmlns="http://www.w3.org/2000/svg">';
+  // membres (variante B)
+  if(o.limbs){
+    const L='fill="none" stroke="'+ink+'" stroke-width="5" stroke-linecap="round"';
+    const armL={wave:"M16 58 Q2 50 4 32",down:"M16 62 Q4 68 6 80",hide:"M16 62 Q22 44 34 50",give:"M16 62 Q4 60 0 52"}[o.limbs]||"M16 62 Q4 68 6 80";
+    const armR={wave:"M84 62 Q96 68 94 80",down:"M84 62 Q96 68 94 80",hide:"M84 62 Q78 44 66 50",give:"M84 60 Q98 54 100 44"}[o.limbs]||"M84 62 Q96 68 94 80";
+    s+='<path d="M36 86 V99 H30" '+L+'/><path d="M64 86 V99 H70" '+L+'/><path d="'+armL+'" '+L+'/><path d="'+armR+'" '+L+'/>';
+    if(o.limbs==="give")s+='<path d="M100 40 c-5-8-15-1-8 6 l8 8 8-8 c7-7-3-14-8-6z" fill="#ff5d8f" stroke="'+ink+'" stroke-width="3" transform="translate(0,-10) scale(.8) translate(26,6)"/>';
+  }
+  // buste (épaules + vêtement) : la tête-cube est alors réduite et remontée
+  if(o.bust){
+    const cl=o.bustC||"#ff6a55";
+    s+='<path d="M2 108 Q3 80 30 76 H70 Q97 80 98 108Z" fill="'+cl+'"/>';
+    if(o.bust==="turtle")s+='<path d="M36 68 H64 L66 82 H34Z" fill="'+cl+'"/><path d="M35 76 H65" stroke="#0002" stroke-width="2"/>';
+    if(o.bust==="shirt")s+='<path d="M38 74 L50 90 L62 74 L70 80 L58 94 L50 88 L42 94 L30 80Z" fill="#fff"/>';
+    if(o.bust==="hoodie")s+='<path d="M30 78 Q50 96 70 78" fill="none" stroke="#0003" stroke-width="5" stroke-linecap="round"/><path d="M44 88 V100 M56 88 V100" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/>';
+    s+='<g transform="translate(9 -9) scale(.82)">';
+  }
+  // cheveux derrière
+  if(o.hair==="bob")s+='<rect x="6" y="12" width="88" height="66" rx="28" fill="'+hairC+'"'+st+'/>';
+  // corps
+  if(o.paper)s+='<path d="M19 22 L82 18 L85 83 L17 86Z" fill="'+o.body+'" stroke="'+o.body+'" stroke-width="9" stroke-linejoin="round"/>';
+  else s+='<rect x="14" y="18" width="72" height="70" rx="18" fill="'+o.body+'"'+st+'/>';
+  if(!o.outline&&!o.paper)s+='<path d="M14 70 V72 a18 18 0 0 0 18 16 H68 a18 18 0 0 0 18-16 V70 a18 18 0 0 1-18 12 H32 a18 18 0 0 1-18-12z" fill="#000" opacity=".13"/>';
+  // cheveux devant
+  const hs='fill="'+hairC+'"'+st;
+  if(o.hair==="bob"||o.hair==="bun")s+='<path d="M14 42 Q14 16 50 16 Q86 16 86 42 Q72 26 50 30 Q30 26 14 42Z" '+hs+'/>';
+  if(o.hair==="bun")s+='<circle cx="50" cy="8" r="12" '+hs+'/>';
+  if(o.hair==="tuft")s+='<path d="M28 24 Q36 2 50 16 Q56 0 66 16 Q76 10 74 26 Q50 16 28 24Z" '+hs+'/>';
+  if(o.hair==="curly")[[26,21,12],[42,13,13],[60,13,13],[76,21,12],[15,35,9],[85,35,9]].forEach(c=>{s+='<circle cx="'+c[0]+'" cy="'+c[1]+'" r="'+c[2]+'" '+hs+'/>';});
+  if(o.hair==="flat")s+='<path d="M14 38 V34 Q14 16 50 16 Q86 16 86 34 V38 Q50 24 14 38Z" '+hs+'/>';
+  if(o.hair==="beanie")s+='<path d="M14 34 Q14 8 50 8 Q86 8 86 34Z" '+hs+'/><rect x="11" y="30" width="78" height="11" rx="5.5" fill="#fff"'+st+'/><circle cx="50" cy="5" r="7" fill="#fff"'+st+'/>';
+  // joues
+  if(o.blush)s+='<ellipse cx="25" cy="66" rx="7" ry="4.5" fill="#ff5d8f" opacity=".55"/><ellipse cx="75" cy="66" rx="7" ry="4.5" fill="#ff5d8f" opacity=".55"/>';
+  // yeux
+  const e=o.eyes||"open", dx=o.look||0;
+  if(e==="open"||e==="wide"){
+    const r=e==="wide"?10.5:9;
+    [36,64].forEach(x=>{s+='<circle cx="'+x+'" cy="54" r="'+r+'" fill="#fff"/><circle cx="'+(x+dx)+'" cy="55" r="4.6" fill="'+ink+'"/><circle cx="'+(x+dx+1.6)+'" cy="53" r="1.5" fill="#fff"/>';});
+  }else if(e==="dot"){
+    [37,63].forEach(x=>{s+='<circle cx="'+(x+dx)+'" cy="53" r="4.4" fill="'+ink+'"/>';});
+  }else if(e==="happy"){
+    s+='<path d="M28 56 Q36 45 44 56 M56 56 Q64 45 72 56" fill="none" stroke="'+ink+'" stroke-width="4" stroke-linecap="round"/>';
+  }else if(e==="heart"){
+    [36,64].forEach(x=>{s+='<path d="M'+x+' 61 c-13-9-8-18 0-11 c8-7 13 2 0 11z" fill="#ff3d6e"/>';});
+  }else if(e==="wink"){
+    s+='<circle cx="36" cy="54" r="9" fill="#fff"/><circle cx="37" cy="55" r="4.6" fill="'+ink+'"/><path d="M56 55 Q64 49 72 55" fill="none" stroke="'+ink+'" stroke-width="4" stroke-linecap="round"/>';
+  }
+  if(o.brows)s+='<path d="M'+(o.brows==="worry"?"28 42 L44 38 M56 38 L72 42":"28 40 L44 41 M56 41 L72 40")+'" stroke="'+ink+'" stroke-width="3.2" stroke-linecap="round"/>';
+  if(o.lashes)s+='<path d="M27 47 l-4-4 M73 47 l4-4" stroke="'+ink+'" stroke-width="2.6" stroke-linecap="round"/>';
+  if(o.nose)s+='<path d="M51 55 q-5 9 0 10 q3 .4 4.5-1.6" fill="none" stroke="'+ink+'" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round" opacity=".75"/>';
+  // bouche
+  const m=o.mouth||"smile";
+  if(m==="smile")s+='<path d="M41 70 Q50 79 59 70" fill="none" stroke="'+ink+'" stroke-width="3.6" stroke-linecap="round"/>';
+  if(m==="shy")s+='<path d="M45 72 Q50 75 55 72" fill="none" stroke="'+ink+'" stroke-width="3.4" stroke-linecap="round"/>';
+  if(m==="grin")s+='<path d="M38 68 Q50 86 62 68Z" fill="'+ink+'"/><path d="M44 76 Q50 81 56 76 Q50 73 44 76Z" fill="#ff5d8f"/>';
+  if(m==="o")s+='<ellipse cx="50" cy="73" rx="4.5" ry="5.5" fill="'+ink+'"/>';
+  if(m==="smirk")s+='<path d="M42 72 Q52 76 60 68" fill="none" stroke="'+ink+'" stroke-width="3.6" stroke-linecap="round"/>';
+  // accessoires
+  if(o.acc==="glasses")s+='<g fill="none" stroke="'+ink+'" stroke-width="3"><circle cx="36" cy="54" r="12.5"/><circle cx="64" cy="54" r="12.5"/><path d="M48.5 53 h3"/></g>';
+  if(o.acc==="earring")s+='<circle cx="88" cy="68" r="4" fill="#ffd166" stroke="'+ink+'" stroke-width="1.5"/>';
+  if(o.acc==="freckles")s+='<g fill="'+ink+'" opacity=".5"><circle cx="24" cy="62" r="1.3"/><circle cx="29" cy="65" r="1.3"/><circle cx="71" cy="65" r="1.3"/><circle cx="76" cy="62" r="1.3"/></g>';
+  if(o.acc==="stache")s+='<path d="M38 68 Q44 62 50 67 Q56 62 62 68 Q56 71 50 68 Q44 71 38 68Z" fill="'+hairC+'"/>';
+  if(o.acc==="bow")s+='<path d="M50 14 L36 6 V22Z M50 14 L64 6 V22Z" fill="#ff5d8f"'+st+'/><circle cx="50" cy="14" r="4" fill="#ff5d8f"'+st+'/>';
+  if(o.sweat)s+='<path d="M90 30 q7 11 0 14 q-7-3 0-14z" fill="#7be0ff"/>';
+  if(o.bust)s+='</g>';
+  return s+'</svg>';
+}
+
+const CAST={
+  a:[
+    {n:"Toi",t:"curieux, un peu maladroit",o:{body:"#ffd166",hair:"tuft",hairC:"#7a4a21",brows:"flat",mouth:"smile",look:1,acc:"freckles"}},
+    {n:"Léa, 27",t:"rit à ses propres blagues",o:{body:"#ff6b5e",hair:"bob",hairC:"#33261f",blush:1,lashes:1,mouth:"smile",look:-1,acc:"earring"}},
+    {n:"Sam, 31",t:"lit trois livres à la fois",o:{body:"#5cc8c0",hair:"flat",hairC:"#33261f",acc:"glasses",mouth:"smirk"}},
+    {n:"Inès, 24",t:"danse dans l'ascenseur",o:{body:"#c79bff",hair:"curly",hairC:"#5a2d82",blush:1,eyes:"happy",mouth:"grin"}},
+    {n:"Tom, 29",t:"fait pousser des tomates",o:{body:"#8fd16a",hair:"beanie",hairC:"#ff6b5e",mouth:"shy",brows:"worry",acc:"stache"}}
+  ],
+  b:[
+    {n:"Toi",t:"sweat fétiche, cœur qui bat",o:{paper:1,nose:1,body:"#ffcf4a",ink:"#232a5c",hair:"tuft",hairC:"#232a5c",bust:"hoodie",bustC:"#ff6a55",eyes:"dot",brows:"flat",mouth:"smile",look:1}},
+    {n:"Léa, 27",t:"cols roulés toute l'année",o:{paper:1,nose:1,body:"#ff9a85",ink:"#232a5c",hair:"bob",hairC:"#232a5c",bust:"turtle",bustC:"#8fd9c4",eyes:"dot",lashes:1,blush:1,mouth:"smile",look:-1,acc:"earring"}},
+    {n:"Sam, 31",t:"chemise repassée, idées froissées",o:{paper:1,nose:1,body:"#8fd9c4",ink:"#232a5c",hair:"flat",hairC:"#5a3a2a",bust:"shirt",bustC:"#2d3a8c",eyes:"dot",brows:"flat",mouth:"smirk",acc:"glasses"}},
+    {n:"Inès, 24",t:"rit avant la fin de la blague",o:{paper:1,nose:1,body:"#f4a9c4",ink:"#232a5c",hair:"curly",hairC:"#ff6a55",bust:"hoodie",bustC:"#ffcf4a",eyes:"happy",blush:1,mouth:"grin"}},
+    {n:"Tom, 29",t:"timide, bonnet vissé",o:{paper:1,nose:1,body:"#a9bdff",ink:"#232a5c",hair:"beanie",hairC:"#ffcf4a",bust:"turtle",bustC:"#232a5c",eyes:"dot",brows:"worry",mouth:"shy",acc:"stache"}}
+  ],
+  c:[
+    {n:"Toi",t:"« j'envoie ? j'envoie pas ? »",o:{body:"#ffb86b",ink:"#43305c",hair:"tuft",hairC:"#43305c",mouth:"shy",brows:"worry",sweat:1,look:1}},
+    {n:"Léa",t:"« coucou… bien dormi ? »",o:{body:"#ff7a6b",ink:"#43305c",hair:"bob",hairC:"#43305c",blush:1,mouth:"smile",look:-1,lashes:1}},
+    {n:"Léa, conquise",t:"yeux en cœur à la victoire",o:{body:"#ff7a6b",ink:"#43305c",hair:"bob",hairC:"#43305c",blush:1,eyes:"heart",mouth:"grin"}},
+    {n:"Sam",t:"« vu à 10:03 »",o:{body:"#8f7bff",ink:"#43305c",hair:"flat",hairC:"#43305c",eyes:"wink",mouth:"smirk",acc:"glasses"}},
+    {n:"Inès",t:"« haha t'es nul 😂 »",o:{body:"#59f0a6",ink:"#43305c",hair:"curly",hairC:"#43305c",eyes:"happy",mouth:"grin",blush:1}}
+  ]
+};
+
+document.querySelectorAll("[data-cast]").forEach(el=>{
+  el.innerHTML=CAST[el.dataset.cast].map(c=>'<figure>'+chr(c.o)+'<figcaption><b>'+c.n+'</b>'+c.t+'</figcaption></figure>').join("");
+});
+// data-chr="a1" = 2e personnage de la variante a ; suffixe "h" = version heureuse (victoire)
+document.querySelectorAll("[data-chr]").forEach(el=>{
+  const k=el.dataset.chr, c=CAST[k[0]][Number(k[1])].o;
+  el.innerHTML=chr(k.endsWith("h")?{...c,eyes:"happy",mouth:"grin",blush:1,brows:null,sweat:0}:c);
+});
+document.querySelectorAll("[data-duo]").forEach(el=>{
+  const c=CAST[el.dataset.duo], win={eyes:"happy",mouth:"grin",blush:1,brows:null,sweat:0};
+  el.innerHTML=chr({...c[0].o,...win,limbs:c[0].o.limbs?"wave":null})+chr({...c[1].o,...win,eyes:el.dataset.duo==="c"?"heart":"happy"});
+});
+// mini-plateaux : w mur, p joueur, d date, h bonus, . vide
+document.querySelectorAll(".board").forEach(b=>{
+  const c=CAST[b.dataset.theme];
+  b.dataset.map.replace(/\|/g,"").split("").forEach(ch=>{
+    const i=document.createElement("i");
+    if(ch==="p")i.innerHTML=chr({...c[0].o,limbs:null,bust:null});
+    else if(ch==="d")i.innerHTML=chr({...c[1].o,limbs:null,bust:null});
+    else if(ch!==".")i.className=ch;
+    b.appendChild(i);
+  });
+});
+</script>
+</body>
+</html>

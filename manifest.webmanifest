@@ -1,11 +1,11 @@
 {
-  "name": "Gravity Cube",
-  "short_name": "Gravity Cube",
+  "name": "Date Gravity",
+  "short_name": "Date Gravity",
   "start_url": "./index.html",
   "scope": "./",
   "display": "fullscreen",
   "orientation": "portrait",
-  "background_color": "#03051a",
-  "theme_color": "#03051a",
+  "background_color": "#0d1230",
+  "theme_color": "#0d1230",
   "icons": []
 }

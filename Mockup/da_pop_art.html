@@ -1,0 +1,250 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Date Gravity – 4 directions pop art</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bangers&family=Comic+Neue:wght@700&family=Rubik+Mono+One&family=Rubik:wght@500;800&family=Anton&family=Archivo:ital,wght@1,800&family=Permanent+Marker&family=Gochi+Hand&family=Nunito:wght@600;800&family=Fredoka:wght@700&display=swap" rel="stylesheet">
+<style>
+*{box-sizing:border-box}
+body{margin:0;background:#14151c;color:#eef0f6;font:600 15px/1.45 Nunito,Arial,sans-serif}
+header{max-width:1320px;margin:0 auto;padding:30px 20px 0}
+header h1{margin:0 0 6px;font:700 32px/1.1 Fredoka,Arial,sans-serif}
+header p{margin:0;max-width:900px;color:#b9bdcc}
+.prop{max-width:1320px;margin:24px auto;padding:22px;border-radius:24px;background:#1d1f2a}
+.prop .num{font:800 12px/1 Nunito,Arial,sans-serif;letter-spacing:.16em;color:#9aa0b6}
+.prop h2{margin:6px 0 6px;font:700 28px/1.05 Fredoka,Arial,sans-serif;color:#ffd166}
+.prop>p{margin:0 0 6px;max-width:900px;color:#c9cddb;font-size:14px}
+.prop ul{margin:0 0 14px;padding-left:16px;color:#aab;font-size:13px;max-width:900px}
+.lay{display:flex;gap:22px;flex-wrap:wrap;align-items:flex-start}
+.side{flex:1;min-width:260px}
+.side h3{margin:0 0 8px;font:800 12px/1 Nunito,Arial,sans-serif;letter-spacing:.12em;color:#9aa0b6;text-transform:uppercase}
+.tints{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px}
+.tints figure{margin:0;border-radius:12px;overflow:hidden;font-size:11.5px;text-align:center;color:#33261f}
+.tints svg{display:block;width:100%;height:auto}
+.tints figcaption{padding:5px;background:#11121a;color:#c9cddb}
+.sw{display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px}
+.sw i{width:38px;height:38px;border-radius:9px}
+.typo{font-size:12.5px;color:#aab}
+.pw{text-align:center}
+.pw>small{display:block;margin-top:8px;font:800 11px/1 Nunito,Arial,sans-serif;letter-spacing:.1em;color:#9aa0b6;text-transform:uppercase}
+
+.phone{position:relative;width:270px;height:560px;border-radius:36px;border:7px solid #06070b;overflow:hidden;box-shadow:0 18px 40px rgba(0,0,0,.5);display:flex;flex-direction:column;text-align:left}
+.phone>*{position:relative;z-index:1}
+.phone::after{content:"";position:absolute;inset:0;z-index:5;pointer-events:none}
+.hd{display:flex;align-items:center;justify-content:space-between;gap:8px;padding:12px 12px 0;height:54px}
+.mid{flex:1;min-height:0;display:grid;place-items:center;padding:0 8px}
+.mid svg{display:block;width:100%;height:auto;overflow:visible}
+.foot{padding:0 12px 14px;display:flex;flex-direction:column;gap:10px}
+.react{display:flex;align-items:flex-end;gap:8px}
+.react svg{flex:none;width:46px;height:46px;overflow:visible}
+.swipe{display:flex;align-items:center;justify-content:space-between;height:42px;padding:0 14px}
+.menu{align-items:center}
+.menu .pair{display:flex;gap:6px;margin-top:18px}
+.menu .pair div{width:108px;padding:8px 8px 6px;text-align:center}
+.menu .pair svg{display:block;width:100%;height:auto;overflow:visible}
+.menu .play{margin-top:auto;margin-bottom:22px;width:210px;padding:14px;text-align:center}
+.menu .tag{margin-top:6px;font-size:12px;text-align:center;padding:0 18px}
+
+/* ============================== 1. COMIC POP */
+.s1 .phone{background:#fff6dc;color:#111;font-family:"Comic Neue",Arial,sans-serif}
+.s1 .phone::before{content:"";position:absolute;inset:0;background:radial-gradient(#ffd400 2.2px,transparent 2.6px) 0 0/11px 11px;-webkit-mask:linear-gradient(160deg,#000 0,transparent 42%);mask:linear-gradient(160deg,#000 0,transparent 42%)}
+.s1 .ttl{font:400 25px/1 Bangers,Impact,sans-serif;letter-spacing:.04em;transform:rotate(-2deg)}
+.s1 .ttl small{display:block;font:700 10px/1 "Comic Neue",Arial,sans-serif;letter-spacing:0}
+.s1 .pill,.s1 .rnd{padding:7px 10px;border:2.5px solid #111;border-radius:99px;background:#fff;font-weight:700;font-size:11px;box-shadow:3px 3px 0 #111}
+.s1 .bubble{padding:8px 11px;border:2.5px solid #111;border-radius:16px 16px 16px 2px;background:#fff;font-weight:700;font-size:12px;box-shadow:3px 3px 0 #111}
+.s1 .swipe{border:2.5px solid #111;border-radius:99px;background:#ffd400;box-shadow:3px 3px 0 #111;font:400 18px Bangers,Impact,sans-serif;letter-spacing:.06em}
+.s1 .logo{margin-top:34px;text-align:center;font:400 58px/.82 Bangers,Impact,sans-serif;color:#ff3b30;-webkit-text-stroke:2.5px #111;text-shadow:4px 4px 0 #111;transform:rotate(-4deg)}
+.s1 .logo b{display:block;color:#ffd400;font-weight:400}
+.s1 .pair div{border:2.5px solid #111;background:#fff;box-shadow:4px 4px 0 #111;transform:rotate(-4deg);font:400 17px Bangers,Impact,sans-serif}
+.s1 .pair div+div{transform:rotate(4deg);background:#19b5e6}
+.s1 .play{border:3px solid #111;border-radius:14px;background:#ff3b30;color:#fff;font:400 30px/1 Bangers,Impact,sans-serif;letter-spacing:.06em;box-shadow:5px 5px 0 #111;transform:rotate(-2deg)}
+
+/* ============================== 2. RISO FLUO */
+.s2 .phone{background:#f4efe6;color:#2a2bd8;font-family:Rubik,Arial,sans-serif}
+.s2 .phone::after,.s4 .phone::after{background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.9' numOctaves='2'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .55 0'/%3E%3C/filter%3E%3Crect width='160' height='160' filter='url(%23n)'/%3E%3C/svg%3E");mix-blend-mode:multiply;opacity:.38}
+.s2 .phone::before{content:"";position:absolute;right:-70px;top:-60px;width:220px;height:220px;border-radius:50%;background:#ffe14a;mix-blend-mode:multiply}
+.s2 .ttl{font:400 15px/1.1 "Rubik Mono One",Arial,sans-serif;text-transform:uppercase}
+.s2 .ttl small{display:block;font:500 10px/1.3 Rubik,Arial,sans-serif;text-transform:none}
+.s2 .pill,.s2 .rnd{padding:7px 10px;border:2px solid #2a2bd8;border-radius:6px;font-weight:800;font-size:11px;background:#f4efe6;box-shadow:3px -2px 0 #ff48b0}
+.s2 .bubble{padding:8px 11px;border:2px solid #2a2bd8;border-radius:4px;background:#ffe14a;font-weight:800;font-size:11.5px;mix-blend-mode:multiply}
+.s2 .swipe{border:2px solid #2a2bd8;border-radius:6px;background:#ff48b0;color:#f4efe6;font:400 12px "Rubik Mono One",Arial,sans-serif;mix-blend-mode:multiply}
+.s2 .logo{margin-top:40px;font:400 40px/.9 "Rubik Mono One",Arial,sans-serif;color:#ff48b0;text-align:center;text-shadow:3px -3px 0 #2a2bd8;mix-blend-mode:multiply}
+.s2 .logo b{display:block;color:#2a2bd8;text-shadow:3px 3px 0 #ffe14a;font-weight:400}
+.s2 .pair div{background:#ffe14a;border:2px solid #2a2bd8;mix-blend-mode:multiply;transform:rotate(-3deg);font:400 10px "Rubik Mono One",Arial,sans-serif}
+.s2 .pair div+div{background:#ff9fd3;transform:rotate(3deg)}
+.s2 .play{border:2px solid #2a2bd8;background:#2a2bd8;color:#ffe14a;font:400 20px/1 "Rubik Mono One",Arial,sans-serif;box-shadow:5px -4px 0 #ff48b0}
+
+/* ============================== 3. SÉRIGRAPHIE */
+.s3 .phone{background:var(--w,#ff3d7f);color:#fff;font-family:Archivo,Arial,sans-serif}
+.s3 .phone::before{content:"";position:absolute;left:-40px;bottom:-60px;width:260px;height:260px;border-radius:44% 56% 61% 39%;background:#111;opacity:.14;transform:rotate(18deg)}
+.s3 .ttl{font:400 25px/.95 Anton,Impact,sans-serif;text-transform:uppercase;letter-spacing:.01em;text-shadow:3px 3px 0 #111}
+.s3 .ttl small{display:block;font:italic 800 10px/1.4 Archivo,Arial,sans-serif;text-transform:none;text-shadow:none}
+.s3 .pill,.s3 .rnd{padding:7px 10px;background:#111;color:#fff;font:italic 800 11px Archivo,Arial,sans-serif;box-shadow:3px 3px 0 #00e0ff}
+.s3 .bubble{padding:8px 11px;background:#fff;color:#111;font:italic 800 12px Archivo,Arial,sans-serif;box-shadow:4px 4px 0 #111}
+.s3 .swipe{background:#ffe600;color:#111;font:400 16px Anton,Impact,sans-serif;letter-spacing:.06em;box-shadow:4px 4px 0 #111}
+.s3 .logo{margin-top:34px;text-align:center;font:400 62px/.86 Anton,Impact,sans-serif;text-transform:uppercase;color:#ffe600;text-shadow:5px 5px 0 #111}
+.s3 .logo b{display:block;color:#fff;text-shadow:5px 5px 0 #00e0ff;font-weight:400}
+.s3 .pair div{background:#ffe600;color:#111;box-shadow:5px 5px 0 #111;font:400 15px Anton,Impact,sans-serif;text-transform:uppercase}
+.s3 .pair div+div{background:#00e0ff}
+.s3 .play{background:#111;color:#ffe600;font:400 30px/1 Anton,Impact,sans-serif;text-transform:uppercase;letter-spacing:.05em;box-shadow:6px 6px 0 #ffe600}
+
+/* ============================== 4. FEUTRE */
+.s4 .phone{background:#fdfbf4 linear-gradient(transparent 26px,#b9d6ff66 27px) 0 6px/100% 27px;color:#1f1f1f;font-family:"Gochi Hand",cursive}
+.s4 .ttl{font:400 22px/1 "Permanent Marker",cursive;transform:rotate(-2deg)}
+.s4 .ttl small{display:block;font:400 12px/1.1 "Gochi Hand",cursive}
+.s4 .pill,.s4 .rnd{padding:5px 10px;border:2px solid #1f1f1f;border-radius:255px 15px 225px 15px/15px 225px 15px 255px;font-size:14px;background:#fff}
+.s4 .bubble{padding:8px 12px;border:2px solid #1f1f1f;border-radius:255px 18px 225px 18px/18px 225px 18px 255px;background:#fff;font-size:15px;line-height:1.1}
+.s4 .swipe{border:2px solid #1f1f1f;border-radius:255px 18px 225px 18px/18px 225px 18px 255px;background:linear-gradient(104deg,transparent 3%,#ffe94a 5% 94%,transparent 97%);font:400 15px "Permanent Marker",cursive}
+.s4 .logo{margin-top:38px;text-align:center;font:400 46px/.9 "Permanent Marker",cursive;transform:rotate(-4deg);background:linear-gradient(104deg,transparent 2%,#ff5fa2 4% 96%,transparent 98%) 0 62%/100% 34% no-repeat}
+.s4 .logo b{display:block;font-weight:400}
+.s4 .pair div{background:#fff;border:2px solid #1f1f1f;border-radius:4px;transform:rotate(-4deg);font-size:17px;box-shadow:2px 3px 0 #0002}
+.s4 .pair div+div{transform:rotate(3deg)}
+.s4 .pair div::before{content:"";position:absolute;left:50%;top:-9px;width:44px;height:16px;margin-left:-22px;background:#57e3b6aa;transform:rotate(-4deg)}
+.s4 .pair div{position:relative}
+.s4 .play{border:2.5px solid #1f1f1f;border-radius:255px 18px 225px 18px/18px 225px 18px 255px;background:linear-gradient(100deg,transparent 2%,#ffe94a 4% 95%,transparent 98%);font:400 26px/1 "Permanent Marker",cursive;transform:rotate(-2deg)}
+</style>
+</head>
+<body>
+<!-- filtres et motifs partagés : tremblé du trait, trames, hachures -->
+<svg width="0" height="0" style="position:absolute"><defs id="defs">
+  <filter id="wobA" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency=".04" numOctaves="2" seed="3"/><feDisplacementMap in="SourceGraphic" scale="2.2"/></filter>
+  <filter id="wobB" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency=".05" numOctaves="2" seed="11"/><feDisplacementMap in="SourceGraphic" scale="3"/></filter>
+</defs></svg>
+
+<header>
+  <h1>4 directions pop art</h1>
+  <p>Plus de parti pris, un trait légèrement crayonné, et une identité qui ne ressemble pas aux jeux mobiles habituels. Dans les quatre : blocs en pictos (clé, cadenas, cœur brisé, lettres), plateau sans cadre, damier discret dont la teinte change à chaque chapitre. Chaque direction montre l'écran de jeu, le menu, les teintes de quatre chapitres et la palette.</p>
+</header>
+<div id="root"></div>
+
+<script>
+const defs=document.getElementById("defs");
+const made={};
+function pat(type,color){ // motif partagé : dots | hatch | scr (gribouillis de feutre)
+  const id=type+color.replace(/[^a-z0-9]/gi,"");
+  if(!made[id]){
+    made[id]=1;
+    let inner="";
+    if(type==="dots")inner='<pattern id="'+id+'" width="4.4" height="4.4" patternUnits="userSpaceOnUse" patternTransform="rotate(20)"><circle cx="2.2" cy="2.2" r="1.15" fill="'+color+'"/></pattern>';
+    if(type==="hatch")inner='<pattern id="'+id+'" width="3.6" height="3.6" patternUnits="userSpaceOnUse" patternTransform="rotate(38)"><rect width="3.6" height="1.2" fill="'+color+'"/></pattern>';
+    if(type==="scr")inner='<pattern id="'+id+'" width="9" height="5.4" patternUnits="userSpaceOnUse" patternTransform="rotate(-24)"><rect y=".5" width="9" height="4.3" rx="2" fill="'+color+'"/></pattern>';
+    defs.insertAdjacentHTML("beforeend",inner);
+  }
+  return "url(#"+id+")";
+}
+const rr=(x,y,w,h,r)=>"M"+(x+r)+" "+y+"H"+(x+w-r)+"a"+r+" "+r+" 0 0 1 "+r+" "+r+"V"+(y+h-r)+"a"+r+" "+r+" 0 0 1 -"+r+" "+r+"H"+(x+r)+"a"+r+" "+r+" 0 0 1 -"+r+" -"+r+"V"+(y+r)+"a"+r+" "+r+" 0 0 1 "+r+" -"+r+"Z";
+const circ=(cx,cy,r)=>"M"+(cx-r)+" "+cy+"a"+r+" "+r+" 0 1 0 "+(2*r)+" 0a"+r+" "+r+" 0 1 0 -"+(2*r)+" 0Z";
+const BAND="M2 28H38V31a7 7 0 0 1 -7 7H9a7 7 0 0 1 -7 -7Z";
+
+/* ---------- les quatre styles : comment on remplit, on ombre et on trace une forme */
+const ST={
+  s1:{name:"1 · Comic Pop",ink:"#111",paper:"#fff6dc",
+    pal:{wall:"#19b5e6",me:"#ffd400",date:"#ff3b30",key:"#ffd400",rot:"#b06cff",dark:"#111",heart:"#ff3b30",hair:"#111",tp:["#19b5e6","#ff3b30","#35c759"]},
+    worlds:[["Premier pas","#ff3b30"],["Sortir du cadre","#19b5e6"],["Boutons du cœur","#ffb400"],["Zones dangereuses","#b06cff"]],
+    fill:(d,c)=>'<path d="'+d+'" fill="'+c+'" transform="translate(1.4 1.4)"/>',
+    shade:(d,c)=>'<path d="'+d+'" fill="'+pat("dots","#111")+'" opacity=".55" transform="translate(1.4 1.4)"/>',
+    line:(d,w)=>'<path d="'+d+'" fill="none" stroke="#111" stroke-width="'+(w||2.6)+'" stroke-linejoin="round" stroke-linecap="round" filter="url(#wobA)"/>',
+    cell:(x,y,t)=>(x+y)%2?'<rect x="'+x*40+'" y="'+y*40+'" width="40" height="40" fill="'+t+'" opacity=".10"/><rect x="'+x*40+'" y="'+y*40+'" width="40" height="40" fill="'+pat("dots",t)+'" opacity=".30"/>':''},
+  s2:{name:"2 · Riso Fluo",ink:"#2a2bd8",paper:"#f4efe6",blend:"multiply",
+    pal:{wall:"#2a2bd8",me:"#ffe14a",date:"#ff48b0",key:"#ffe14a",rot:"#ff48b0",dark:"#2a2bd8",heart:"#ff48b0",hair:"#2a2bd8",tp:["#2a2bd8","#ff48b0","#19c29a"]},
+    worlds:[["Premier pas","#ff48b0"],["Sortir du cadre","#2a2bd8"],["Boutons du cœur","#f2b600"],["Zones dangereuses","#19c29a"]],
+    fill:(d,c)=>'<path d="'+d+'" fill="'+c+'" transform="translate(2.2 -1.4)" style="mix-blend-mode:multiply" opacity=".92"/>',
+    shade:(d,c)=>'<path d="'+d+'" fill="'+pat("hatch","#2a2bd8")+'" opacity=".6" transform="translate(2.2 -1.4)"/>',
+    line:(d,w)=>'<path d="'+d+'" fill="none" stroke="#2a2bd8" stroke-width="'+(w||2.1)+'" stroke-linejoin="round" stroke-linecap="round" filter="url(#wobA)"/>',
+    cell:(x,y,t)=>(x+y)%2?'<rect x="'+x*40+'" y="'+y*40+'" width="40" height="40" fill="'+pat("hatch",t)+'" opacity=".26"/>':''},
+  s3:{name:"3 · Sérigraphie",ink:"#111",paper:null,
+    pal:{wall:"#111",me:"#ffe600",date:"#fff",key:"#ffe600",rot:"#00e0ff",dark:"#111",heart:"#ff3d7f",hair:"#111",tp:["#00e0ff","#ffe600","#fff"]},
+    worlds:[["Premier pas","#ff3d7f"],["Sortir du cadre","#0aa5ff"],["Boutons du cœur","#ff7a1a"],["Zones dangereuses","#7a4dff"]],
+    ghost:"#00e0ff",
+    fill:(d,c,g)=>'<path d="'+d+'" fill="'+(g||"#00e0ff")+'" transform="translate(3 3)"/><path d="'+d+'" fill="'+c+'"/>',
+    shade:(d,c)=>'<path d="'+d+'" fill="#111" opacity=".2"/>',
+    line:(d,w)=>'<path d="'+d+'" fill="none" stroke="#fff" stroke-width="1.1" stroke-linecap="round" stroke-dasharray="14 60" opacity=".85" filter="url(#wobB)"/>',
+    cell:(x,y,t)=>'<rect x="'+x*40+'" y="'+y*40+'" width="40.5" height="40.5" fill="'+((x+y)%2?"#fff":"#111")+'" opacity="'+((x+y)%2?".13":".07")+'"/>'},
+  s4:{name:"4 · Feutre et carnet",ink:"#1f1f1f",paper:"#fdfbf4",
+    pal:{wall:"#57c8ff",me:"#ffe94a",date:"#ff5fa2",key:"#ffe94a",rot:"#c59bff",dark:"#3a3a3a",heart:"#ff5fa2",hair:"#1f1f1f",tp:["#57c8ff","#ff5fa2","#57e3b6"]},
+    worlds:[["Premier pas","#ff5fa2"],["Sortir du cadre","#57c8ff"],["Boutons du cœur","#ffc93c"],["Zones dangereuses","#b68bff"]],
+    fill:(d,c)=>'<path d="'+d+'" fill="'+c+'" opacity=".32"/><path d="'+d+'" fill="'+pat("scr",c)+'"/>',
+    shade:(d,c)=>'<path d="'+d+'" fill="'+pat("hatch","#1f1f1f")+'" opacity=".45"/>',
+    line:(d,w)=>'<path d="'+d+'" fill="none" stroke="#1f1f1f" stroke-width="'+(w||1.9)+'" stroke-linejoin="round" stroke-linecap="round" filter="url(#wobA)"/><path d="'+d+'" fill="none" stroke="#1f1f1f" stroke-width="1" stroke-linejoin="round" stroke-linecap="round" filter="url(#wobB)" opacity=".7"/>',
+    cell:(x,y,t)=>(x+y)%2?'<rect x="'+(x*40+3)+'" y="'+(y*40+3)+'" width="34" height="34" fill="'+pat("scr",t)+'" opacity=".34"/>':''}
+};
+
+/* ---------- formes : une case fait 40 x 40 */
+function shape(S,d,c,o){o=o||{};return S.fill(d,c,o.ghost)+(o.shade?S.shade(o.shade,c):"")+(o.noLine?"":S.line(d,o.w));}
+const ICON={
+  key:i=>'<circle cx="15.5" cy="20" r="3.4" fill="none" stroke="'+i+'" stroke-width="2.4"/><path d="M18.9 20H27M24 20v3M27 20v2.6" fill="none" stroke="'+i+'" stroke-width="2.4" stroke-linecap="round"/>',
+  lock:i=>'<path d="M15.5 17v-3.4a4.5 4.5 0 0 1 9 0V17" fill="none" stroke="'+i+'" stroke-width="2.6"/><rect x="12.5" y="16.5" width="15" height="11.5" rx="3" fill="'+i+'"/>',
+  open:i=>'<path d="M24.5 17v-3.4a4.5 4.5 0 0 0 -9 0" fill="none" stroke="'+i+'" stroke-width="2.6" stroke-linecap="round"/><rect x="12.5" y="16.5" width="15" height="11.5" rx="3" fill="'+i+'"/>',
+  arrowR:c=>'<path d="M12.5 21A8 8 0 1 1 20 26" fill="none" stroke="'+c+'" stroke-width="3.4" stroke-linecap="round"/><polygon points="20,21 20,31 14,26" fill="'+c+'"/>',
+  arrowL:c=>'<path d="M27.5 21A8 8 0 1 0 20 26" fill="none" stroke="'+c+'" stroke-width="3.4" stroke-linecap="round"/><polygon points="20,21 20,31 26,26" fill="'+c+'"/>'
+};
+function tile(S,c){
+  const P=S.pal,B=rr(2,2,36,36,7);
+  const onDark=S===ST.s2?"#f4efe6":"#fff";
+  if(c==="#")return shape(S,B,P.wall,{shade:BAND});
+  if(c==="D")return shape(S,B,P.key,{shade:BAND})+g(0,-2.5,ICON.lock(S.ink));
+  if(c==="O")return '<path d="'+rr(4,4,32,32,6)+'" fill="'+P.key+'" opacity=".16"/><path d="'+rr(4,4,32,32,6)+'" fill="none" stroke="'+S.ink+'" stroke-width="1.8" stroke-dasharray="4 3.5" opacity=".65" filter="url(#wobA)"/><g opacity=".55">'+ICON.open(S.ink)+'</g>';
+  if(c==="S")return shape(S,circ(20,21,14.5),P.key)+ICON.key(S.ink);
+  if(c==="X")return shape(S,B,P.dark,{ghost:S===ST.s3?"#ff3d7f":null})+'<path d="M20 31L9.5 20.5Q5 13.5 11 10Q16 7.5 20 13.5Q24 7.5 29 10Q35 13.5 30.5 20.5Z" fill="'+(S===ST.s2?"#f4efe6":P.heart)+'"/><path d="M20.5 12.5l-3.2 5 5.2 3.4 -3 6.6" fill="none" stroke="'+P.dark+'" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>';
+  if(c==="R"||c==="L")return shape(S,B,P.rot,{shade:BAND})+g(0,-3,c==="R"?ICON.arrowR(S===ST.s4?S.ink:onDark):ICON.arrowL(S===ST.s4?S.ink:onDark));
+  if("123".includes(c)){const k=P.tp[c-1];return shape(S,circ(20,20,16),k)+'<circle cx="20" cy="20" r="10" fill="'+(S===ST.s3?"#111":S.ink)+'"/><text x="20" y="25.3" text-anchor="middle" font-family="Fredoka,Arial,sans-serif" font-weight="700" font-size="15" fill="'+onDark+'">'+"ABC"[c-1]+'</text>';}
+  return "";
+}
+const g=(x,y,inner)=>'<g transform="translate('+x+' '+y+')">'+inner+'</g>';
+function face(S,who){
+  const P=S.pal,me=who==="me",ink=S.ink;
+  const head=rr(4,7,32,30,9);
+  const hair=me?"M10 11Q14 0 20 6Q23 -1 27 6Q32 3 31 11Q20 6 10 11Z":"M3 20Q2 4 20 4Q38 4 37 20Q31 10 20 12Q9 10 3 20Z";
+  let s=shape(S,head,me?P.me:P.date,{shade:"M4 30H36V30a9 7 0 0 1 -9 7H13a9 7 0 0 1 -9 -7Z"});
+  s+=S.fill(hair,P.hair)+(S===ST.s3?"":S.line(hair,1.6));
+  const eyeInk=S===ST.s3?"#111":ink;
+  [13.5,26.5].forEach(x=>{s+='<circle cx="'+x+'" cy="21" r="4.6" fill="#fff" stroke="'+eyeInk+'" stroke-width="1.5"/><circle cx="'+(x+(me?.8:-.8))+'" cy="21.6" r="2.2" fill="'+eyeInk+'"/>';});
+  s+='<path d="M15 29Q20 33.5 25 29" fill="none" stroke="'+eyeInk+'" stroke-width="2" stroke-linecap="round"/>';
+  if(!me)s+='<circle cx="8.5" cy="27" r="2.6" fill="'+(S===ST.s3?"#ff3d7f":"#ff7fa8")+'" opacity=".7"/><circle cx="31.5" cy="27" r="2.6" fill="'+(S===ST.s3?"#ff3d7f":"#ff7fa8")+'" opacity=".7"/>';
+  return s;
+}
+const MAP=["........1","..X..#...","###..#.2.","...A.#...","..##D#...",".S...O..B",".###.####","..R.1..2.","......L.."];
+function board(S,map,tint){
+  const n=map.length;
+  let s="",top="";
+  for(let y=0;y<n;y++)for(let x=0;x<n;x++)s+=S.cell(x,y,tint);
+  map.forEach((row,y)=>[...row].forEach((c,x)=>{
+    if(c==="A")top+=g(x*40,y*40,face(S,"me"));
+    else if(c==="B")top+=g(x*40,y*40,'<circle cx="20" cy="21" r="27" fill="'+(S===ST.s3?"#fff":S.pal.date)+'" opacity=".22"/>'+face(S,"date"));
+    else if(c!==".")s+=g(x*40,y*40,tile(S,c));
+  }));
+  return '<svg viewBox="-4 -6 '+(n*40+8)+' '+(n*40+12)+'" xmlns="http://www.w3.org/2000/svg">'+s+top+'</svg>';
+}
+const single=(S,inner)=>'<svg viewBox="-5 -8 50 52" xmlns="http://www.w3.org/2000/svg">'+inner+'</svg>';
+
+const TXT={
+  s1:["Bande dessinée assumée : gros trait noir un peu tremblé, aplats primaires légèrement décalés du trait, ombres en trame de points. Les titres claquent comme des onomatopées.",
+      ["Le plus lisible des quatre, même en tout petit.","Le coup de tampon et les rubans s'y intègrent naturellement (POW, GO !).","Risque : la référence BD est connue. C'est la moins « jamais vue »."],"Bangers · Comic Neue"],
+  s2:["Impression risographe : trois encres seulement (rose fluo, bleu, jaune) qui se superposent et créent d'autres couleurs, un trait bleu au lieu du noir, des aplats décalés du trait et un grain de papier partout.",
+      ["Aucun noir : identité immédiate, très peu vue dans le jeu mobile.","Les hachures remplacent les ombres : c'est là que se sent le crayonné.","Risque : moins de contraste, il faudra vérifier la lisibilité en plein soleil."],"Rubik Mono One · Rubik"],
+  s3:["Affiche sérigraphiée : un fond de couleur vive plein écran par chapitre, des formes en aplat sans contour avec un double décalé cyan derrière, typographie d'affiche énorme. Le sol est ton sur ton avec le fond.",
+      ["La plus radicale : chaque chapitre change entièrement de couleur.","Les murs noirs et les personnages jaune / blanc restent identiques d'un chapitre à l'autre, donc on ne se perd pas.","Risque : fatigue visuelle sur de longues sessions, à tester."],"Anton · Archivo Italic"],
+  s4:["Carnet de notes : tout semble dessiné au feutre sur une page lignée. Trait repassé deux fois, coloriage au surligneur qui ne remplit pas tout, scotch, écriture à la main.",
+      ["La plus crayonnée et la plus personnelle : on dirait le carnet de quelqu'un.","Les cases du damier sont des coups de surligneur, une couleur par chapitre.","Risque : peut paraître moins « fini » ; tout repose sur la qualité du trait."],"Permanent Marker · Gochi Hand"]
+};
+
+document.getElementById("root").innerHTML=Object.keys(ST).map(k=>{
+  const S=ST[k],T=TXT[k],w=S.worlds;
+  const bg=S.paper||w[0][1];
+  const game='<div class="pw"><div class="phone" style="--w:'+w[0][1]+'"><div class="hd"><span class="rnd">II</span><span class="ttl">Fermer à clé<small>chapitre 3 · niveau 7</small></span><span class="pill">1 / 6</span></div>'+
+    '<div class="mid">'+board(S,MAP,w[2][1])+'</div>'+
+    '<div class="foot"><div class="react">'+single(S,face(S,"date"))+'<span class="bubble">Encore 5 coups pour le sans-faute.</span></div><div class="swipe"><span>⟲</span><span>GLISSE</span><span>⟳</span></div></div></div><small>écran de jeu</small></div>';
+  const menu='<div class="pw"><div class="phone menu" style="--w:'+w[0][1]+'"><div class="logo">date<b>gravity</b></div><div class="pair"><div>'+single(S,face(S,"me"))+'Moi</div><div>'+single(S,face(S,"date"))+'Mon date</div></div><div class="tag">Trouve le chemin jusqu’à ton date.</div><div class="play">JOUER</div></div><small>menu</small></div>';
+  const tints=w.map((t,i)=>{
+    const bgc=S.paper||t[1];
+    return '<figure style="background:'+bgc+'">'+board(S,["....","#.A.","##.B","...."].map((r,y)=>y===1&&i===2?"#SA.":r),t[1])+'<figcaption>chapitre '+(i+1)+' · '+t[0]+'</figcaption></figure>';
+  }).join("");
+  const sw=[...new Set([S.ink,S.pal.me,S.pal.date,S.pal.wall,S.pal.rot,S.paper||w[0][1]])].map(c=>'<i style="background:'+c+'" title="'+c+'"></i>').join("");
+  return '<section class="prop '+k+'"><div class="num">DIRECTION</div><h2>'+S.name+'</h2><p>'+T[0]+'</p><ul>'+T[1].map(x=>"<li>"+x+"</li>").join("")+'</ul>'+
+    '<div class="lay">'+game+menu+'<div class="side"><h3>Le damier, une teinte par chapitre</h3><div class="tints">'+tints+'</div><h3>Palette</h3><div class="sw">'+sw+'</div><div class="typo">Typographies : '+T[2]+'</div></div></div></section>';
+}).join("");
+</script>
+</body>
+</html>
