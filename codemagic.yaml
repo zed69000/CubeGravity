@@ -1,0 +1,62 @@
+# Builds Codemagic de Date Gravity (jeu web emballé avec Capacitor).
+#
+# ios-simulator : vérifie que l'application iPhone compile. Aucun compte Apple n'est nécessaire,
+#                 mais le résultat ne s'installe pas sur un vrai iPhone (il faudra la signature pour ça).
+# android-debug : produit un .apk de test, installable directement sur un téléphone Android.
+#
+# Les dossiers ios/ et android/ ne sont pas dans le dépôt : ils sont recréés à chaque build.
+
+definitions:
+  scripts:
+    - &deps
+      name: Dépendances
+      script: npm install
+    - &web
+      name: Copie du jeu dans www
+      script: npm run build:web
+
+workflows:
+  ios-simulator:
+    name: iOS · vérification de compilation
+    instance_type: mac_mini_m2
+    max_build_duration: 30
+    environment:
+      node: 20
+      xcode: latest
+      cocoapods: default
+    scripts:
+      - *deps
+      - *web
+      - name: Projet iOS
+        script: |
+          npx cap add ios
+          npm run native:ios
+          npx cap sync ios
+      - name: Compilation pour le simulateur
+        script: |
+          cd ios/App
+          xcodebuild -workspace App.xcworkspace -scheme App -configuration Debug \
+            -sdk iphonesimulator -destination 'generic/platform=iOS Simulator' \
+            CODE_SIGNING_ALLOWED=NO build
+
+  android-debug:
+    name: Android · apk de test
+    instance_type: mac_mini_m2
+    max_build_duration: 30
+    environment:
+      node: 20
+      java: 21
+    scripts:
+      - *deps
+      - *web
+      - name: Projet Android
+        script: |
+          npx cap add android
+          npm run native:android
+          npx cap sync android
+      - name: Compilation de l'apk
+        script: |
+          cd android
+          ./gradlew assembleDebug
+    artifacts:
+      - android/app/build/outputs/apk/debug/*.apk

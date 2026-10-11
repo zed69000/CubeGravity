@@ -3,9 +3,11 @@
      DGAds.maybeInterstitial({chapterIndex})  -> Promise, résolue quand le jeu peut continuer
      DGAds.showRewarded(reason)               -> Promise<boolean>, true si la récompense est gagnée
 
-   Pour l'instant le seul fournisseur est "fake" : de faux encarts pour juger le
-   rythme et l'emplacement. Brancher un vrai SDK = ajouter une entrée dans
-   `providers` avec les deux mêmes méthodes, puis changer config.provider.
+   Deux fournisseurs :
+     "fake"  : de faux encarts, sur le site web, pour juger le rythme et l'emplacement ;
+     "admob" : les vraies pubs Google, uniquement dans l'application iOS / Android (Capacitor).
+   Le choix est automatique. Brancher une autre régie = ajouter une entrée dans `providers`
+   avec les deux mêmes méthodes.
 
    Tests rapides :  game.html?ads=debug  (interstitiel à chaque niveau)
                     game.html?ads=off    (aucune pub)
@@ -16,7 +18,8 @@
   const config={
     enabled:param!=="off",
     debug:param==="debug",
-    provider:"fake",
+    provider:"fake",              // remplacé par "admob" plus bas quand on tourne dans l'application
+    admobTesting:true,            // true = pubs de test Google. À passer à false seulement avec de vrais identifiants.
     firstChapterAdFree:true,      // jamais d'interstitiel pendant le premier chapitre
     interstitialEveryLevels:4,    // au plus un interstitiel tous les N niveaux gagnés
     minSecondsBetweenAds:120,     // et jamais deux pubs à moins de N secondes
@@ -128,7 +131,70 @@
     });
   }
 
+  /* --- AdMob (application seulement) ---
+     Les identifiants ci-dessous sont ceux de TEST publiés par Google : ils affichent de fausses pubs
+     et ne rapportent rien. Avant publication, les remplacer par les blocs d'annonces du compte AdMob
+     (et l'identifiant d'application dans tools/app/configure-native.mjs), puis passer admobTesting à false. */
+  const cap=window.Capacitor;
+  const AdMob=cap&&cap.isNativePlatform&&cap.isNativePlatform()&&cap.Plugins?cap.Plugins.AdMob:null;
+  const ADMOB_UNITS={
+    ios:{interstitial:"ca-app-pub-3940256099942544/4411468910",rewarded:"ca-app-pub-3940256099942544/1712485313"},
+    android:{interstitial:"ca-app-pub-3940256099942544/1033173712",rewarded:"ca-app-pub-3940256099942544/5224354917"}
+  };
+  let admobReady=null;
+  function admobUnits(){return ADMOB_UNITS[cap.getPlatform()]||ADMOB_UNITS.android;}
+  function admobInit(){
+    // À la première pub seulement : consentement RGPD, puis autorisation de suivi sur iPhone.
+    if(!admobReady)admobReady=(async()=>{
+      await AdMob.initialize({initializeForTesting:config.admobTesting});
+      try{
+        const info=await AdMob.requestConsentInfo();
+        if(info&&info.isConsentFormAvailable&&info.status==="REQUIRED")await AdMob.showConsentForm();
+      }catch(e){console.warn("[ADS] consentement",e);}
+      try{if(cap.getPlatform()==="ios")await AdMob.requestTrackingAuthorization();}catch(e){}
+    })();
+    return admobReady;
+  }
+  // Résolue au premier des événements cités (ou au bout de 90 s, pour ne jamais bloquer le jeu).
+  function admobOnce(names){
+    return new Promise(resolve=>{
+      const handles=[];
+      const done=v=>{handles.forEach(h=>{try{h&&h.remove&&h.remove();}catch(e){}});resolve(v);};
+      names.forEach(n=>Promise.resolve(AdMob.addListener(n,()=>done(n))).then(h=>handles.push(h)));
+      setTimeout(()=>done("timeout"),90000);
+    });
+  }
+  const admob={
+    async interstitial(){
+      await admobInit();
+      await AdMob.prepareInterstitial({adId:admobUnits().interstitial,isTesting:config.admobTesting});
+      const closed=admobOnce(["interstitialAdDismissed","interstitialAdFailedToShow"]);
+      await AdMob.showInterstitial();
+      await closed;
+      return {completed:true};
+    },
+    async rewarded(){
+      try{
+        await admobInit();
+        await AdMob.prepareRewardVideoAd({adId:admobUnits().rewarded,isTesting:config.admobTesting});
+      }catch(e){
+        console.warn("[ADS] aucune vidéo disponible, récompense offerte",e);
+        return {completed:true};
+      }
+      let earned=false;
+      const closed=admobOnce(["onRewardedVideoAdDismissed","onRewardedVideoAdFailedToShow"]);
+      const reward=AdMob.addListener("onRewardedVideoAdReward",()=>{earned=true;});
+      Promise.resolve(AdMob.showRewardVideoAd()).then(r=>{if(r)earned=true;},()=>{});
+      await closed;
+      await new Promise(r=>setTimeout(r,150)); // la récompense peut arriver juste après la fermeture
+      Promise.resolve(reward).then(h=>{try{h&&h.remove&&h.remove();}catch(e){}});
+      return {completed:earned};
+    }
+  };
+  if(AdMob)config.provider="admob";
+
   const providers={
+    admob,
     fake:{
       interstitial(){
         return fakeAd({kind:"Interstitiel",text:"Encart plein écran entre deux niveaux.",

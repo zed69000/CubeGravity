@@ -10,3 +10,9 @@ $RECYCLE.BIN/
 
 # Windows shortcuts
 *.lnk
+
+### Application (Capacitor) : tout ceci est recréé par le build
+node_modules/
+www/
+ios/
+android/

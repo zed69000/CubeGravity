@@ -1,0 +1,23 @@
+# Fichiers du dépôt qui ne doivent pas être publiés sur le site (Cloudflare lit ce fichier, même syntaxe que .gitignore).
+# Le site n'a besoin que du jeu, du menu, des éditeurs et de leurs données.
+.git
+.claude/
+.gitignore
+.assetsignore
+Mockup/
+Levels/
+tools/
+logs/
+node_modules/
+www/
+ios/
+android/
+*.check.js
+*.psd
+*.bat
+*.ps1
+package.json
+package-lock.json
+capacitor.config.json
+codemagic.yaml
+wrangler.toml
