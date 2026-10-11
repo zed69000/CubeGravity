@@ -10,6 +10,9 @@ const FILES = [
   "index.html",
   "game.html",
   "ads.js",
+  "i18n.js",
+  "premium.js",
+  "lang",
   "spirits.js",
   "levels.json",
   "vector_assets.json",
@@ -23,6 +26,6 @@ for (const f of FILES) {
   const src = join(root, f);
   if (!existsSync(src)) throw new Error("fichier manquant : " + f);
   mkdirSync(dirname(join(out, f)), { recursive: true });
-  cpSync(src, join(out, f));
+  cpSync(src, join(out, f), { recursive: true }); // "lang" est un dossier : une traduction par fichier
 }
-console.log(FILES.length + " fichiers copiés dans www/");
+console.log(FILES.length + " entrées copiées dans www/");

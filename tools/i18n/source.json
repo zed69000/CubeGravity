@@ -1,0 +1,1074 @@
+[
+ {
+  "fr": "Niveau {n}",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "chapitre {c} · niveau {n}",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "coups",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "BRAVO !",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "MATCH !",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "OUPS !",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "Réessayer",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "Voir la solution",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "PUB",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "Oups… râteau",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "Tu as touché un cœur brisé. {name} a levé les yeux au ciel.",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "Perdu de vue",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "Tu es tombé dans le vide trois fois de suite. {name} ne te voit plus.",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "Tu as terminé les {n} niveaux. Après tous ces rendez-vous, cette fois c'était la bonne personne.",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "Préparation du niveau…",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "Un coup de pouce ?",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "{name} peut te montrer comment le rejoindre. Tu peux aussi continuer à chercher.",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "{name} peut te montrer comment la rejoindre. Tu peux aussi continuer à chercher.",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "Je continue",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "Commandes : boutons",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "Commandes : glisser",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "Besoin d'un coup de pouce ? Touche-moi.",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "Je t'attends, viens !",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "Encore {n} coups pour le sans-faute.",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "Plus qu'un coup pour le sans-faute !",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "C'était le dernier coup du sans-faute…",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "Prends ton temps, je ne bouge pas.",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "Fin de l'histoire",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "Chapitre terminé",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "Match !",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "{n} coups · objectif {max}",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "{n} coup · objectif {max}",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "rejoue pour aller plus loin",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "Mes rencontres",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "Chapitre suivant",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "Suivant",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "Jouer sans pub ?",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "Passe en Premium : plus aucune pub, et les solutions sont offertes.",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "Premium · {price}",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "Plus tard",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "Pas de solution",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "Ce niveau n'a pas encore de solution enregistrée.",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "Le coup de pouce",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "{name} te souffle la solution, depuis le début du niveau :",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "{n} coups · ⟳ tourne vers la droite, ⟲ tourne vers la gauche",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "{n} coup · ⟳ tourne vers la droite, ⟲ tourne vers la gauche",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "Recommencer",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "Fermer",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "chapitre {c}",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "{n} niveaux",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "suite à {n} %",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "GO !",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "Plein écran",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "Sur iPhone, Safari ne propose pas le plein écran par bouton. Fais <b>Partager → Sur l'écran d'accueil</b>, puis lance le jeu depuis son icône.",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "Pause",
+  "contexte": "écran de jeu (bouton, titre ou libellé)"
+ },
+ {
+  "fr": "Coups joués",
+  "contexte": "écran de jeu (bouton, titre ou libellé)"
+ },
+ {
+  "fr": "Plateau",
+  "contexte": "écran de jeu (bouton, titre ou libellé)"
+ },
+ {
+  "fr": "Demander un indice",
+  "contexte": "écran de jeu (bouton, titre ou libellé)"
+ },
+ {
+  "fr": "Tourner à gauche",
+  "contexte": "écran de jeu (bouton, titre ou libellé)"
+ },
+ {
+  "fr": "Tourner à droite",
+  "contexte": "écran de jeu (bouton, titre ou libellé)"
+ },
+ {
+  "fr": "Chapitres",
+  "contexte": "écran de jeu (bouton, titre ou libellé)"
+ },
+ {
+  "fr": "Retour au menu",
+  "contexte": "écran de jeu (bouton, titre ou libellé)"
+ },
+ {
+  "fr": "♥ rencontres",
+  "contexte": "écran de jeu (bouton, titre ou libellé)"
+ },
+ {
+  "fr": "Niveaux du chapitre",
+  "contexte": "écran de jeu (bouton, titre ou libellé)"
+ },
+ {
+  "fr": "Retour aux chapitres",
+  "contexte": "écran de jeu (bouton, titre ou libellé)"
+ },
+ {
+  "fr": "Chapitre précédent",
+  "contexte": "écran de jeu (bouton, titre ou libellé)"
+ },
+ {
+  "fr": "Rencontres",
+  "contexte": "écran de jeu (bouton, titre ou libellé)"
+ },
+ {
+  "fr": "Retour",
+  "contexte": "écran de jeu (bouton, titre ou libellé)"
+ },
+ {
+  "fr": "Nouvelle rencontre",
+  "contexte": "écran de jeu (bouton, titre ou libellé)"
+ },
+ {
+  "fr": "Retour aux niveaux",
+  "contexte": "écran de jeu (bouton, titre ou libellé)"
+ },
+ {
+  "fr": "C’est parti",
+  "contexte": "écran de jeu (bouton, titre ou libellé)"
+ },
+ {
+  "fr": "Victoire",
+  "contexte": "écran de jeu (bouton, titre ou libellé)"
+ },
+ {
+  "fr": "Rejouer",
+  "contexte": "écran de jeu (bouton, titre ou libellé)"
+ },
+ {
+  "fr": "Menu pause",
+  "contexte": "écran de jeu (bouton, titre ou libellé)"
+ },
+ {
+  "fr": "Reprendre",
+  "contexte": "écran de jeu (bouton, titre ou libellé)"
+ },
+ {
+  "fr": "Musique",
+  "contexte": "écran de jeu (bouton, titre ou libellé)"
+ },
+ {
+  "fr": "Sons",
+  "contexte": "écran de jeu (bouton, titre ou libellé)"
+ },
+ {
+  "fr": "💡 Solution",
+  "contexte": "écran de jeu (bouton, titre ou libellé)"
+ },
+ {
+  "fr": "Menu",
+  "contexte": "écran de jeu (bouton, titre ou libellé)"
+ },
+ {
+  "fr": "Chargement…",
+  "contexte": "écran de jeu (bouton, titre ou libellé)"
+ },
+ {
+  "fr": "Sur iPhone, pour le vrai plein écran : Partager → Sur l’écran d’accueil, puis lance Date Gravity depuis son icône.",
+  "contexte": "menu principal (texte dynamique)"
+ },
+ {
+  "fr": "♪ Musique du menu : oui",
+  "contexte": "menu principal (texte dynamique)"
+ },
+ {
+  "fr": "♪ Musique du menu : non",
+  "contexte": "menu principal (texte dynamique)"
+ },
+ {
+  "fr": "Premium activé ✓",
+  "contexte": "menu principal (texte dynamique)"
+ },
+ {
+  "fr": "Premium sans pub · {price}",
+  "contexte": "menu principal (texte dynamique)"
+ },
+ {
+  "fr": "Premium activé. Merci !",
+  "contexte": "menu principal (texte dynamique)"
+ },
+ {
+  "fr": "Aucun achat à restaurer.",
+  "contexte": "menu principal (texte dynamique)"
+ },
+ {
+  "fr": "elle · changer ↻",
+  "contexte": "menu principal (texte dynamique)"
+ },
+ {
+  "fr": "lui · changer ↻",
+  "contexte": "menu principal (texte dynamique)"
+ },
+ {
+  "fr": "reprendre · chapitre {c}, niveau {n}",
+  "contexte": "menu principal (texte dynamique)"
+ },
+ {
+  "fr": "chapitre {c}, niveau {n}",
+  "contexte": "menu principal (texte dynamique)"
+ },
+ {
+  "fr": "Options",
+  "contexte": "menu principal (bouton, titre ou libellé)"
+ },
+ {
+  "fr": "Tourne le monde. Tombe juste. Fais des rencontres.",
+  "contexte": "menu principal (bouton, titre ou libellé)"
+ },
+ {
+  "fr": "Choix des personnages",
+  "contexte": "menu principal (bouton, titre ou libellé)"
+ },
+ {
+  "fr": "Changer mon personnage",
+  "contexte": "menu principal (bouton, titre ou libellé)"
+ },
+ {
+  "fr": "Moi",
+  "contexte": "menu principal (bouton, titre ou libellé)"
+ },
+ {
+  "fr": "Changer le genre des rencontres",
+  "contexte": "menu principal (bouton, titre ou libellé)"
+ },
+ {
+  "fr": "Navigation principale",
+  "contexte": "menu principal (bouton, titre ou libellé)"
+ },
+ {
+  "fr": "Jouer",
+  "contexte": "menu principal (bouton, titre ou libellé)"
+ },
+ {
+  "fr": "Restaurer mes achats",
+  "contexte": "menu principal (bouton, titre ou libellé)"
+ },
+ {
+  "fr": "Langue",
+  "contexte": "menu principal (bouton, titre ou libellé)"
+ },
+ {
+  "fr": "Glisse à droite ou à gauche pour tourner le plateau. Je tombe, et je m'arrête au premier obstacle.",
+  "contexte": "bulle de tutoriel dite par le personnage"
+ },
+ {
+  "fr": "Indice : un bord ouvert n'est pas un mur. Regarde où je réapparais de l'autre côté.",
+  "contexte": "bulle de tutoriel dite par le personnage"
+ },
+ {
+  "fr": "Nouveauté : les bords sont ouverts. Si je sors d'un côté, je reviens par l'autre. Mais trois tours dans le vide, et c'est la chute éternelle.",
+  "contexte": "bulle de tutoriel dite par le personnage"
+ },
+ {
+  "fr": "Indice : la clé inverse tous les cadenas. Le bon moment compte plus que la vitesse.",
+  "contexte": "bulle de tutoriel dite par le personnage"
+ },
+ {
+  "fr": "Nouveauté : la clé. Quand je passe dessus, les cadenas fermés s'ouvrent et les cadenas ouverts se referment.",
+  "contexte": "bulle de tutoriel dite par le personnage"
+ },
+ {
+  "fr": "Indice : vise d'abord une case sûre où atterrir. La sortie vient après.",
+  "contexte": "bulle de tutoriel dite par le personnage"
+ },
+ {
+  "fr": "Nouveauté : le cœur brisé. Si je le touche, c'est le râteau assuré. On l'évite.",
+  "contexte": "bulle de tutoriel dite par le personnage"
+ },
+ {
+  "fr": "Indice : le rotateur tourne le monde à ta place. Prévois ma chute après cette rotation forcée.",
+  "contexte": "bulle de tutoriel dite par le personnage"
+ },
+ {
+  "fr": "Nouveauté : le rotateur. Quand je le touche, le plateau tourne tout seul, puis je retombe.",
+  "contexte": "bulle de tutoriel dite par le personnage"
+ },
+ {
+  "fr": "Indice : A mène à A, B mène à B. Après la sortie, je continue à tomber dans le même sens.",
+  "contexte": "bulle de tutoriel dite par le personnage"
+ },
+ {
+  "fr": "Nouveauté : les portails. J'entre par une lettre, je ressors par la même lettre. Le plateau ne tourne pas.",
+  "contexte": "bulle de tutoriel dite par le personnage"
+ },
+ {
+  "fr": "Indice : pense en étapes : rotation, chute, arrêt, prochaine rotation.",
+  "contexte": "bulle de tutoriel dite par le personnage"
+ },
+ {
+  "fr": "tourner, tomber",
+  "contexte": "mécanique d'un chapitre, en minuscules"
+ },
+ {
+  "fr": "bords ouverts",
+  "contexte": "mécanique d'un chapitre, en minuscules"
+ },
+ {
+  "fr": "clés et cadenas",
+  "contexte": "mécanique d'un chapitre, en minuscules"
+ },
+ {
+  "fr": "cœurs brisés",
+  "contexte": "mécanique d'un chapitre, en minuscules"
+ },
+ {
+  "fr": "rotateurs",
+  "contexte": "mécanique d'un chapitre, en minuscules"
+ },
+ {
+  "fr": "téléporteurs",
+  "contexte": "mécanique d'un chapitre, en minuscules"
+ },
+ {
+  "fr": "tout mélangé",
+  "contexte": "mécanique d'un chapitre, en minuscules"
+ },
+ {
+  "fr": "Toujours partant·e pour un détour.",
+  "contexte": "phrase d'accroche d'une rencontre (profil de site de rencontre, ton léger)"
+ },
+ {
+  "fr": "Adore sortir des sentiers battus.",
+  "contexte": "phrase d'accroche d'une rencontre (profil de site de rencontre, ton léger)"
+ },
+ {
+  "fr": "A la clé de toutes les portes.",
+  "contexte": "phrase d'accroche d'une rencontre (profil de site de rencontre, ton léger)"
+ },
+ {
+  "fr": "Marche sur des œufs, et toi avec.",
+  "contexte": "phrase d'accroche d'une rencontre (profil de site de rencontre, ton léger)"
+ },
+ {
+  "fr": "Te fait tourner la tête.",
+  "contexte": "phrase d'accroche d'une rencontre (profil de site de rencontre, ton léger)"
+ },
+ {
+  "fr": "Le coup de foudre, version express.",
+  "contexte": "phrase d'accroche d'une rencontre (profil de site de rencontre, ton léger)"
+ },
+ {
+  "fr": "C'est compliqué, mais ça sent bon.",
+  "contexte": "phrase d'accroche d'une rencontre (profil de site de rencontre, ton léger)"
+ },
+ {
+  "fr": "Rare. Vraiment rare.",
+  "contexte": "phrase d'accroche d'une rencontre (profil de site de rencontre, ton léger)"
+ },
+ {
+  "fr": "Pas encore rencontré·e",
+  "contexte": "statut de la relation avec une rencontre"
+ },
+ {
+  "fr": "Âme sœur",
+  "contexte": "statut de la relation avec une rencontre"
+ },
+ {
+  "fr": "Grand amour",
+  "contexte": "statut de la relation avec une rencontre"
+ },
+ {
+  "fr": "Crush",
+  "contexte": "statut de la relation avec une rencontre"
+ },
+ {
+  "fr": "Pote",
+  "contexte": "statut de la relation avec une rencontre"
+ },
+ {
+  "fr": "Connaissance",
+  "contexte": "statut de la relation avec une rencontre"
+ },
+ {
+  "fr": "Premier pas",
+  "contexte": "titre de chapitre"
+ },
+ {
+  "fr": "Sortir du cadre",
+  "contexte": "titre de chapitre"
+ },
+ {
+  "fr": "Boutons du cœur",
+  "contexte": "titre de chapitre"
+ },
+ {
+  "fr": "Zones dangereuses",
+  "contexte": "titre de chapitre"
+ },
+ {
+  "fr": "Têtes qui tournent",
+  "contexte": "titre de chapitre"
+ },
+ {
+  "fr": "Coup de foudre",
+  "contexte": "titre de chapitre"
+ },
+ {
+  "fr": "C’est compliqué",
+  "contexte": "titre de chapitre"
+ },
+ {
+  "fr": "Le grand amour",
+  "contexte": "titre de chapitre"
+ },
+ {
+  "fr": "Premier regard",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Bonjour timide",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Un pas vers toi",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Le premier mot",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Sourire en coin",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Petit signe",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Les yeux baissés",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Premier rendez-vous",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Hors des sentiers",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Faire le tour",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Par la petite porte",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "The Mirror",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Prendre le large",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Tourner autour du pot",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Sortir de sa bulle",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Le grand détour",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Par l’autre côté",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Le grand saut",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Le déclic",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Ouvre-moi",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Porte entrouverte",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Briser la glace",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Le bon bouton",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Sésame",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Clé des champs",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Porte qui claque",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Message envoyé",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Vu à 21h04",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Double coche",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Jeanne labyrinthe",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Fermer à clé",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Cœur à code",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Sujet sensible",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Terrain glissant",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "L’ex au téléphone",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Mot de travers",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Love Symetrical",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Signes contradictoires",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Jalousie",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "L’étincelle",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Rendez-vous réel",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Ghosting",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Pieds dans le plat",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Message supprimé",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Dîner chez belle-maman",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Ligne rouge",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Pas ce soir",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Cœur en miettes",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Tête qui tourne",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Premier slow",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Manège",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Volte-face",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Tourbillon",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Changement d’avis",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Valse-hésitation",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Retournement",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Sens dessus dessous",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "La tête à l’envers",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Pirouette",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Tourner en rond",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Girouette",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Coup de théâtre",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Demi-tour droite",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Carrousel",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Montagnes russes",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Perdre le nord",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Grand huit",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Vertige d’amour",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "En un éclair",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Raccourci",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Aller simple",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Longue distance",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Appel vidéo",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Train de nuit",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "À l’autre bout",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Sauter le pas",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Porte dérobée",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Correspondance",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Vol direct",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Dans tes bras",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Ici et ailleurs",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Aller-retour",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Trou de ver",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Tête dans les étoiles",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Deux adresses",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Transit",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Téléportés",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Statut flou",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "On verra",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Ni oui ni non",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Entre deux",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Les amis communs",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Week-end test",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Brosse à dents",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Présenter les parents",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Première dispute",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Réconciliation",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Vacances à deux",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Double jeu",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Le tiroir vide",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Compromis",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Les clés de chez toi",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Carton plein",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Emménager",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Tout ou rien",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Le cap des trois ans",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Évidence",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Même longueur d’onde",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Mains liées",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Projets à deux",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Nos habitudes",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Le canapé du dimanche",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Pour de vrai",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Contre vents et marées",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Dans la durée",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Les mots justes",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Tenir bon",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Toi et moi",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Promesse",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "À la folie",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Plus fort que tout",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Le grand oui",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Pour toujours",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Âmes sœurs",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Destinée",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "La bonne personne",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ }
+]

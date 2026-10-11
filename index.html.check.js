@@ -1,8 +1,13 @@
+/* premier affichage de la session : on montre l'écran du studio avant le menu */
+try{if(!sessionStorage.getItem("dg_splash")&&sessionStorage.getItem("dg_tx")!=="1"){sessionStorage.setItem("dg_splash","1");document.documentElement.classList.add("splash");}}catch(e){}
+;
 /* retour depuis le jeu : les rubans sont déjà fermés, on les ouvrira une fois prêt */
 try{if(sessionStorage.getItem("dg_tx")==="1"){sessionStorage.removeItem("dg_tx");document.documentElement.classList.add("tx-in");}}catch(e){}
 ;
 
 /* ===== V49 NÉON CIRCUIT : menu principal ===== */
+const tr=DGi18n.t; // traduction : tr("texte français", {variables})
+DGi18n.apply();
 const PROGRESS_KEY="gravity_cube_player_progress_v2";
 const PROJECT_ZIP_NAME="date_gravity_project_pc.zip";
 const PROJECT_PASSWORD="Lulu69";
@@ -20,7 +25,7 @@ async function requestMenuFullscreen(showHelp=false){
     if(target.requestFullscreen){await target.requestFullscreen({navigationUI:"hide"});return true;}
     if(target.webkitRequestFullscreen){target.webkitRequestFullscreen();return true;}
   }catch(e){console.warn("[MENU FULLSCREEN]",e);}
-  if(showHelp&&isIOS())alert("Sur iPhone, pour le vrai plein écran : Partager → Sur l’écran d’accueil, puis lance Date Gravity depuis son icône.");
+  if(showHelp&&isIOS())alert(tr("Sur iPhone, pour le vrai plein écran : Partager → Sur l’écran d’accueil, puis lance Date Gravity depuis son icône."));
   return false;
 }
 document.getElementById("fullscreenBtn").addEventListener("click",()=>requestMenuFullscreen(true));
@@ -102,11 +107,11 @@ function stopMenuMusic(){if(menuMusicTimer){clearInterval(menuMusicTimer);menuMu
 function setMusicState(v){
   menuMusicOn=!!v;
   try{localStorage.setItem("dcg_menu_music_on",menuMusicOn?"1":"0");}catch(e){}
-  soundToggle.textContent="♪ Musique du menu : "+(menuMusicOn?"oui":"non");
+  soundToggle.textContent=tr(menuMusicOn?"♪ Musique du menu : oui":"♪ Musique du menu : non");
   if(menuMusicOn)startMenuMusic();else stopMenuMusic();
 }
 try{const saved=localStorage.getItem("dcg_menu_music_on");if(saved!==null)menuMusicOn=saved==="1";}catch(e){}
-soundToggle.textContent="♪ Musique du menu : "+(menuMusicOn?"oui":"non");
+soundToggle.textContent=tr(menuMusicOn?"♪ Musique du menu : oui":"♪ Musique du menu : non");
 ["pointerdown","keydown"].forEach(evt=>window.addEventListener(evt,()=>{if(menuMusicOn)startMenuMusic();},{once:true,passive:true}));
 soundToggle.addEventListener("click",()=>setMusicState(!menuMusicOn));
 
@@ -114,12 +119,51 @@ soundToggle.addEventListener("click",()=>setMusicState(!menuMusicOn));
 const CONTROLS_KEY="dg_controls";
 const controlsToggle=document.getElementById("controlsToggle");
 function controlsMode(){try{return localStorage.getItem(CONTROLS_KEY)==="buttons"?"buttons":"swipe";}catch(e){return "swipe";}}
-function showControlsMode(){controlsToggle.textContent="Commandes : "+(controlsMode()==="buttons"?"boutons":"glisser");}
+function showControlsMode(){controlsToggle.textContent=tr(controlsMode()==="buttons"?"Commandes : boutons":"Commandes : glisser");}
 controlsToggle.addEventListener("click",()=>{
   try{localStorage.setItem(CONTROLS_KEY,controlsMode()==="buttons"?"swipe":"buttons");}catch(e){}
   playOpenSound();showControlsMode();
 });
 showControlsMode();
+
+/* --- langue : chaque bouton porte le nom de la langue dans cette langue ; le choix recharge la page */
+Object.entries(DGi18n.LANGS).forEach(([code,name])=>{
+  const b=document.createElement("button");
+  b.type="button";b.textContent=name;b.lang=code;
+  if(code===DGi18n.lang)b.className="on";
+  b.addEventListener("click",()=>DGi18n.setLang(code));
+  document.getElementById("langGrid").appendChild(b);
+});
+
+/* --- écran d'ouverture : il s'efface seul ; un toucher le passe tout de suite */
+(function(){
+  const root=document.documentElement,el=document.getElementById("splash");
+  if(!root.classList.contains("splash"))return;
+  const end=()=>root.classList.remove("splash");
+  const timer=setTimeout(end,1950);
+  el.addEventListener("pointerdown",()=>{clearTimeout(timer);end();},{once:true});
+})();
+
+/* --- Premium : un achat unique qui retire les pubs. Le bouton montre le prix, puis « activé ». */
+const premiumBtn=document.getElementById("premiumBtn");
+function showPremium(){
+  const on=DGPremium.isOn();
+  premiumBtn.textContent=on?tr("Premium activé ✓"):tr("Premium sans pub · {price}",{price:DGPremium.price()});
+  premiumBtn.classList.toggle("owned",on);
+  document.getElementById("restoreBtn").classList.toggle("hidden",on);
+}
+premiumBtn.addEventListener("click",async()=>{
+  if(DGPremium.isOn())return;
+  playButtonSound();
+  if(await DGPremium.buy())alert(tr("Premium activé. Merci !"));
+  showPremium();
+});
+document.getElementById("restoreBtn").addEventListener("click",async()=>{
+  playButtonSound();
+  alert(tr(await DGPremium.restore()?"Premium activé. Merci !":"Aucun achat à restaurer."));
+  showPremium();
+});
+showPremium();
 
 /* --- options */
 function openOptions(){playOpenSound();overlay.classList.remove("hidden");overlay.setAttribute("aria-hidden","false");}
@@ -156,9 +200,9 @@ function updateMenuCharacters(){
   const person=DGSpirit.person(chapterIndex);
   document.getElementById("mePic").innerHTML=DGSpirit.portrait("flamme",meGender==="girl"?"f":"m");
   document.getElementById("datePic").innerHTML=DGSpirit.portrait(person.kind,dateGender==="boy"?"m":"f");
-  document.getElementById("meCap").textContent=(meGender==="girl"?"elle":"lui")+" · changer ↻";
+  document.getElementById("meCap").textContent=tr(meGender==="girl"?"elle · changer ↻":"lui · changer ↻");
   document.getElementById("dateName").textContent=person.name;
-  document.getElementById("dateCap").textContent=(dateGender==="boy"?"lui":"elle")+" · changer ↻";
+  document.getElementById("dateCap").textContent=tr(dateGender==="boy"?"lui · changer ↻":"elle · changer ↻");
 }
 document.getElementById("meChoice").addEventListener("click",()=>{
   meGender=meGender==="boy"?"girl":"boy";
@@ -188,7 +232,7 @@ async function showResume(){
     const chId=levels[idx].chapter;
     chapterIndex=Math.max(0,chapters.findIndex(c=>c.id===chId));
     const pos=levels.slice(0,idx+1).filter(l=>l.chapter===chId).length;
-    line.textContent=(started?"reprendre · ":"")+"chapitre "+(chapterIndex+1)+", niveau "+pos;
+    line.textContent=tr(started?"reprendre · chapitre {c}, niveau {n}":"chapitre {c}, niveau {n}",{c:chapterIndex+1,n:pos});
     const met=new Set(levels.filter(l=>best[l.id]).map(l=>l.chapter)).size;
     document.getElementById("metCount").textContent=met+"/"+chapters.length;
     // le menu prend les couleurs du chapitre en cours
@@ -197,7 +241,7 @@ async function showResume(){
     document.documentElement.style.setProperty("--c2",w[1]);
     bandColors=[w[0],w[1],"#0d1230"];
   }catch(e){
-    line.textContent="chapitre 1, niveau 1";
+    line.textContent=tr("chapitre {c}, niveau {n}",{c:1,n:1});
   }
   updateMenuCharacters();
 }

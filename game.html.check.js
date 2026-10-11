@@ -4,6 +4,8 @@ window.CG_EDITOR_MODE=new URLSearchParams(location.search).get("editor")==="1";d
 try{if(sessionStorage.getItem("dg_tx")==="1"){sessionStorage.removeItem("dg_tx");document.documentElement.classList.add("tx-in");}}catch(e){}
 ;
 
+const tr=DGi18n.t; // traduction : tr("texte français", {variables})
+DGi18n.apply();
 const BOARD=520; let W=11,H=11,T=BOARD/W,HALF=T/2;
 
 function clampGridSize(v){
@@ -243,14 +245,14 @@ function updateStats(){
   const titleEl=document.getElementById("title");
   titleEl.textContent="";
   const nameEl=document.createElement("span");
-  nameEl.textContent=l.name||("Niveau "+info.pos);
+  nameEl.textContent=l.name?tr(l.name):tr("Niveau {n}",{n:info.pos});
   titleEl.appendChild(nameEl);
 
   const sub=document.createElement("small");
-  sub.textContent="chapitre "+info.number+" · niveau "+info.pos;
+  sub.textContent=tr("chapitre {c} · niveau {n}",{c:info.number,n:info.pos});
   titleEl.appendChild(sub);
   const max=Number(l.maxMoves)||0;
-  const html="<b"+(moves?' class="pop"':"")+">"+moves+"</b><span>/ "+(max||"?")+"</span><em>coups</em>";
+  const html="<b"+(moves?' class="pop"':"")+">"+moves+"</b><span>/ "+(max||"?")+"</span><em>"+tr("coups")+"</em>";
   playStats.classList.toggle("over",max>0&&moves>max);
   playStats.innerHTML=html;
   dgTint(info.ci);
@@ -416,20 +418,20 @@ function showBanner(title,msg,stars,kind){
   if(kind==="win"||kind==="final"){
     const ch=dgChapterOfLevel(currentLevel);
     const chapterDone=!!ch&&ch.levelIds[ch.levelIds.length-1]===currentLevel;
-    dgTampon(kind==="final"||chapterDone?"BRAVO !":"MATCH !",()=>{if(stillThere())dgShowWin(kind,msg);});
+    dgTampon(tr(kind==="final"||chapterDone?"BRAVO !":"MATCH !"),()=>{if(stillThere())dgShowWin(kind,msg);});
     return;
   }
   // défaite : le date fait la tête, on propose de réessayer ou de voir la solution
-  dgTampon("OUPS !",()=>{
+  dgTampon(tr("OUPS !"),()=>{
     if(!stillThere())return;
     dgPortrait("bannerArt",dgCurPerson().kind,dgDateSex(),{eye:"sad",mouth:"sad"});
     bannerTitle.textContent=title;
     bannerText.textContent=msg;
     starsEl.textContent="";
-    bannerAction.textContent="Réessayer";
+    bannerAction.textContent=tr("Réessayer");
     bannerAction.onclick=()=>resetPlay();
     const alt=document.getElementById("bannerAlt");
-    alt.innerHTML=levels[currentLevel]?.solution?'💡 Voir la solution<span class="adtag">PUB</span>':"";
+    alt.innerHTML=levels[currentLevel]?.solution?'💡 '+tr("Voir la solution")+'<span class="adtag">'+tr("PUB")+'</span>':"";
     alt.onclick=()=>dgRequestSolution();
     banner.classList.add("lose");
     banner.classList.remove("hidden");
@@ -1296,7 +1298,7 @@ function triggerDeathTile(){
   soundCrash();soundLose();
   dissolvePlayer();
   draw();
-  showBanner("Oups… râteau","Tu as touché un cœur brisé. "+dgDateName()+" a levé les yeux au ciel.","","lose");
+  showBanner(tr("Oups… râteau"),tr("Tu as touché un cœur brisé. {name} a levé les yeux au ciel.",{name:dgDateName()}),"","lose");
   busy=false;
 }
 
@@ -1307,7 +1309,7 @@ function triggerEternalFall(){
   status.textContent="Chute éternelle détectée.";
   soundEternalFall();
   soundLose();
-  showBanner("Perdu de vue","Tu es tombé dans le vide trois fois de suite. "+dgDateName()+" ne te voit plus.","","lose");
+  showBanner(tr("Perdu de vue"),tr("Tu es tombé dans le vide trois fois de suite. {name} ne te voit plus.",{name:dgDateName()}),"","lose");
 }
 
 function fall(){
@@ -1393,7 +1395,7 @@ function fall(){
         startConfetti();
         saveWinProgress();
         if(currentLevel===levels.length-1){
-          showBanner("","Tu as terminé les "+levels.length+" niveaux. Après tous ces rendez-vous, cette fois c'était la bonne personne.","","final");
+          showBanner("",tr("Tu as terminé les {n} niveaux. Après tous ces rendez-vous, cette fois c'était la bonne personne.",{n:levels.length}),"","final");
         }else{
           showBanner("","",stars,"win");
         }
@@ -1899,7 +1901,7 @@ function companionMessage(kind="intro"){
 
 function showCompanion(msg, markSeen=false){
   if(edit||gameOver||!msg)return;
-  dgSetReact(msg,true);
+  dgSetReact(tr(msg),true);
   if(markSeen){
     const stage=companionStage();
     if(stage){
@@ -2105,7 +2107,7 @@ function applyLevelsData(data,source){
 
   console.log("[LEVELS] OK source =",source,"|",levels.length,"niveau(x)",levels.map(l=>l.name));
   loadFromLevel(currentLevel);
-  setLoadingText("Préparation du niveau…");
+  setLoadingText(tr("Préparation du niveau…"));
   requestAnimationFrame(()=>setTimeout(hideLoadingOverlay,120));
 
   
@@ -2387,12 +2389,12 @@ function dgHelpUpdate(){
 function dgHelpOffer(){
   const person=dgCurPerson(),alt=document.getElementById("bannerAlt");
   dgPortrait("bannerArt",person.kind,dgDateSex(),{eye:"happy"});
-  bannerTitle.textContent="Un coup de pouce ?";
-  bannerText.textContent=person.name+" peut te montrer comment la rejoindre. Tu peux aussi continuer à chercher.".replace("la rejoindre",dgDateSex()==="m"?"le rejoindre":"la rejoindre");
+  bannerTitle.textContent=tr("Un coup de pouce ?");
+  bannerText.textContent=tr(dgDateSex()==="m"?"{name} peut te montrer comment le rejoindre. Tu peux aussi continuer à chercher.":"{name} peut te montrer comment la rejoindre. Tu peux aussi continuer à chercher.",{name:person.name});
   starsEl.textContent="";
-  bannerAction.innerHTML='💡 Voir la solution<span class="adtag">PUB</span>';
+  bannerAction.innerHTML='💡 '+tr("Voir la solution")+'<span class="adtag">'+tr("PUB")+'</span>';
   bannerAction.onclick=()=>{dgHelp.snooze=true;banner.classList.add("hidden");dgRequestSolution();};
-  alt.textContent="Je continue";
+  alt.textContent=tr("Je continue");
   alt.onclick=()=>{dgHelp.snooze=true;banner.classList.add("hidden");};
   banner.classList.remove("lose");
   banner.classList.remove("hidden");
@@ -2406,7 +2408,7 @@ function dgControls(){
 function dgApplyControls(){
   const buttons=dgControls()==="buttons";
   document.body.classList.toggle("btnCtl",buttons);
-  document.getElementById("pauseControls").textContent="Commandes : "+(buttons?"boutons":"glisser");
+  document.getElementById("pauseControls").textContent=tr(buttons?"Commandes : boutons":"Commandes : glisser");
 }
 document.getElementById("pauseControls").onclick=()=>{
   try{localStorage.setItem(DG_CONTROLS_KEY,dgControls()==="buttons"?"swipe":"buttons");}catch(e){}
@@ -2538,14 +2540,14 @@ function dgUiOpen(){
 
 /* --- bulle : tutoriel, indice, ou petite phrase selon l'avancée */
 function dgReactLine(){
-  if(dgHelp.on)return "Besoin d'un coup de pouce ? Touche-moi.";
+  if(dgHelp.on)return tr("Besoin d'un coup de pouce ? Touche-moi.");
   const max=Number(levels[currentLevel]?.maxMoves)||0;
-  if(moves===0)return "Je t'attends, viens !";
+  if(moves===0)return tr("Je t'attends, viens !");
   const left=max-moves;
-  if(left>1)return "Encore "+left+" coups pour le sans-faute.";
-  if(left===1)return "Plus qu'un coup pour le sans-faute !";
-  if(left===0)return "C'était le dernier coup du sans-faute…";
-  return "Prends ton temps, je ne bouge pas.";
+  if(left>1)return tr("Encore {n} coups pour le sans-faute.",{n:left});
+  if(left===1)return tr("Plus qu'un coup pour le sans-faute !");
+  if(left===0)return tr("C'était le dernier coup du sans-faute…");
+  return tr("Prends ton temps, je ne bouge pas.");
 }
 function dgSetReact(text,tuto){
   const t=document.getElementById("companionText");
@@ -2674,9 +2676,9 @@ function dgShowWin(kind,finalText){
   const l=levels[currentLevel], s=starScore(), info=dgLevelPos(currentLevel);
   const last=currentLevel===levels.length-1;
   const chapterDone=!!info.ch && info.ch.levelIds[info.ch.levelIds.length-1]===currentLevel;
-  document.getElementById("winTitle").textContent=last?"Fin de l'histoire":(chapterDone?"Chapitre terminé":"Match !");
+  document.getElementById("winTitle").textContent=tr(last?"Fin de l'histoire":(chapterDone?"Chapitre terminé":"Match !"));
   document.getElementById("winHearts").innerHTML="<span>♥</span>".repeat(s)+"<u>"+"♥".repeat(3-s)+"</u>";
-  document.getElementById("winMoves").textContent=(last&&finalText?finalText+" ":"")+moves+" coup"+(moves>1?"s":"")+" · objectif "+(l.maxMoves||"?");
+  document.getElementById("winMoves").textContent=(last&&finalText?finalText+" ":"")+tr(moves>1?"{n} coups · objectif {max}":"{n} coup · objectif {max}",{n:moves,max:l.maxMoves||"?"});
   // la phrase composée pendant le niveau
   const notes=dgMelody.slice(-14), lo=Math.min(...notes,9999), hi=Math.max(...notes,0);
   document.getElementById("winMelody").innerHTML=notes.map(f=>'<i style="height:'+(30+70*(hi>lo?(f-lo)/(hi-lo):.5))+'%"></i>').join("");
@@ -2686,22 +2688,22 @@ function dgShowWin(kind,finalText){
   if(chapterDone||last){
     const person=DGSpirit.person(info.ci), rel=dgRelation(info.ci);
     relEl.innerHTML='<div class="art">'+DGSpirit.portrait(person.kind,dgDateSex(),{eye:"happy",mouth:"grin"})+'</div><div><b></b><span></span></div>';
-    relEl.querySelector("b").textContent=person.name+" · "+rel.label;
-    relEl.querySelector("span").textContent=rel.stars+" / "+(rel.total*3)+" ♥"+(rel.rank<5?" · rejoue pour aller plus loin":"");
+    relEl.querySelector("b").textContent=person.name+" · "+tr(rel.label);
+    relEl.querySelector("span").textContent=rel.stars+" / "+(rel.total*3)+" ♥"+(rel.rank<5?" · "+tr("rejoue pour aller plus loin"):"");
   }
   const next=document.getElementById("winNext"), replay=document.getElementById("winReplay");
   next.disabled=false;
   if(last){
-    next.textContent="Mes rencontres";
+    next.textContent=tr("Mes rencontres");
     next.onclick=()=>dgRubans(()=>{hideBanner();dgShowCollection();});
   }else{
-    next.textContent=chapterDone?"Chapitre suivant":"Suivant";
+    next.textContent=tr(chapterDone?"Chapitre suivant":"Suivant");
     next.onclick=()=>{
       // Un interstitiel peut s'intercaler ici, jamais ailleurs. DGAds décide de la fréquence.
       const target=currentLevel+1;
       next.disabled=true;
-      const ad=window.DGAds?DGAds.maybeInterstitial({chapterIndex:info.ci}):Promise.resolve();
-      ad.finally(()=>{next.disabled=false;dgAdvance(target);});
+      const ad=window.DGAds?DGAds.maybeInterstitial({chapterIndex:info.ci}):Promise.resolve(false);
+      ad.then(shown=>shown?dgPremiumOffer():null).catch(()=>{}).then(()=>{next.disabled=false;dgAdvance(target);});
     };
   }
   replay.onclick=()=>resetPlay();
@@ -2709,12 +2711,35 @@ function dgShowWin(kind,finalText){
   dgPlayMelody();
 }
 
+/* --- Premium : proposé juste après une pub, une fois sur trois, jamais plus. C'est le moment où le joueur
+   sait exactement ce qu'il achète. La promesse est résolue quand la fenêtre se ferme, pour reprendre le jeu. */
+function dgPremiumOffer(){
+  if(!window.DGPremium||DGPremium.isOn())return Promise.resolve();
+  let n=0;
+  try{n=(Number(localStorage.getItem("dg_offer_n"))||0)+1;localStorage.setItem("dg_offer_n",String(n));}catch(e){}
+  if(n%3!==1)return Promise.resolve();
+  return new Promise(resolve=>{
+    const alt=document.getElementById("bannerAlt");
+    const close=()=>{banner.classList.add("hidden");resolve();};
+    dgPortrait("bannerArt",dgCurPerson().kind,dgDateSex(),{eye:"happy",mouth:"grin"});
+    bannerTitle.textContent=tr("Jouer sans pub ?");
+    bannerText.textContent=tr("Passe en Premium : plus aucune pub, et les solutions sont offertes.");
+    starsEl.textContent="";
+    bannerAction.textContent=tr("Premium · {price}",{price:DGPremium.price()});
+    bannerAction.onclick=()=>DGPremium.buy().then(close);
+    alt.textContent=tr("Plus tard");
+    alt.onclick=close;
+    banner.classList.remove("lose");
+    banner.classList.remove("hidden");
+  });
+}
+
 /* --- solution contre pub récompensée */
 const dgSolutionSeen=new Set(); // solutions déjà débloquées pendant cette session
 async function dgRequestSolution(){
   if(edit || !levels[currentLevel])return;
   const key=levelKey(currentLevel);
-  if(!levels[currentLevel].solution){showInfoBanner("Pas de solution","Ce niveau n'a pas encore de solution enregistrée.");return;}
+  if(!levels[currentLevel].solution){showInfoBanner(tr("Pas de solution"),tr("Ce niveau n'a pas encore de solution enregistrée."));return;}
   if(!(window.CG_EDITOR_MODE || dgSolutionSeen.has(key))){
     const ok=await (window.DGAds?DGAds.showRewarded("solution"):Promise.resolve(true));
     if(!ok || levelKey(currentLevel)!==key)return;
@@ -2728,14 +2753,14 @@ function dgShowSolution(){
   const seq=String(l.solution||"");
   const helper=DGSpirit.person(dgChapterIndexOfLevel(currentLevel)+3);
   dgPortrait("bannerArt",helper.kind,dgDateSex()==="f"?"m":"f",{eye:"happy"});
-  bannerTitle.textContent="Le coup de pouce";
-  bannerText.textContent=helper.name+" te souffle la solution, depuis le début du niveau :";
+  bannerTitle.textContent=tr("Le coup de pouce");
+  bannerText.textContent=tr("{name} te souffle la solution, depuis le début du niveau :",{name:helper.name});
   starsEl.innerHTML='<div class="seq">'+seq.split("").map(c=>c==="R"?'<b class="r">⟳</b>':'<b>⟲</b>').join("")+'</div>'+
-    '<p>'+seq.length+' coup'+(seq.length>1?'s':'')+' · ⟳ tourne vers la droite, ⟲ tourne vers la gauche</p>';
+    '<p>'+tr(seq.length>1?"{n} coups · ⟳ tourne vers la droite, ⟲ tourne vers la gauche":"{n} coup · ⟳ tourne vers la droite, ⟲ tourne vers la gauche",{n:seq.length})+'</p>';
   const alt=document.getElementById("bannerAlt");
-  bannerAction.textContent="Recommencer";
+  bannerAction.textContent=tr("Recommencer");
   bannerAction.onclick=()=>resetPlay();
-  alt.textContent=gameOver?"":"Fermer";
+  alt.textContent=gameOver?"":tr("Fermer");
   alt.onclick=()=>banner.classList.add("hidden");
   banner.classList.remove("lose");
   banner.classList.remove("hidden");
@@ -2744,14 +2769,14 @@ function dgShowSolution(){
 /* --- nouvelle rencontre : affichée une seule fois, au premier niveau de chaque chapitre */
 function dgShowIntro(){
   const info=dgLevelPos(currentLevel), person=DGSpirit.person(info.ci);
-  document.getElementById("pfWhere").textContent="chapitre "+info.number;
-  document.getElementById("pfBest").textContent=(info.ch?info.ch.levelIds.length:0)+" niveaux";
+  document.getElementById("pfWhere").textContent=tr("chapitre {c}",{c:info.number});
+  document.getElementById("pfBest").textContent=tr("{n} niveaux",{n:info.ch?info.ch.levelIds.length:0});
   dgPortrait("pfArt",person.kind,dgDateSex());
   document.getElementById("pfName").textContent=person.name;
-  document.getElementById("pfBio").textContent=person.line;
+  document.getElementById("pfBio").textContent=tr(person.line);
   const tg=document.getElementById("pfTags");
   tg.innerHTML="";
-  [info.ch&&info.ch.subtitle,DG_MECH_LABEL[info.ch&&info.ch.mechanic]].filter(Boolean).forEach(t=>{const sp=document.createElement("span");sp.textContent=t;tg.appendChild(sp);});
+  [info.ch&&info.ch.subtitle,DG_MECH_LABEL[info.ch&&info.ch.mechanic]].filter(Boolean).forEach(t=>{const sp=document.createElement("span");sp.textContent=tr(t);tg.appendChild(sp);});
   dgShowScreen("profileScreen");
 }
 function dgOnLevelLoaded(){
@@ -2776,8 +2801,8 @@ function dgRenderChapterList(){
     row.style.setProperty("--rc1",w[0]);row.style.setProperty("--rc2",w[1]);
     row.innerHTML='<div class="av"></div><div class="tx"><b></b><span></span><em class="bar"><i></i></em></div><div class="st"></div>';
     dgPortrait(row.querySelector(".av"),person.kind,dgDateSex(),p.done>=p.total&&p.total?{eye:"happy",mouth:"grin"}:null);
-    row.querySelector("b").textContent=ch.subtitle||ch.name;
-    row.querySelector("span").textContent=(open?person.name:"???")+" · "+(DG_MECH_LABEL[ch.mechanic]||"");
+    row.querySelector("b").textContent=tr(ch.subtitle||ch.name);
+    row.querySelector("span").textContent=(open?person.name:"???")+" · "+tr(DG_MECH_LABEL[ch.mechanic]||"");
     row.querySelector(".bar i").style.width=p.percent+"%";
     row.querySelector(".st").textContent=open?(p.done+"/"+p.total+(p.done>=p.total?" ✓":"")):"🔒";
     row.onclick=()=>{
@@ -2798,7 +2823,7 @@ function dgRenderChapterScreen(chapterIndex=dgSelectedChapter){
   chapterIndex=Math.max(0,Math.min(dgChapters.length-1,chapterIndex));
   dgSelectedChapter=chapterIndex;
   const ch=dgChapters[chapterIndex], p=dgChapterProgress(ch), ids=ch.levelIds||[], person=DGSpirit.person(chapterIndex);
-  document.getElementById("dgChapterSub").textContent=ch.subtitle||ch.name;
+  document.getElementById("dgChapterSub").textContent=tr(ch.subtitle||ch.name);
   document.getElementById("dgChapterMeter").textContent=person.name+" · "+p.done+" / "+p.total+" · "+p.stars+" ♥";
   document.getElementById("dgChapterTitle").textContent=p.percent+" %";
   const gridEl=document.getElementById("dgLevelGrid");
@@ -2832,7 +2857,7 @@ function dgRenderChapterScreen(chapterIndex=dgSelectedChapter){
   next.onclick=()=>{ if(chapterIndex<dgChapters.length-1 && nextUnlocked)dgRenderChapterScreen(chapterIndex+1); };
   const where=(chapterIndex+1)+" / "+dgChapters.length;
   const need=Number(dgChapters[chapterIndex+1]?.unlockPercent||DG_CHAPTER_UNLOCK_PERCENT);
-  document.getElementById("dgNextCaption").textContent=(chapterIndex>=dgChapters.length-1||nextUnlocked)?where:(where+" · suite à "+need+" %");
+  document.getElementById("dgNextCaption").textContent=(chapterIndex>=dgChapters.length-1||nextUnlocked)?where:(where+" · "+tr("suite à {n} %",{n:need}));
 }
 function dgShowChapterScreen(chapterIndex=dgChapterIndexOfLevel(currentLevel||0)){
   setPaused(false);
@@ -2858,9 +2883,9 @@ function dgRenderCollection(){
     card.innerHTML='<div class="art"></div><b></b><em></em><span class="bar"><i></i></span><small></small>';
     dgPortrait(card.querySelector(".art"),person.kind,dgDateSex(),rel.rank>=3?{eye:"happy",mouth:"grin"}:null);
     card.querySelector("b").textContent=rel.rank?person.name:"???";
-    card.querySelector("em").textContent=rel.label;
+    card.querySelector("em").textContent=tr(rel.label);
     card.querySelector(".bar i").style.width=(rel.total?Math.round(rel.stars/(rel.total*3)*100):0)+"%";
-    card.querySelector("small").textContent=rel.rank?(rel.stars+" / "+(rel.total*3)+" ♥"):("chapitre "+(i+1));
+    card.querySelector("small").textContent=rel.rank?(rel.stars+" / "+(rel.total*3)+" ♥"):tr("chapitre {c}",{c:i+1});
     card.onclick=()=>{ if(dgChapterUnlocked(i))dgRubans(()=>dgShowChapterScreen(i)); };
     host.appendChild(card);
   });
@@ -2884,7 +2909,7 @@ document.getElementById("pfGo").onclick=()=>{
   pr.met=pr.met||{};
   if(info.ch)pr.met[info.ch.id]=true;
   saveProgress(pr);
-  dgTampon("GO !",()=>{
+  dgTampon(tr("GO !"),()=>{
     dgHideScreen("profileScreen");
     resetPlay(); // on rejoue la chute d'entrée, maintenant que le plateau est visible
   });
@@ -2897,7 +2922,7 @@ document.getElementById("pauseFullscreen").onclick=async()=>{
     if(target.webkitRequestFullscreen){target.webkitRequestFullscreen();return;}
   }catch(e){console.warn("[FULLSCREEN]",e);}
   setPaused(false);
-  showInfoBanner("Plein écran","Sur iPhone, Safari ne propose pas le plein écran par bouton. Fais <b>Partager → Sur l'écran d'accueil</b>, puis lance le jeu depuis son icône.");
+  showInfoBanner(tr("Plein écran"),tr("Sur iPhone, Safari ne propose pas le plein écran par bouton. Fais <b>Partager → Sur l'écran d'accueil</b>, puis lance le jeu depuis son icône."));
 };
 
 const dgOldApplyLevelsData=applyLevelsData;

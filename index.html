@@ -2,6 +2,8 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
+<script>/* premier affichage de la session : on montre l'écran du studio avant le menu */
+try{if(!sessionStorage.getItem("dg_splash")&&sessionStorage.getItem("dg_tx")!=="1"){sessionStorage.setItem("dg_splash","1");document.documentElement.classList.add("splash");}}catch(e){}</script>
 <script>/* retour depuis le jeu : les rubans sont déjà fermés, on les ouvrira une fois prêt */
 try{if(sessionStorage.getItem("dg_tx")==="1"){sessionStorage.removeItem("dg_tx");document.documentElement.classList.add("tx-in");}}catch(e){}</script>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
@@ -91,8 +93,24 @@ button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:poin
 .modal{width:100%;max-height:100%;overflow-y:auto;padding:1.6rem .4rem calc(1.8rem + env(safe-area-inset-bottom));border-radius:2.6rem 2.6rem 0 0;background:var(--navy2);box-shadow:inset 0 .25rem 0 var(--c2),0 -1rem 3rem rgba(0,0,0,.4);display:flex;flex-direction:column;gap:.9rem;animation:mdIn .28s cubic-bezier(.2,1.3,.3,1) both}
 @keyframes mdIn{from{transform:translateY(30%)}to{transform:none}}
 .modal h3{margin:0 1.8rem .2rem;text-align:center;font:900 2.2rem/1.05 Rubik,Arial,sans-serif;text-transform:uppercase}
+.langs{display:grid;grid-template-columns:repeat(4,1fr);gap:.5rem;margin:0 1.8rem}
+.langs button{padding:.8rem .2rem;border-radius:1rem;background:var(--navy3);box-shadow:inset 0 0 0 .2rem var(--line);font:800 1.05rem/1 Rubik,Arial,sans-serif;white-space:nowrap}
+.langs button.on{background:var(--grad);box-shadow:none;color:var(--navy)}
 .lbl{margin:.4rem 2rem 0;font:800 1rem/1 Rubik,Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
 
+/* écran d'ouverture : le nom du studio, une seconde et demie, puis le menu. Un toucher le passe. */
+#splash{display:none}
+html.splash #splash{position:absolute!important;inset:0;z-index:70!important;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1rem;background:var(--navy);animation:spOut .35s ease 1.55s forwards}
+#splash b{font:900 5.2rem/1 Rubik,Arial,sans-serif;letter-spacing:-.02em;background:linear-gradient(90deg,#f6ff3d,#19e3ff,#ff4fd8);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 0 1.6rem rgba(25,227,255,.7));animation:spIn .6s cubic-bezier(.2,1.6,.4,1) both}
+#splash i{width:9rem;height:.5rem;border-radius:99rem;background:linear-gradient(90deg,#f6ff3d,#19e3ff);box-shadow:0 0 1.4rem #19e3ff;transform-origin:50% 50%;animation:spBar .7s ease .25s both}
+#splash span{font:800 1.1rem/1 Rubik,Arial,sans-serif;letter-spacing:.5em;text-indent:.5em;text-transform:uppercase;color:var(--muted);animation:spBar .6s ease .45s both}
+@keyframes spIn{from{transform:translateY(-6rem) scale(1.4);opacity:0}to{transform:none;opacity:1}}
+@keyframes spBar{from{transform:scaleX(0);opacity:0}to{transform:none;opacity:1}}
+@keyframes spOut{to{opacity:0;visibility:hidden}}
+html.splash .logoBig span{animation-play-state:paused}
+#premiumBtn{box-shadow:inset 0 0 0 .2rem var(--yellow),0 0 1.2rem color-mix(in srgb,var(--yellow) 35%,transparent);color:var(--yellow)}
+#premiumBtn.owned{box-shadow:inset 0 0 0 .2rem var(--line);color:var(--muted)}
+.link{align-self:center;padding:.2rem 1rem;font-size:1.05rem;font-weight:800;color:var(--muted);text-decoration:underline}
 #txLayer{position:absolute!important;inset:0;z-index:60!important;pointer-events:none;overflow:hidden}
 #txLayer.block{pointer-events:auto}
 .band{position:absolute;top:-10%;bottom:-10%;left:-30%;width:160%;transform:translateX(-130%) skewX(-18deg)}
@@ -127,11 +145,16 @@ html.tx-in .logoBig span{animation:none}
     <div class="two"><a class="btn ghost sm" href="game.html?chapters=1">Chapitres</a><a class="btn ghost sm" href="game.html?collection=1">Rencontres<em id="metCount"></em></a></div>
   </nav>
 
+  <div id="splash" aria-hidden="true" data-no-i18n><b>GiGi42</b><i></i><span>games</span></div>
   <div id="txLayer" aria-hidden="true"><div class="band boot" style="background:#f6ff3d"></div><div class="band boot" style="background:#19e3ff"></div><div class="band boot" style="background:#0d1230"></div></div>
   <div class="overlay hidden" id="optionsOverlay" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="optionsTitle">
       <h3 id="optionsTitle">Options</h3>
+      <button class="btn ghost sm" id="premiumBtn" type="button"></button>
+      <button class="link" id="restoreBtn" type="button">Restaurer mes achats</button>
       <button class="btn ghost sm" id="soundToggle" type="button">♪ Musique du menu : oui</button>
+      <div class="lbl">Langue</div>
+      <div class="langs" id="langGrid" data-no-i18n></div>
       <button class="btn ghost sm" id="controlsToggle" type="button">Commandes : glisser</button>
       <button class="btn ghost sm" id="fullscreenBtn" type="button">Plein écran</button>
       <div class="lbl">Atelier</div>
@@ -142,9 +165,13 @@ html.tx-in .logoBig span{animation:none}
   </div>
 </main>
 
+<script src="i18n.js"></script>
+<script src="premium.js"></script>
 <script src="spirits.js"></script>
 <script>
 /* ===== V49 NÉON CIRCUIT : menu principal ===== */
+const tr=DGi18n.t; // traduction : tr("texte français", {variables})
+DGi18n.apply();
 const PROGRESS_KEY="gravity_cube_player_progress_v2";
 const PROJECT_ZIP_NAME="date_gravity_project_pc.zip";
 const PROJECT_PASSWORD="Lulu69";
@@ -162,7 +189,7 @@ async function requestMenuFullscreen(showHelp=false){
     if(target.requestFullscreen){await target.requestFullscreen({navigationUI:"hide"});return true;}
     if(target.webkitRequestFullscreen){target.webkitRequestFullscreen();return true;}
   }catch(e){console.warn("[MENU FULLSCREEN]",e);}
-  if(showHelp&&isIOS())alert("Sur iPhone, pour le vrai plein écran : Partager → Sur l’écran d’accueil, puis lance Date Gravity depuis son icône.");
+  if(showHelp&&isIOS())alert(tr("Sur iPhone, pour le vrai plein écran : Partager → Sur l’écran d’accueil, puis lance Date Gravity depuis son icône."));
   return false;
 }
 document.getElementById("fullscreenBtn").addEventListener("click",()=>requestMenuFullscreen(true));
@@ -244,11 +271,11 @@ function stopMenuMusic(){if(menuMusicTimer){clearInterval(menuMusicTimer);menuMu
 function setMusicState(v){
   menuMusicOn=!!v;
   try{localStorage.setItem("dcg_menu_music_on",menuMusicOn?"1":"0");}catch(e){}
-  soundToggle.textContent="♪ Musique du menu : "+(menuMusicOn?"oui":"non");
+  soundToggle.textContent=tr(menuMusicOn?"♪ Musique du menu : oui":"♪ Musique du menu : non");
   if(menuMusicOn)startMenuMusic();else stopMenuMusic();
 }
 try{const saved=localStorage.getItem("dcg_menu_music_on");if(saved!==null)menuMusicOn=saved==="1";}catch(e){}
-soundToggle.textContent="♪ Musique du menu : "+(menuMusicOn?"oui":"non");
+soundToggle.textContent=tr(menuMusicOn?"♪ Musique du menu : oui":"♪ Musique du menu : non");
 ["pointerdown","keydown"].forEach(evt=>window.addEventListener(evt,()=>{if(menuMusicOn)startMenuMusic();},{once:true,passive:true}));
 soundToggle.addEventListener("click",()=>setMusicState(!menuMusicOn));
 
@@ -256,12 +283,51 @@ soundToggle.addEventListener("click",()=>setMusicState(!menuMusicOn));
 const CONTROLS_KEY="dg_controls";
 const controlsToggle=document.getElementById("controlsToggle");
 function controlsMode(){try{return localStorage.getItem(CONTROLS_KEY)==="buttons"?"buttons":"swipe";}catch(e){return "swipe";}}
-function showControlsMode(){controlsToggle.textContent="Commandes : "+(controlsMode()==="buttons"?"boutons":"glisser");}
+function showControlsMode(){controlsToggle.textContent=tr(controlsMode()==="buttons"?"Commandes : boutons":"Commandes : glisser");}
 controlsToggle.addEventListener("click",()=>{
   try{localStorage.setItem(CONTROLS_KEY,controlsMode()==="buttons"?"swipe":"buttons");}catch(e){}
   playOpenSound();showControlsMode();
 });
 showControlsMode();
+
+/* --- langue : chaque bouton porte le nom de la langue dans cette langue ; le choix recharge la page */
+Object.entries(DGi18n.LANGS).forEach(([code,name])=>{
+  const b=document.createElement("button");
+  b.type="button";b.textContent=name;b.lang=code;
+  if(code===DGi18n.lang)b.className="on";
+  b.addEventListener("click",()=>DGi18n.setLang(code));
+  document.getElementById("langGrid").appendChild(b);
+});
+
+/* --- écran d'ouverture : il s'efface seul ; un toucher le passe tout de suite */
+(function(){
+  const root=document.documentElement,el=document.getElementById("splash");
+  if(!root.classList.contains("splash"))return;
+  const end=()=>root.classList.remove("splash");
+  const timer=setTimeout(end,1950);
+  el.addEventListener("pointerdown",()=>{clearTimeout(timer);end();},{once:true});
+})();
+
+/* --- Premium : un achat unique qui retire les pubs. Le bouton montre le prix, puis « activé ». */
+const premiumBtn=document.getElementById("premiumBtn");
+function showPremium(){
+  const on=DGPremium.isOn();
+  premiumBtn.textContent=on?tr("Premium activé ✓"):tr("Premium sans pub · {price}",{price:DGPremium.price()});
+  premiumBtn.classList.toggle("owned",on);
+  document.getElementById("restoreBtn").classList.toggle("hidden",on);
+}
+premiumBtn.addEventListener("click",async()=>{
+  if(DGPremium.isOn())return;
+  playButtonSound();
+  if(await DGPremium.buy())alert(tr("Premium activé. Merci !"));
+  showPremium();
+});
+document.getElementById("restoreBtn").addEventListener("click",async()=>{
+  playButtonSound();
+  alert(tr(await DGPremium.restore()?"Premium activé. Merci !":"Aucun achat à restaurer."));
+  showPremium();
+});
+showPremium();
 
 /* --- options */
 function openOptions(){playOpenSound();overlay.classList.remove("hidden");overlay.setAttribute("aria-hidden","false");}
@@ -298,9 +364,9 @@ function updateMenuCharacters(){
   const person=DGSpirit.person(chapterIndex);
   document.getElementById("mePic").innerHTML=DGSpirit.portrait("flamme",meGender==="girl"?"f":"m");
   document.getElementById("datePic").innerHTML=DGSpirit.portrait(person.kind,dateGender==="boy"?"m":"f");
-  document.getElementById("meCap").textContent=(meGender==="girl"?"elle":"lui")+" · changer ↻";
+  document.getElementById("meCap").textContent=tr(meGender==="girl"?"elle · changer ↻":"lui · changer ↻");
   document.getElementById("dateName").textContent=person.name;
-  document.getElementById("dateCap").textContent=(dateGender==="boy"?"lui":"elle")+" · changer ↻";
+  document.getElementById("dateCap").textContent=tr(dateGender==="boy"?"lui · changer ↻":"elle · changer ↻");
 }
 document.getElementById("meChoice").addEventListener("click",()=>{
   meGender=meGender==="boy"?"girl":"boy";
@@ -330,7 +396,7 @@ async function showResume(){
     const chId=levels[idx].chapter;
     chapterIndex=Math.max(0,chapters.findIndex(c=>c.id===chId));
     const pos=levels.slice(0,idx+1).filter(l=>l.chapter===chId).length;
-    line.textContent=(started?"reprendre · ":"")+"chapitre "+(chapterIndex+1)+", niveau "+pos;
+    line.textContent=tr(started?"reprendre · chapitre {c}, niveau {n}":"chapitre {c}, niveau {n}",{c:chapterIndex+1,n:pos});
     const met=new Set(levels.filter(l=>best[l.id]).map(l=>l.chapter)).size;
     document.getElementById("metCount").textContent=met+"/"+chapters.length;
     // le menu prend les couleurs du chapitre en cours
@@ -339,7 +405,7 @@ async function showResume(){
     document.documentElement.style.setProperty("--c2",w[1]);
     bandColors=[w[0],w[1],"#0d1230"];
   }catch(e){
-    line.textContent="chapitre 1, niveau 1";
+    line.textContent=tr("chapitre {c}, niveau {n}",{c:1,n:1});
   }
   updateMenuCharacters();
 }

@@ -232,6 +232,7 @@
        N'affiche une pub que si toutes les règles de fréquence sont respectées. */
     async maybeInterstitial(ctx){
       if(!config.enabled || window.CG_EDITOR_MODE)return false;
+      if(window.DGPremium&&DGPremium.isOn())return false; // Premium : plus aucune pub
       winsSinceAd++;
       if(!config.debug){
         if(config.firstChapterAdFree && (ctx&&ctx.chapterIndex||0)<1)return false;
@@ -245,6 +246,7 @@
     /* Pub choisie par le joueur. Sans pub disponible, la récompense est offerte. */
     async showRewarded(reason){
       if(!config.enabled || window.CG_EDITOR_MODE)return true;
+      if(window.DGPremium&&DGPremium.isOn())return true; // Premium : la récompense est offerte
       const result=await run("rewarded",reason);
       return !!result.completed;
     }
