@@ -18,6 +18,7 @@ const FILES = [
   "vector_assets.json",
   "vector_assets_runtime.json",
   "manifest.webmanifest",
+  "icons",
   "audio/music/Petals_in_Perfect_Order.mp3",
 ];
 

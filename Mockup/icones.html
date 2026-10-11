@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Date Gravity · propositions d'icône</title>
+<style>
+body{margin:0;padding:2rem;background:#12141c;color:#e8eaf6;font:500 15px/1.45 system-ui,Arial,sans-serif}
+h1{margin:0 0 .3rem;font-size:1.5rem}
+.lead{margin:0 0 2rem;color:#9aa3c7;max-width:60rem}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:1.4rem}
+.card{background:#1b1f2c;border-radius:1rem;padding:1.1rem}
+.card h2{margin:.9rem 0 .2rem;font-size:1.05rem}
+.card h2 span{color:#19e3ff}
+.card p{margin:0;color:#9aa3c7;font-size:.9rem}
+.big{display:block;width:100%;aspect-ratio:1;border-radius:22.5%;overflow:hidden}
+.row{display:flex;gap:.8rem;align-items:center;margin-top:.9rem}
+.row svg{width:56px;height:56px;border-radius:22.5%;overflow:hidden;flex:none}
+.row svg.round{border-radius:50%}
+.row svg.tiny{width:34px;height:34px}
+.row em{color:#6f789c;font-size:.78rem;font-style:normal}
+</style>
+</head>
+<body>
+<h1>Date Gravity · propositions d'icône</h1>
+<p class="lead">Le rendez-vous, et huit variantes autour du couple. Chaque carte montre l'icône en grand, puis à la taille réelle d'un écran d'accueil (carrée, ronde, très petite) : c'est là qu'elle doit rester lisible.</p>
+<div class="grid" id="grid"></div>
+<script src="../spirits.js"></script>
+<script>
+(function(){
+  const NAVY="#0d1230",Y="#f6ff3d",C="#19e3ff",PINK="#ff4f93";
+  const sp=(kind,sex,st,x,y,k,rot)=>'<g transform="translate('+x+' '+y+') rotate('+(rot||0)+') scale('+k+') translate(-20 -22)">'+DGSpirit.svg(kind,sex,st).replace(/<circle cx="20" cy="24" r="27"[^>]*>/,"")+'</g>';
+  const heart=(x,y,k,fill,rot)=>'<path transform="translate('+x+' '+y+') rotate('+(rot||0)+') scale('+k+')" d="M0 30C-60 -10 -34 -52 0 -24C34 -52 60 -10 0 30Z" fill="'+(fill||PINK)+'"/>';
+  // tube néon creux : un trait épais en dégradé, évidé par un trait sombre
+  const tube=(p,d,w,hollow)=>'<path d="'+d+'" fill="none" stroke="url(#'+p+'g)" stroke-width="'+w+'" stroke-linecap="round" stroke-linejoin="round"/><path d="'+d+'" fill="none" stroke="'+(hollow||NAVY)+'" stroke-width="'+(w*.34)+'" stroke-linecap="round" stroke-linejoin="round"/>';
+  const defs=(p,a,b)=>'<defs><linearGradient id="'+p+'g" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="'+(a||Y)+'"/><stop offset="1" stop-color="'+(b||C)+'"/></linearGradient>'+
+    '<radialGradient id="'+p+'n" cx=".5" cy=".45" r=".75"><stop offset="0" stop-color="#27348a"/><stop offset="1" stop-color="#090c24"/></radialGradient>'+
+    '<filter id="'+p+'f" x="-30%" y="-30%" width="160%" height="160%"><feGaussianBlur stdDeviation="22" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter></defs>';
+  const night=p=>'<rect width="1024" height="1024" fill="url(#'+p+'n)"/>';
+  const dots=(x,ys,col)=>ys.map((y,i)=>'<circle cx="'+x+'" cy="'+y+'" r="'+(12+i*6)+'" fill="'+(col||C)+'" opacity="'+(.35+i*.3)+'"/>').join("");
+
+  const pink=p=>defs(p,"#ff4fd8","#7a5cff")+'<rect width="1024" height="1024" fill="url(#'+p+'g)"/>';
+  const HEART="M0 30C-60 -10 -34 -52 0 -24C34 -52 60 -10 0 30Z";
+  const ICONS=[
+    ["C","Le rendez-vous (l'original)","Celle que tu as retenue, pour comparer : Nami et Pétale joue contre joue, un cœur au-dessus.",
+      p=>pink(p)+'<circle cx="512" cy="560" r="430" fill="#fff" opacity=".12"/>'+sp("vague","m",{eye:"happy"},350,640,13.5,-9)+sp("fleur","f",{eye:"happy",mouth:"grin"},674,640,13.5,9)+heart(512,250,3.1,"#fff")],
+    ["C1","Serrés","La même, mais avec Flamme (le héros) et plus grands : ils remplissent l'icône, le cœur est plus gros.",
+      p=>pink(p)+sp("flamme","m",{eye:"happy"},335,670,15.5,-10)+sp("fleur","f",{eye:"happy",mouth:"grin"},690,670,15.5,10)+heart(512,205,3.9,"#fff")],
+    ["C2","Cœur néon","Fond nuit du jeu : le couple est entouré d'un grand cœur en tube néon, comme les murs du plateau.",
+      p=>defs(p,"#ff4fd8","#19e3ff")+night(p)+'<g filter="url(#'+p+'f)"><g transform="translate(512 560) scale(8.4)">'+tube(p,HEART,9)+'</g></g>'+sp("flamme","m",{eye:"happy"},405,500,8.6,-8)+sp("fleur","f",{eye:"happy",mouth:"grin"},620,500,8.6,8)],
+    ["C3","Dans le cœur","Fond rose-orangé, un grand cœur blanc plein, et le couple posé dedans.",
+      p=>defs(p,"#ff5fa2","#ffb23f")+'<rect width="1024" height="1024" fill="url(#'+p+'g)"/>'+heart(512,570,9.6,"#fff")+sp("flamme","m",{eye:"happy"},395,480,9.4,-8)+sp("fleur","f",{eye:"happy",mouth:"grin"},630,480,9.4,8)],
+    ["C4","La chute à deux","Ils tombent ensemble, étirés, bouche bée, avec leurs traînées de chute : le rendez-vous ET la gravité.",
+      p=>defs(p,"#7a5cff","#19e3ff")+'<rect width="1024" height="1024" fill="url(#'+p+'g)"/>'+dots(330,[70,140,215],"#fff")+dots(694,[70,140,215],"#fff")+
+        sp("flamme","m",{stretch:.45,mouth:"o"},335,690,13.5,-7)+sp("fleur","f",{stretch:.45,mouth:"o"},690,690,13.5,7)+heart(512,330,2.6,"#fff")],
+    ["C5","Les yeux dans les yeux","Fond jaune-cyan du logo. Ils se regardent, chacun de son côté, un cœur rose entre eux.",
+      p=>defs(p)+'<rect width="1024" height="1024" fill="url(#'+p+'g)"/>'+sp("flamme","m",{ex:1.6},262,640,11.6,-5)+sp("fleur","f",{ex:-1.6},762,640,11.6,5)+
+        '<g transform="translate(512 300) scale(4.2)"><path d="'+HEART+'" fill="'+PINK+'" stroke="#5a0f33" stroke-width="5" stroke-linejoin="round"/></g>'],
+    ["C6","Tête-bêche","L'un marche au plafond, l'autre au sol : le baiser à l'envers. C'est la seule qui raconte la gravité du jeu.",
+      p=>defs(p)+night(p)+'<g filter="url(#'+p+'f)">'+tube(p,"M90 96L934 97",60)+tube(p,"M90 928L934 929",60)+'</g>'+
+        sp("flamme","m",{eye:"happy"},512,345,9.6,180)+sp("fleur","f",{eye:"happy",mouth:"grin"},512,700,9.6)+heart(800,512,2.6)+heart(224,512,2.6)],
+    ["C7","Coucher de soleil","Fond orange-rose, un grand soleil derrière eux, trois petits cœurs qui s'envolent.",
+      p=>defs(p,"#ff7a3d","#ff4fd8")+'<rect width="1024" height="1024" fill="url(#'+p+'g)"/><circle cx="512" cy="600" r="390" fill="#ffe14a" opacity=".85"/>'+
+        sp("vague","m",{eye:"happy"},350,680,13.5,-9)+sp("fleur","f",{eye:"happy",mouth:"grin"},674,680,13.5,9)+heart(512,250,2.6,"#fff")+heart(330,150,1.5,"#fff",-15)+heart(700,130,1.8,"#fff",15)],
+    ["C8","Très gros plan","Les deux visages énormes, coupés par le bord, joue contre joue. La plus lisible en tout petit.",
+      p=>pink(p)+sp("flamme","m",{eye:"happy"},255,700,21,-9)+sp("fleur","f",{eye:"happy",mouth:"grin"},770,700,21,9)+
+        '<g transform="translate(512 190) scale(3.4)"><path d="'+HEART+'" fill="#fff" stroke="#5a0f33" stroke-width="5" stroke-linejoin="round"/></g>']
+  ];
+
+  // export d'une seule icône en plein écran, pour tools/app/make_icon.py :
+  //   icones.html?export=A            l'icône entière
+  //   icones.html?export=A&layer=fg   l'icône réduite à la zone sûre d'une icône adaptative Android
+  const q=new URLSearchParams(location.search),ex=ICONS.find(i=>i[0]===q.get("export"));
+  if(ex){
+    const fg=q.get("layer")==="fg";
+    const inner=fg?ex[3]("x").replace("</defs>",'</defs><g transform="translate(512 512) scale(.7) translate(-512 -512)">')+"</g>":ex[3]("x");
+    document.documentElement.style.background="transparent";
+    document.body.style.cssText="margin:0;padding:0;background:transparent;overflow:hidden";
+    document.body.innerHTML='<svg viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg" style="display:block;width:100vw;height:100vh">'+inner+'</svg>';
+    return;
+  }
+  let n=0;
+  const draw=(f,cls)=>'<svg class="'+cls+'" viewBox="0 0 1024 1024" xmlns="http://www.w3.org/2000/svg">'+f("i"+(++n))+'</svg>';
+  document.getElementById("grid").innerHTML=ICONS.map(([tag,title,text,f])=>
+    '<section class="card">'+draw(f,"big")+'<div class="row">'+draw(f,"")+draw(f,"round")+draw(f,"tiny")+'<em>taille réelle</em></div>'+
+    '<h2><span>'+tag+' ·</span> '+title+'</h2><p>'+text+'</p></section>').join("");
+})();
+</script>
+</body>
+</html>

@@ -5,7 +5,7 @@
 //
 // ADMOB_APP_ID : identifiants d'application de TEST fournis par Google. À remplacer par ceux du compte
 // AdMob avant toute publication (un par plateforme), en même temps que les blocs d'annonces de ads.js.
-import { readFileSync, writeFileSync } from "node:fs";
+import { cpSync, readFileSync, writeFileSync } from "node:fs";
 
 const ADMOB_APP_ID = {
   ios: "ca-app-pub-3940256099942544~1458002511",
@@ -39,6 +39,10 @@ if (platform === "ios") {
     writeFileSync(path, s);
   }
   console.log("AndroidManifest.xml prêt pour AdMob");
+  // l'icône du jeu remplace celle du modèle Capacitor (dessinée par tools/app/make_icon.py)
+  // (mipmap-* et values/ic_launcher_background.xml)
+  cpSync("tools/app/android-res", "android/app/src/main/res", { recursive: true });
+  console.log("icône Android en place");
 } else {
   throw new Error("plateforme attendue : ios ou android");
 }
