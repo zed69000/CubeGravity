@@ -264,15 +264,16 @@ DGi18n.add("zh", {
   "Premium activé. Merci !": "高级版已开通,谢谢!",
   "Aucun achat à restaurer.": "没有可恢复的购买。",
   "💡 Indice ·": "💡 提示 ·",
-  "{name} te montre le prochain coup.": "{name} 告诉你下一步。",
-  "{name} te montre le prochain coup. Il te reste {n} indices.": "{name} 告诉你下一步。剩余提示:{n}。",
-  "💡 Utiliser un indice": "💡 使用提示",
   "Plus d'indice": "提示用完了",
   "Regarde une vidéo pour gagner un indice.": "看一段视频,获得一个提示。",
   "▶ +1 indice": "▶ +1 提示",
-  "Tourne le plateau dans ce sens : {arrow}": "把棋盘往这边转:{arrow}",
-  "D'ici, plus aucun chemin. Recommence et je te guide.": "从这里已经走不通了。重新开始,我来带你。",
   "💡 Réessayer avec un indice": "💡 带提示重试",
   "+{n} indices 💡": "+{n} 提示 💡",
-  "Passe en Premium : plus aucune pub, et des indices illimités.": "升级高级版:不再有广告,提示无限用。"
+  "Passe en Premium : plus aucune pub, et des indices illimités.": "升级高级版:不再有广告,提示无限用。",
+  "{name} te souffle le chemin, trois coups à la fois.": "{name} 悄悄告诉你路线,一次三步。",
+  "Il te reste {n} indices.": "剩余提示:{n}。",
+  "💡 Révéler 3 coups": "💡 揭示 3 步",
+  "↺ Recommencer le niveau": "↺ 重新开始本关",
+  "La solution part du début du niveau.": "解法从本关开头算起。",
+  "Tous les coups sont révélés.": "所有步骤都已揭示。"
 });

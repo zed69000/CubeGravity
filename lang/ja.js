@@ -264,15 +264,16 @@ DGi18n.add("ja", {
   "Premium activé. Merci !": "プレミアムが有効になりました。ありがとう!",
   "Aucun achat à restaurer.": "復元できる購入はありません。",
   "💡 Indice ·": "💡 ヒント ·",
-  "{name} te montre le prochain coup.": "{name}が次の一手を教えるよ。",
-  "{name} te montre le prochain coup. Il te reste {n} indices.": "{name}が次の一手を教えるよ。残りヒント:{n}",
-  "💡 Utiliser un indice": "💡 ヒントを使う",
   "Plus d'indice": "ヒント切れ",
   "Regarde une vidéo pour gagner un indice.": "動画を見るとヒントが1つもらえるよ。",
   "▶ +1 indice": "▶ ヒント+1",
-  "Tourne le plateau dans ce sens : {arrow}": "ボードをこの向きに回して:{arrow}",
-  "D'ici, plus aucun chemin. Recommence et je te guide.": "ここからはもう進めないよ。やり直したら案内するね。",
   "💡 Réessayer avec un indice": "💡 ヒント付きで再挑戦",
   "+{n} indices 💡": "ヒント+{n} 💡",
-  "Passe en Premium : plus aucune pub, et des indices illimités.": "プレミアムなら広告ゼロ、ヒントも使い放題。"
+  "Passe en Premium : plus aucune pub, et des indices illimités.": "プレミアムなら広告ゼロ、ヒントも使い放題。",
+  "{name} te souffle le chemin, trois coups à la fois.": "{name}が道を教えるよ、3手ずつね。",
+  "Il te reste {n} indices.": "残りヒント:{n}",
+  "💡 Révéler 3 coups": "💡 3手を見る",
+  "↺ Recommencer le niveau": "↺ レベルをやり直す",
+  "La solution part du début du niveau.": "答えはレベルの最初からだよ。",
+  "Tous les coups sont révélés.": "すべての手が見えているよ。"
 });

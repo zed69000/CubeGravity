@@ -264,15 +264,16 @@ DGi18n.add("en", {
   "Premium activé. Merci !": "Premium is on. Thank you!",
   "Aucun achat à restaurer.": "No purchase to restore.",
   "💡 Indice ·": "💡 Hint ·",
-  "{name} te montre le prochain coup.": "{name} shows you the next move.",
-  "{name} te montre le prochain coup. Il te reste {n} indices.": "{name} shows you the next move. Hints left: {n}.",
-  "💡 Utiliser un indice": "💡 Use a hint",
   "Plus d'indice": "Out of hints",
   "Regarde une vidéo pour gagner un indice.": "Watch a video to earn a hint.",
   "▶ +1 indice": "▶ +1 hint",
-  "Tourne le plateau dans ce sens : {arrow}": "Turn the board this way: {arrow}",
-  "D'ici, plus aucun chemin. Recommence et je te guide.": "No way through from here. Restart and I'll guide you.",
   "💡 Réessayer avec un indice": "💡 Retry with a hint",
   "+{n} indices 💡": "+{n} hints 💡",
-  "Passe en Premium : plus aucune pub, et des indices illimités.": "Go Premium: no more ads, and unlimited hints."
+  "Passe en Premium : plus aucune pub, et des indices illimités.": "Go Premium: no more ads, and unlimited hints.",
+  "{name} te souffle le chemin, trois coups à la fois.": "{name} whispers the way, three moves at a time.",
+  "Il te reste {n} indices.": "Hints left: {n}.",
+  "💡 Révéler 3 coups": "💡 Reveal 3 moves",
+  "↺ Recommencer le niveau": "↺ Restart the level",
+  "La solution part du début du niveau.": "The solution starts from the beginning of the level.",
+  "Tous les coups sont révélés.": "All moves are revealed."
 });

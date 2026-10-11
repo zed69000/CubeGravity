@@ -104,14 +104,19 @@ body.premium .adtag{display:none!important}
 /* crédits d'indice, accrochés au portrait */
 #hintCount{position:absolute;left:2.9rem;bottom:-.3rem;z-index:6;padding:.2rem .5rem;border-radius:99rem;background:var(--navy);box-shadow:inset 0 0 0 .15rem var(--yellow);font:800 .95rem/1 Rubik,Arial,sans-serif;color:var(--yellow);pointer-events:none}
 /* l'indice : une grande flèche de rotation au centre du plateau, jusqu'au prochain coup */
-#hintArrow{position:absolute;left:50%;top:50%;width:11rem;height:11rem;margin:-5.5rem 0 0 -5.5rem;z-index:3;display:none;place-items:center;border-radius:50%;background:rgba(13,18,48,.72);box-shadow:inset 0 0 0 .3rem var(--yellow),0 0 2.4rem var(--yellow);font:900 7rem/1 Rubik,Arial,sans-serif;color:var(--yellow);pointer-events:none}
-#hintArrow.show{display:grid}
-#hintArrow.cw{animation:gHintCw 1.5s ease-in-out infinite}
-#hintArrow.ccw{animation:gHintCcw 1.5s ease-in-out infinite}
-@keyframes gHintCw{0%,100%{transform:rotate(-14deg)}50%{transform:rotate(22deg)}}
-@keyframes gHintCcw{0%,100%{transform:rotate(14deg)}50%{transform:rotate(-22deg)}}
-#sideLeft.hint,#sideRight.hint{color:var(--yellow);box-shadow:inset 0 0 0 .3rem var(--yellow),0 0 2rem var(--yellow);animation:gHelp .7s ease-in-out infinite}
-body.editing #hintArrow,body.editing #hintCount{display:none}
+/* la solution révélée : une bande de coups sous le plateau. Les coups déjà joués s'effacent, le prochain pulse. */
+#hintStrip{position:absolute;left:0;right:0;top:calc(100% + .6rem);z-index:3;display:none;flex-wrap:wrap;justify-content:center;gap:.35rem;pointer-events:none}
+#hintStrip.show{display:flex}
+#hintStrip.show+#swipeHint{display:none}
+#hintStrip b,.seq b{width:2.3rem;height:2.3rem;border-radius:.7rem;display:grid;place-items:center;font:900 1.4rem/1 Rubik,Arial,sans-serif;background:var(--navy);box-shadow:inset 0 0 0 .18rem var(--c1);color:var(--c1)}
+#hintStrip b.r,.seq b.r{box-shadow:inset 0 0 0 .18rem var(--c2);color:var(--c2)}
+#hintStrip b.q,.seq b.q{box-shadow:inset 0 0 0 .18rem var(--line);color:var(--muted)}
+#hintStrip b.done,.seq b.done{opacity:.3}
+#hintStrip b.next,.seq b.next{background:var(--yellow);box-shadow:0 0 1rem var(--yellow);color:var(--navy);animation:gHelp .8s ease-in-out infinite}
+#hintStrip.off b{opacity:.35}
+#hintStrip button{pointer-events:auto;height:2.3rem;padding:0 .9rem;border-radius:.7rem;background:var(--yellow);color:var(--navy);font:900 1.05rem/1 Rubik,Arial,sans-serif}
+.seq{gap:.4rem!important;margin:.2rem 1.2rem .4rem!important}
+body.editing #hintStrip,body.editing #hintCount{display:none}
 /* coup de pouce : une petite bulle « ? » sautille au-dessus de sa tête quand le joueur peine */
 .react.help .mini::after{content:"?";position:absolute;left:50%;top:-2.3rem;width:2.4rem;height:2.4rem;margin-left:-1.2rem;border-radius:50% 50% 50% 50% / 55% 55% 45% 45%;display:grid;place-items:center;background:var(--yellow);color:var(--navy);font:900 1.6rem/1 Rubik,Arial,sans-serif;box-shadow:0 0 1.2rem var(--yellow);animation:gHelp 1.1s ease-in-out infinite}
 .react.help .mini::before{content:"";position:absolute;left:50%;top:-.2rem;margin-left:-.4rem;border:.4rem solid transparent;border-top-color:var(--yellow);border-bottom:0;animation:gHelp 1.1s ease-in-out infinite}
@@ -358,7 +363,7 @@ html:not(.editor-enabled) #toggleEdit,html:not(.editor-enabled) #compactEdit{dis
   <main id="stage">
     <div class="boardWrap">
       <svg viewBox="0 0 520 520" aria-label="Plateau"><g id="rot"><g id="grid"></g></g></svg>
-      <div id="hintArrow" aria-hidden="true"></div>
+      <div id="hintStrip"></div>
       <div id="swipeHint" aria-hidden="true"><span class="chev l"><i>‹</i><i>‹</i><i>‹</i></span><svg viewBox="0 0 24 24"><circle cx="11.5" cy="7.5" r="3.4"/><path d="M18.84 15.87l-4.54-2.26c-.17-.07-.35-.11-.54-.11H13v-6c0-.83-.67-1.5-1.5-1.5S10 6.67 10 7.5v10.74l-3.43-.72c-.08-.01-.15-.03-.24-.03-.31 0-.59.13-.79.33l-.79.8 4.94 4.94c.27.27.65.44 1.06.44h6.79c.75 0 1.33-.55 1.44-1.28l.75-5.27c.01-.07.02-.14.02-.2 0-.62-.38-1.16-.91-1.38z"/></svg><span class="chev r"><i>›</i><i>›</i><i>›</i></span></div>
     </div>
     <div id="confirmBox" class="hidden"><h2>Confirmer la suppression</h2><p id="confirmText"></p><div class="row"><button id="confirmCancel">Annuler</button><button id="confirmDelete" class="danger">Supprimer</button></div></div>
@@ -678,7 +683,7 @@ function resetPlay(){
   levels[currentLevel].map=map();
   b=arr(levels[currentLevel].map);
   door=baseDoorOpen();
-  dgFallAnim=null;dgImpact=null;dgRot=null;dgMelody=[];dgQueue=[];dgWhoosh(0);dgHideHint();dgPendingHint=false;
+  dgFallAnim=null;dgImpact=null;dgRot=null;dgMelody=[];dgQueue=[];dgWhoosh(0);dgHistory="";
   moves=0;busy=false;gameOver=false;deadPlayer=false;rotatorCooldown=false;teleporterCooldownType=null;eternalFallWraps=0;gamePaused=false;activeSwitchKey=null;activeSwitchHeld=false;resetPlayerTrail();hideBanner();
   rot.setAttribute("transform",`rotate(0 ${BOARD/2} ${BOARD/2})`);visualOri=0;
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){
@@ -709,6 +714,7 @@ function updateStats(){
   dgTint(info.ci);
   if(!dgTutoActive)dgSetReact(dgReactLine(),false);
   dgHintBadge();
+  dgHintStrip();
 }
 
 function isLocked(){return !!levels[currentLevel].locked}
@@ -884,7 +890,7 @@ function showBanner(title,msg,stars,kind){
     bannerAction.onclick=()=>resetPlay();
     const alt=document.getElementById("bannerAlt");
     alt.textContent=tr("💡 Réessayer avec un indice");
-    alt.onclick=()=>{resetPlay();dgPendingHint=true;};
+    alt.onclick=()=>{resetPlay();dgHelpOffer();};
     banner.classList.add("lose");
     banner.classList.remove("hidden");
   },true);
@@ -1602,7 +1608,7 @@ function toggleDoors(){
 function turn(d,fromAngle=0){
   if(edit||gameOver||gamePaused||dgUiOpen())return;
   if(busy){if(dgQueue.length<2)dgQueue.push(d);return;} // le plateau bouge encore : le coup attend son tour
-  dgHideHint();
+  dgHistory+=d>0?"R":"L";
   hideCompanion(false);clearTimeout(companionTimer);clearTimeout(companionIdleTimer);
   busy=true;moves++;rotatorCooldown=false;userAudioGesture();soundRotate(d);updateStats();
   dgSpin(d,(Math.sign(fromAngle)===d)?fromAngle:0,()=>{apply(d);draw();fall();});
@@ -2644,7 +2650,6 @@ function ingameAnimationLoop(ts){
       dgMotes(dt);
       dgIdle();
       dgHelpUpdate();
-      if(dgPendingHint&&!busy){dgPendingHint=false;dgUseHint();}
       dgFlush();
       draw();
     }
@@ -2840,11 +2845,14 @@ function dgHelpUpdate(){
   if(!dgTutoActive)dgSetReact(dgReactLine(),false);
 }
 /* ===== Indices =====
-   Un indice ne donne pas la solution : il montre seulement le PROCHAIN coup, depuis la position actuelle.
-   Les indices sont des crédits : le joueur en a quelques-uns au départ, en gagne à chaque chapitre terminé,
-   et peut en obtenir un contre une vidéo. En Premium ils sont illimités. */
-const DG_HINTS_START=3,DG_HINTS_PER_CHAPTER=3;
-let dgPendingHint=false;
+   Un indice révèle les TROIS coups suivants de la solution du niveau ; les coups pas encore révélés restent en « ? ».
+   La solution part du début du niveau : les coups révélés s'affichent en bande sous le plateau, ceux déjà joués
+   s'effacent et le prochain pulse. Si le joueur s'en écarte, la bande se grise et propose de recommencer.
+   Les indices sont des crédits : quelques-uns au départ, d'autres à chaque chapitre terminé, un contre une vidéo.
+   En Premium ils sont illimités. */
+const DG_HINTS_START=3,DG_HINTS_PER_CHAPTER=3,DG_HINT_STEP=3;
+let dgReveal={level:-1,n:0};   // nombre de coups de la solution déjà révélés pour le niveau en cours
+let dgHistory="";              // les coups joués depuis le début de l'essai, "R" ou "L"
 function dgPremium(){return !!(window.DGPremium&&DGPremium.isOn());}
 function dgHints(){const n=loadProgress().hints;return Number.isFinite(n)?n:DG_HINTS_START;}
 function dgAddHints(n){
@@ -2859,89 +2867,89 @@ function dgHintBadge(){
   const pause=document.getElementById("pauseHintCount");
   if(pause)pause.textContent=dgPremium()?"∞":dgHints();
 }
-/* Le prochain coup du plus court chemin depuis la position actuelle : 1 (⟳), -1 (⟲), ou 0 si plus rien ne mène au but. */
-function dgHintMove(){
-  const start={m:cloneGrid(b),p:{x:p.x,y:p.y},ex:{x:exit.x,y:exit.y},switchHeld:activeSwitchHeld,tpCooldown:teleporterCooldownType};
-  const seen=new Set([solverKey(start)]);
-  let queue=[{s:start,first:0,depth:0}];
-  while(queue.length){
-    const next=[];
-    for(const node of queue){
-      for(const d of [1,-1]){
-        const n=solverRotate(node.s,d);
-        if(n.dead)continue;
-        const first=node.first||d;
-        if(n.p.x===n.ex.x&&n.p.y===n.ex.y)return first;
-        const k=solverKey(n);
-        if(seen.has(k)||node.depth>=30)continue;
-        seen.add(k);
-        next.push({s:n,first,depth:node.depth+1});
-      }
-    }
-    queue=next;
-    if(seen.size>6000)break;
-  }
-  return 0;
+function dgSolution(){return String((levels[currentLevel]&&levels[currentLevel].solution)||"");}
+function dgRevealed(){
+  if(dgReveal.level!==currentLevel)dgReveal={level:currentLevel,n:0};
+  return Math.min(dgReveal.n,dgSolution().length);
 }
-function dgHideHint(){
-  const el=document.getElementById("hintArrow");
-  if(el)el.className="";
-  document.getElementById("sideLeft").classList.remove("hint");
-  document.getElementById("sideRight").classList.remove("hint");
+// le joueur suit-il la solution depuis le début de l'essai ?
+function dgOnTrack(){return dgSolution().startsWith(dgHistory);}
+function dgHintTiles(){
+  const sol=dgSolution(),shown=dgRevealed(),track=dgOnTrack(),done=track?dgHistory.length:0;
+  return [...sol].map((c,i)=>i<shown
+    ?'<b class="'+(c==="R"?"r":"")+(i<done?" done":"")+(track&&i===done?" next":"")+'">'+(c==="R"?"⟳":"⟲")+'</b>'
+    :'<b class="q">?</b>').join("");
 }
-function dgShowHint(d){
-  const el=document.getElementById("hintArrow");
-  el.textContent=d>0?"⟳":"⟲";
-  el.className="show "+(d>0?"cw":"ccw");
-  document.getElementById(d>0?"sideRight":"sideLeft").classList.add("hint");
-  dgSetReact(tr("Tourne le plateau dans ce sens : {arrow}",{arrow:d>0?"⟳":"⟲"}),true);
+function dgHintStrip(){
+  const el=document.getElementById("hintStrip");
+  if(!el)return;
+  if(!dgRevealed()||edit||gameOver){el.className="";el.innerHTML="";return;}
+  const track=dgOnTrack();
+  el.innerHTML=dgHintTiles()+(track?"":'<button type="button">↺</button>');
+  el.className="show"+(track?"":" off");
+  const again=el.querySelector("button");
+  if(again)again.onclick=()=>{userAudioGesture();resetPlay();};
 }
-/* Dépense un crédit et montre le prochain coup. Sans crédit, propose d'en gagner un. */
-function dgUseHint(){
-  if(edit||gameOver||dgUiOpen())return;
-  if(busy){dgPendingHint=true;return;} // on attend l'atterrissage : l'indice part de la vraie position
-  const d=dgHintMove();
-  if(!d){dgSetReact(tr("D'ici, plus aucun chemin. Recommence et je te guide."),true);return;}
+/* révèle trois coups de plus, contre un crédit */
+function dgRevealMore(){
   if(!dgPremium()){
     if(dgHints()<=0){dgHintShop();return;}
     dgAddHints(-1);
   }
+  dgReveal.n=Math.min(dgSolution().length,dgRevealed()+DG_HINT_STEP);
   dgHelp.snooze=true;
-  dgShowHint(d);
+  dgHintStrip();
+  dgHelpOffer();
 }
-function dgHintModal(title,text,actionHtml,onAction,altText){
-  const alt=document.getElementById("bannerAlt"),person=dgCurPerson();
-  dgPortrait("bannerArt",person.kind,dgDateSex(),{eye:"happy"});
-  bannerTitle.textContent=title;
-  bannerText.textContent=text;
+/* plus de crédit : une vidéo en donne un, utilisé aussitôt */
+function dgHintShop(){
+  const alt=document.getElementById("bannerAlt");
+  dgPortrait("bannerArt",dgCurPerson().kind,dgDateSex(),{eye:"happy"});
+  bannerTitle.textContent=tr("Plus d'indice");
+  bannerText.textContent=tr("Regarde une vidéo pour gagner un indice.");
   starsEl.textContent="";
-  bannerAction.innerHTML=actionHtml;
-  bannerAction.onclick=()=>{banner.classList.add("hidden");onAction();};
-  alt.textContent=altText;
+  bannerAction.innerHTML=tr("▶ +1 indice")+'<span class="adtag">'+tr("PUB")+'</span>';
+  bannerAction.onclick=async()=>{
+    banner.classList.add("hidden");
+    const level=currentLevel;
+    const ok=await (window.DGAds?DGAds.showRewarded("hint"):Promise.resolve(true));
+    if(!ok||level!==currentLevel)return;
+    dgAddHints(1);
+    dgRevealMore();
+  };
+  alt.textContent=tr("Fermer");
   alt.onclick=()=>{dgHelp.snooze=true;banner.classList.add("hidden");};
   banner.classList.remove("lose");
   banner.classList.remove("hidden");
 }
-/* plus de crédit : une vidéo en donne un, utilisé aussitôt */
-function dgHintShop(){
-  dgHintModal(tr("Plus d'indice"),tr("Regarde une vidéo pour gagner un indice."),
-    tr("▶ +1 indice")+'<span class="adtag">'+tr("PUB")+'</span>',
-    async()=>{
-      const level=currentLevel;
-      const ok=await (window.DGAds?DGAds.showRewarded("hint"):Promise.resolve(true));
-      if(!ok||level!==currentLevel)return;
-      dgAddHints(1);
-      dgUseHint();
-    },tr("Fermer"));
-}
-/* la personne à rejoindre propose son aide : on confirme avant de dépenser un crédit */
+/* la fenêtre d'indice : toute la solution, les coups révélés en clair, les autres en « ? » */
 function dgHelpOffer(){
   if(edit||gameOver)return;
-  if(!dgPremium()&&dgHints()<=0){dgHintShop();return;}
-  const name=dgCurPerson().name;
-  dgHintModal(tr("Un coup de pouce ?"),
-    dgPremium()?tr("{name} te montre le prochain coup.",{name}):tr("{name} te montre le prochain coup. Il te reste {n} indices.",{name,n:dgHints()}),
-    tr("💡 Utiliser un indice"),dgUseHint,tr("Je continue"));
+  const sol=dgSolution(),alt=document.getElementById("bannerAlt");
+  if(!sol){showInfoBanner(tr("Pas de solution"),tr("Ce niveau n'a pas encore de solution enregistrée."));return;}
+  const shown=dgRevealed(),all=shown>=sol.length,track=dgOnTrack(),name=dgCurPerson().name;
+  dgPortrait("bannerArt",dgCurPerson().kind,dgDateSex(),{eye:"happy"});
+  bannerTitle.textContent=tr("Un coup de pouce ?");
+  bannerText.textContent=tr("{name} te souffle le chemin, trois coups à la fois.",{name})+(dgPremium()?"":" "+tr("Il te reste {n} indices.",{n:dgHints()}));
+  starsEl.innerHTML='<div class="seq">'+dgHintTiles()+'</div>'+
+    (shown&&!track?'<p>'+tr("La solution part du début du niveau.")+'</p>':(all?'<p>'+tr("Tous les coups sont révélés.")+'</p>':""));
+  const close=()=>{dgHelp.snooze=true;banner.classList.add("hidden");};
+  if(all){
+    bannerAction.textContent=tr("Fermer");
+    bannerAction.onclick=close;
+  }else{
+    bannerAction.textContent=tr("💡 Révéler 3 coups");
+    bannerAction.onclick=dgRevealMore;
+  }
+  if(shown&&!track){
+    alt.textContent=tr("↺ Recommencer le niveau");
+    alt.onclick=()=>{close();resetPlay();};
+  }else{
+    alt.textContent=all?"":tr("Je continue");
+    alt.onclick=close;
+  }
+  banner.classList.remove("lose");
+  banner.classList.remove("hidden");
 }
 /* Commandes : glisser (par défaut) ou deux boutons de rotation. Le choix se fait dans les options du menu
    ou dans la pause ; il est gardé dans le téléphone. Le geste reste actif même avec les boutons. */
@@ -3051,6 +3059,9 @@ function dgAdvance(target){
   const dv=[[0,1],[-1,0],[0,-1],[1,0]][target%4];
   const r=wrap.getBoundingClientRect(), sr=stage.getBoundingClientRect();
   const ghost=wrap.cloneNode(true);
+  // La copie ne garde que le plateau. Le rappel du swipe et la bande d'indices sont stylés par leur id : une fois
+  // l'id retiré ils perdraient leur style et s'afficheraient en grand et en noir pendant le défilement.
+  [...ghost.children].forEach(c=>{if(c.tagName.toLowerCase()!=="svg")c.remove();});
   ghost.querySelectorAll("[id]").forEach(e=>e.removeAttribute("id"));
   ghost.classList.add("ghostBoard");
   ghost.style.left=(r.left-sr.left)+"px";ghost.style.top=(r.top-sr.top)+"px";ghost.style.width=r.width+"px";

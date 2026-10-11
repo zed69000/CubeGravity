@@ -264,15 +264,16 @@ DGi18n.add("de", {
   "Premium activé. Merci !": "Premium ist aktiv. Danke!",
   "Aucun achat à restaurer.": "Kein Kauf zum Wiederherstellen.",
   "💡 Indice ·": "💡 Tipp ·",
-  "{name} te montre le prochain coup.": "{name} zeigt dir den nächsten Zug.",
-  "{name} te montre le prochain coup. Il te reste {n} indices.": "{name} zeigt dir den nächsten Zug. Tipps übrig: {n}.",
-  "💡 Utiliser un indice": "💡 Tipp nutzen",
   "Plus d'indice": "Keine Tipps mehr",
   "Regarde une vidéo pour gagner un indice.": "Sieh dir ein Video an und erhalte einen Tipp.",
   "▶ +1 indice": "▶ +1 Tipp",
-  "Tourne le plateau dans ce sens : {arrow}": "Dreh das Brett so: {arrow}",
-  "D'ici, plus aucun chemin. Recommence et je te guide.": "Von hier geht es nicht weiter. Starte neu, ich helfe dir.",
   "💡 Réessayer avec un indice": "💡 Nochmal mit Tipp",
   "+{n} indices 💡": "+{n} Tipps 💡",
-  "Passe en Premium : plus aucune pub, et des indices illimités.": "Hol dir Premium: keine Werbung mehr und unbegrenzt Tipps."
+  "Passe en Premium : plus aucune pub, et des indices illimités.": "Hol dir Premium: keine Werbung mehr und unbegrenzt Tipps.",
+  "{name} te souffle le chemin, trois coups à la fois.": "{name} verrät dir den Weg, drei Züge auf einmal.",
+  "Il te reste {n} indices.": "Tipps übrig: {n}.",
+  "💡 Révéler 3 coups": "💡 3 Züge zeigen",
+  "↺ Recommencer le niveau": "↺ Level neu starten",
+  "La solution part du début du niveau.": "Die Lösung beginnt am Anfang des Levels.",
+  "Tous les coups sont révélés.": "Alle Züge sind aufgedeckt."
 });

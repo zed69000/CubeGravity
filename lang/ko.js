@@ -264,15 +264,16 @@ DGi18n.add("ko", {
   "Premium activé. Merci !": "프리미엄이 켜졌어요. 고마워요!",
   "Aucun achat à restaurer.": "복원할 구매가 없어요.",
   "💡 Indice ·": "💡 힌트 ·",
-  "{name} te montre le prochain coup.": "{name}님이 다음 수를 알려줘요.",
-  "{name} te montre le prochain coup. Il te reste {n} indices.": "{name}님이 다음 수를 알려줘요. 남은 힌트: {n}",
-  "💡 Utiliser un indice": "💡 힌트 쓰기",
   "Plus d'indice": "힌트가 없어요",
   "Regarde une vidéo pour gagner un indice.": "영상을 보면 힌트 1개를 받아요.",
   "▶ +1 indice": "▶ 힌트 +1",
-  "Tourne le plateau dans ce sens : {arrow}": "보드를 이쪽으로 돌려요: {arrow}",
-  "D'ici, plus aucun chemin. Recommence et je te guide.": "여기선 길이 없어요. 다시 시작하면 안내할게요.",
   "💡 Réessayer avec un indice": "💡 힌트로 다시 도전",
   "+{n} indices 💡": "힌트 +{n} 💡",
-  "Passe en Premium : plus aucune pub, et des indices illimités.": "프리미엄이면 광고가 사라지고, 힌트도 무제한이에요."
+  "Passe en Premium : plus aucune pub, et des indices illimités.": "프리미엄이면 광고가 사라지고, 힌트도 무제한이에요.",
+  "{name} te souffle le chemin, trois coups à la fois.": "{name}님이 길을 알려줘요, 세 수씩.",
+  "Il te reste {n} indices.": "남은 힌트: {n}",
+  "💡 Révéler 3 coups": "💡 3수 보기",
+  "↺ Recommencer le niveau": "↺ 레벨 다시 시작",
+  "La solution part du début du niveau.": "해답은 레벨 처음부터예요.",
+  "Tous les coups sont révélés.": "모든 수가 공개됐어요."
 });

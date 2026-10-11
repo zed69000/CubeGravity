@@ -264,15 +264,16 @@ DGi18n.add("es", {
   "Premium activé. Merci !": "Premium activado. ¡Gracias!",
   "Aucun achat à restaurer.": "No hay compras que restaurar.",
   "💡 Indice ·": "💡 Pista ·",
-  "{name} te montre le prochain coup.": "{name} te muestra la próxima jugada.",
-  "{name} te montre le prochain coup. Il te reste {n} indices.": "{name} te muestra la próxima jugada. Pistas restantes: {n}.",
-  "💡 Utiliser un indice": "💡 Usar una pista",
   "Plus d'indice": "Sin pistas",
   "Regarde une vidéo pour gagner un indice.": "Mira un vídeo para ganar una pista.",
   "▶ +1 indice": "▶ +1 pista",
-  "Tourne le plateau dans ce sens : {arrow}": "Gira el tablero así: {arrow}",
-  "D'ici, plus aucun chemin. Recommence et je te guide.": "Desde aquí no hay camino. Reinicia y te guío.",
   "💡 Réessayer avec un indice": "💡 Reintentar con pista",
   "+{n} indices 💡": "+{n} pistas 💡",
-  "Passe en Premium : plus aucune pub, et des indices illimités.": "Hazte Premium: ni un anuncio más, y pistas ilimitadas."
+  "Passe en Premium : plus aucune pub, et des indices illimités.": "Hazte Premium: ni un anuncio más, y pistas ilimitadas.",
+  "{name} te souffle le chemin, trois coups à la fois.": "{name} te sopla el camino, de tres en tres jugadas.",
+  "Il te reste {n} indices.": "Pistas restantes: {n}.",
+  "💡 Révéler 3 coups": "💡 Revelar 3 jugadas",
+  "↺ Recommencer le niveau": "↺ Reiniciar el nivel",
+  "La solution part du début du niveau.": "La solución empieza desde el inicio del nivel.",
+  "Tous les coups sont révélés.": "Todas las jugadas están reveladas."
 });

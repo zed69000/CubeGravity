@@ -56,14 +56,6 @@
   "contexte": "écran de jeu (texte dynamique)"
  },
  {
-  "fr": "Tourne le plateau dans ce sens : {arrow}",
-  "contexte": "écran de jeu (texte dynamique)"
- },
- {
-  "fr": "D'ici, plus aucun chemin. Recommence et je te guide.",
-  "contexte": "écran de jeu (texte dynamique)"
- },
- {
   "fr": "Plus d'indice",
   "contexte": "écran de jeu (texte dynamique)"
  },
@@ -84,19 +76,39 @@
   "contexte": "écran de jeu (texte dynamique)"
  },
  {
+  "fr": "Pas de solution",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "Ce niveau n'a pas encore de solution enregistrée.",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
   "fr": "Un coup de pouce ?",
   "contexte": "écran de jeu (texte dynamique)"
  },
  {
-  "fr": "{name} te montre le prochain coup.",
+  "fr": "{name} te souffle le chemin, trois coups à la fois.",
   "contexte": "écran de jeu (texte dynamique)"
  },
  {
-  "fr": "{name} te montre le prochain coup. Il te reste {n} indices.",
+  "fr": "Il te reste {n} indices.",
   "contexte": "écran de jeu (texte dynamique)"
  },
  {
-  "fr": "💡 Utiliser un indice",
+  "fr": "La solution part du début du niveau.",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "Tous les coups sont révélés.",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "💡 Révéler 3 coups",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "↺ Recommencer le niveau",
   "contexte": "écran de jeu (texte dynamique)"
  },
  {
@@ -189,14 +201,6 @@
  },
  {
   "fr": "Plus tard",
-  "contexte": "écran de jeu (texte dynamique)"
- },
- {
-  "fr": "Pas de solution",
-  "contexte": "écran de jeu (texte dynamique)"
- },
- {
-  "fr": "Ce niveau n'a pas encore de solution enregistrée.",
   "contexte": "écran de jeu (texte dynamique)"
  },
  {
