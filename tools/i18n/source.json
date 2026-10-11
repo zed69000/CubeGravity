@@ -28,11 +28,7 @@
   "contexte": "écran de jeu (texte dynamique)"
  },
  {
-  "fr": "Voir la solution",
-  "contexte": "écran de jeu (texte dynamique)"
- },
- {
-  "fr": "PUB",
+  "fr": "💡 Réessayer avec un indice",
   "contexte": "écran de jeu (texte dynamique)"
  },
  {
@@ -60,15 +56,47 @@
   "contexte": "écran de jeu (texte dynamique)"
  },
  {
+  "fr": "Tourne le plateau dans ce sens : {arrow}",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "D'ici, plus aucun chemin. Recommence et je te guide.",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "Plus d'indice",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "Regarde une vidéo pour gagner un indice.",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "▶ +1 indice",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "PUB",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "Fermer",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
   "fr": "Un coup de pouce ?",
   "contexte": "écran de jeu (texte dynamique)"
  },
  {
-  "fr": "{name} peut te montrer comment le rejoindre. Tu peux aussi continuer à chercher.",
+  "fr": "{name} te montre le prochain coup.",
   "contexte": "écran de jeu (texte dynamique)"
  },
  {
-  "fr": "{name} peut te montrer comment la rejoindre. Tu peux aussi continuer à chercher.",
+  "fr": "{name} te montre le prochain coup. Il te reste {n} indices.",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "💡 Utiliser un indice",
   "contexte": "écran de jeu (texte dynamique)"
  },
  {
@@ -128,6 +156,10 @@
   "contexte": "écran de jeu (texte dynamique)"
  },
  {
+  "fr": "+{n} indices 💡",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
   "fr": "rejoue pour aller plus loin",
   "contexte": "écran de jeu (texte dynamique)"
  },
@@ -148,7 +180,7 @@
   "contexte": "écran de jeu (texte dynamique)"
  },
  {
-  "fr": "Passe en Premium : plus aucune pub, et les solutions sont offertes.",
+  "fr": "Passe en Premium : plus aucune pub, et des indices illimités.",
   "contexte": "écran de jeu (texte dynamique)"
  },
  {
@@ -185,10 +217,6 @@
  },
  {
   "fr": "Recommencer",
-  "contexte": "écran de jeu (texte dynamique)"
- },
- {
-  "fr": "Fermer",
   "contexte": "écran de jeu (texte dynamique)"
  },
  {
@@ -308,7 +336,7 @@
   "contexte": "écran de jeu (bouton, titre ou libellé)"
  },
  {
-  "fr": "💡 Solution",
+  "fr": "💡 Indice ·",
   "contexte": "écran de jeu (bouton, titre ou libellé)"
  },
  {

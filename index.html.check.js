@@ -139,8 +139,12 @@ Object.entries(DGi18n.LANGS).forEach(([code,name])=>{
 (function(){
   const root=document.documentElement,el=document.getElementById("splash");
   if(!root.classList.contains("splash"))return;
-  const end=()=>root.classList.remove("splash");
-  const timer=setTimeout(end,1950);
+  // le trait gravé tremble légèrement, comme une animation dessinée image par image
+  const art=document.getElementById("spArt");
+  let step=0;
+  const boil=setInterval(()=>{step=(step+1)%3;art.setAttribute("filter","url(#spWob"+(step+1)+")");},170);
+  const end=()=>{clearInterval(boil);root.classList.remove("splash");};
+  const timer=setTimeout(end,2850);
   el.addEventListener("pointerdown",()=>{clearTimeout(timer);end();},{once:true});
 })();
 
@@ -164,6 +168,17 @@ document.getElementById("restoreBtn").addEventListener("click",async()=>{
   showPremium();
 });
 showPremium();
+
+/* --- atelier (éditeurs de niveaux et d'assets) : outil de l'équipe, invisible pour les joueurs.
+   Il n'apparaît qu'après avoir ouvert une fois index.html?atelier=1 sur cet appareil (index.html?atelier=0 le recache). */
+(function(){
+  const asked=new URLSearchParams(location.search).get("atelier");
+  try{
+    if(asked==="1")localStorage.setItem("dg_atelier","1");
+    if(asked==="0")localStorage.removeItem("dg_atelier");
+    if(localStorage.getItem("dg_atelier")==="1")document.getElementById("atelier").classList.remove("hidden");
+  }catch(e){}
+})();
 
 /* --- options */
 function openOptions(){playOpenSound();overlay.classList.remove("hidden");overlay.setAttribute("aria-hidden","false");}

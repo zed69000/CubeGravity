@@ -227,7 +227,7 @@ function resetPlay(){
   levels[currentLevel].map=map();
   b=arr(levels[currentLevel].map);
   door=baseDoorOpen();
-  dgFallAnim=null;dgImpact=null;dgRot=null;dgMelody=[];dgQueue=[];dgWhoosh(0);
+  dgFallAnim=null;dgImpact=null;dgRot=null;dgMelody=[];dgQueue=[];dgWhoosh(0);dgHideHint();dgPendingHint=false;
   moves=0;busy=false;gameOver=false;deadPlayer=false;rotatorCooldown=false;teleporterCooldownType=null;eternalFallWraps=0;gamePaused=false;activeSwitchKey=null;activeSwitchHeld=false;resetPlayerTrail();hideBanner();
   rot.setAttribute("transform",`rotate(0 ${BOARD/2} ${BOARD/2})`);visualOri=0;
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){
@@ -257,6 +257,7 @@ function updateStats(){
   playStats.innerHTML=html;
   dgTint(info.ci);
   if(!dgTutoActive)dgSetReact(dgReactLine(),false);
+  dgHintBadge();
 }
 
 function isLocked(){return !!levels[currentLevel].locked}
@@ -431,8 +432,8 @@ function showBanner(title,msg,stars,kind){
     bannerAction.textContent=tr("Réessayer");
     bannerAction.onclick=()=>resetPlay();
     const alt=document.getElementById("bannerAlt");
-    alt.innerHTML=levels[currentLevel]?.solution?'💡 '+tr("Voir la solution")+'<span class="adtag">'+tr("PUB")+'</span>':"";
-    alt.onclick=()=>dgRequestSolution();
+    alt.textContent=tr("💡 Réessayer avec un indice");
+    alt.onclick=()=>{resetPlay();dgPendingHint=true;};
     banner.classList.add("lose");
     banner.classList.remove("hidden");
   },true);
@@ -1150,6 +1151,7 @@ function toggleDoors(){
 function turn(d,fromAngle=0){
   if(edit||gameOver||gamePaused||dgUiOpen())return;
   if(busy){if(dgQueue.length<2)dgQueue.push(d);return;} // le plateau bouge encore : le coup attend son tour
+  dgHideHint();
   hideCompanion(false);clearTimeout(companionTimer);clearTimeout(companionIdleTimer);
   busy=true;moves++;rotatorCooldown=false;userAudioGesture();soundRotate(d);updateStats();
   dgSpin(d,(Math.sign(fromAngle)===d)?fromAngle:0,()=>{apply(d);draw();fall();});
@@ -1958,8 +1960,7 @@ document.getElementById("companionSkip").onclick=()=>{
 };
 document.getElementById("companionHelp").onclick=()=>{
   userAudioGesture();
-  if(dgHelp.on)dgHelpOffer();
-  else showCompanion(companionMessage("hint"),false);
+  dgHelpOffer();
 };
 document.getElementById("pauseBtn")?.addEventListener("click",()=>{userAudioGesture();setPaused(!gamePaused);});
 document.getElementById("pauseResume")?.addEventListener("click",()=>setPaused(false));
@@ -1995,7 +1996,7 @@ document.getElementById("sfxVolumeSlider")?.addEventListener("input",e=>{
 });
 document.getElementById("pauseRestart")?.addEventListener("click",()=>{setPaused(false);resetPlay();});
 document.getElementById("pauseMainMenu")?.addEventListener("click",()=>{setPaused(false);stopElevatorMusic();dgLeaveTo("index.html");});
-document.getElementById("pauseSolution")?.addEventListener("click",()=>{setPaused(false);showLevelRecap();});
+document.getElementById("pauseSolution")?.addEventListener("click",()=>{setPaused(false);dgHelpOffer();});
 if(window.DGAds){
   DGAds.onStart=()=>stopElevatorMusic();
   DGAds.onEnd=()=>{if(musicOn&&!edit&&!gameOver&&!gamePaused)startElevatorMusic();};
@@ -2192,6 +2193,7 @@ function ingameAnimationLoop(ts){
       dgMotes(dt);
       dgIdle();
       dgHelpUpdate();
+      if(dgPendingHint&&!busy){dgPendingHint=false;dgUseHint();}
       dgFlush();
       draw();
     }
@@ -2386,18 +2388,109 @@ function dgHelpUpdate(){
   document.getElementById("companionDock").classList.toggle("help",on);
   if(!dgTutoActive)dgSetReact(dgReactLine(),false);
 }
-function dgHelpOffer(){
-  const person=dgCurPerson(),alt=document.getElementById("bannerAlt");
+/* ===== Indices =====
+   Un indice ne donne pas la solution : il montre seulement le PROCHAIN coup, depuis la position actuelle.
+   Les indices sont des crédits : le joueur en a quelques-uns au départ, en gagne à chaque chapitre terminé,
+   et peut en obtenir un contre une vidéo. En Premium ils sont illimités. */
+const DG_HINTS_START=3,DG_HINTS_PER_CHAPTER=3;
+let dgPendingHint=false;
+function dgPremium(){return !!(window.DGPremium&&DGPremium.isOn());}
+function dgHints(){const n=loadProgress().hints;return Number.isFinite(n)?n:DG_HINTS_START;}
+function dgAddHints(n){
+  const pr=loadProgress();
+  pr.hints=Math.max(0,(Number.isFinite(pr.hints)?pr.hints:DG_HINTS_START)+n);
+  saveProgress(pr);
+  dgHintBadge();
+}
+function dgHintBadge(){
+  const el=document.getElementById("hintCount");
+  if(el)el.textContent="💡"+(dgPremium()?"∞":dgHints());
+  const pause=document.getElementById("pauseHintCount");
+  if(pause)pause.textContent=dgPremium()?"∞":dgHints();
+}
+/* Le prochain coup du plus court chemin depuis la position actuelle : 1 (⟳), -1 (⟲), ou 0 si plus rien ne mène au but. */
+function dgHintMove(){
+  const start={m:cloneGrid(b),p:{x:p.x,y:p.y},ex:{x:exit.x,y:exit.y},switchHeld:activeSwitchHeld,tpCooldown:teleporterCooldownType};
+  const seen=new Set([solverKey(start)]);
+  let queue=[{s:start,first:0,depth:0}];
+  while(queue.length){
+    const next=[];
+    for(const node of queue){
+      for(const d of [1,-1]){
+        const n=solverRotate(node.s,d);
+        if(n.dead)continue;
+        const first=node.first||d;
+        if(n.p.x===n.ex.x&&n.p.y===n.ex.y)return first;
+        const k=solverKey(n);
+        if(seen.has(k)||node.depth>=30)continue;
+        seen.add(k);
+        next.push({s:n,first,depth:node.depth+1});
+      }
+    }
+    queue=next;
+    if(seen.size>6000)break;
+  }
+  return 0;
+}
+function dgHideHint(){
+  const el=document.getElementById("hintArrow");
+  if(el)el.className="";
+  document.getElementById("sideLeft").classList.remove("hint");
+  document.getElementById("sideRight").classList.remove("hint");
+}
+function dgShowHint(d){
+  const el=document.getElementById("hintArrow");
+  el.textContent=d>0?"⟳":"⟲";
+  el.className="show "+(d>0?"cw":"ccw");
+  document.getElementById(d>0?"sideRight":"sideLeft").classList.add("hint");
+  dgSetReact(tr("Tourne le plateau dans ce sens : {arrow}",{arrow:d>0?"⟳":"⟲"}),true);
+}
+/* Dépense un crédit et montre le prochain coup. Sans crédit, propose d'en gagner un. */
+function dgUseHint(){
+  if(edit||gameOver||dgUiOpen())return;
+  if(busy){dgPendingHint=true;return;} // on attend l'atterrissage : l'indice part de la vraie position
+  const d=dgHintMove();
+  if(!d){dgSetReact(tr("D'ici, plus aucun chemin. Recommence et je te guide."),true);return;}
+  if(!dgPremium()){
+    if(dgHints()<=0){dgHintShop();return;}
+    dgAddHints(-1);
+  }
+  dgHelp.snooze=true;
+  dgShowHint(d);
+}
+function dgHintModal(title,text,actionHtml,onAction,altText){
+  const alt=document.getElementById("bannerAlt"),person=dgCurPerson();
   dgPortrait("bannerArt",person.kind,dgDateSex(),{eye:"happy"});
-  bannerTitle.textContent=tr("Un coup de pouce ?");
-  bannerText.textContent=tr(dgDateSex()==="m"?"{name} peut te montrer comment le rejoindre. Tu peux aussi continuer à chercher.":"{name} peut te montrer comment la rejoindre. Tu peux aussi continuer à chercher.",{name:person.name});
+  bannerTitle.textContent=title;
+  bannerText.textContent=text;
   starsEl.textContent="";
-  bannerAction.innerHTML='💡 '+tr("Voir la solution")+'<span class="adtag">'+tr("PUB")+'</span>';
-  bannerAction.onclick=()=>{dgHelp.snooze=true;banner.classList.add("hidden");dgRequestSolution();};
-  alt.textContent=tr("Je continue");
+  bannerAction.innerHTML=actionHtml;
+  bannerAction.onclick=()=>{banner.classList.add("hidden");onAction();};
+  alt.textContent=altText;
   alt.onclick=()=>{dgHelp.snooze=true;banner.classList.add("hidden");};
   banner.classList.remove("lose");
   banner.classList.remove("hidden");
+}
+/* plus de crédit : une vidéo en donne un, utilisé aussitôt */
+function dgHintShop(){
+  dgHintModal(tr("Plus d'indice"),tr("Regarde une vidéo pour gagner un indice."),
+    tr("▶ +1 indice")+'<span class="adtag">'+tr("PUB")+'</span>',
+    async()=>{
+      const level=currentLevel;
+      const ok=await (window.DGAds?DGAds.showRewarded("hint"):Promise.resolve(true));
+      if(!ok||level!==currentLevel)return;
+      dgAddHints(1);
+      dgUseHint();
+    },tr("Fermer"));
+}
+/* la personne à rejoindre propose son aide : on confirme avant de dépenser un crédit */
+function dgHelpOffer(){
+  if(edit||gameOver)return;
+  if(!dgPremium()&&dgHints()<=0){dgHintShop();return;}
+  const name=dgCurPerson().name;
+  dgHintModal(tr("Un coup de pouce ?"),
+    dgPremium()?tr("{name} te montre le prochain coup.",{name}):tr("{name} te montre le prochain coup. Il te reste {n} indices.",{name,n:dgHints()}),
+    tr("💡 Utiliser un indice"),dgUseHint,tr("Je continue"));
 }
 /* Commandes : glisser (par défaut) ou deux boutons de rotation. Le choix se fait dans les options du menu
    ou dans la pause ; il est gardé dans le téléphone. Le geste reste actif même avec les boutons. */
@@ -2689,7 +2782,16 @@ function dgShowWin(kind,finalText){
     const person=DGSpirit.person(info.ci), rel=dgRelation(info.ci);
     relEl.innerHTML='<div class="art">'+DGSpirit.portrait(person.kind,dgDateSex(),{eye:"happy",mouth:"grin"})+'</div><div><b></b><span></span></div>';
     relEl.querySelector("b").textContent=person.name+" · "+tr(rel.label);
-    relEl.querySelector("span").textContent=rel.stars+" / "+(rel.total*3)+" ♥"+(rel.rank<5?" · "+tr("rejoue pour aller plus loin"):"");
+    let gift="";
+    const pr=loadProgress();
+    pr.bonus=pr.bonus||{};
+    if(chapterDone&&info.ch&&!pr.bonus[info.ch.id]){
+      pr.bonus[info.ch.id]=true;
+      saveProgress(pr);
+      dgAddHints(DG_HINTS_PER_CHAPTER);
+      gift=" · "+tr("+{n} indices 💡",{n:DG_HINTS_PER_CHAPTER});
+    }
+    relEl.querySelector("span").textContent=rel.stars+" / "+(rel.total*3)+" ♥"+(gift||(rel.rank<5?" · "+tr("rejoue pour aller plus loin"):""));
   }
   const next=document.getElementById("winNext"), replay=document.getElementById("winReplay");
   next.disabled=false;
@@ -2723,7 +2825,7 @@ function dgPremiumOffer(){
     const close=()=>{banner.classList.add("hidden");resolve();};
     dgPortrait("bannerArt",dgCurPerson().kind,dgDateSex(),{eye:"happy",mouth:"grin"});
     bannerTitle.textContent=tr("Jouer sans pub ?");
-    bannerText.textContent=tr("Passe en Premium : plus aucune pub, et les solutions sont offertes.");
+    bannerText.textContent=tr("Passe en Premium : plus aucune pub, et des indices illimités.");
     starsEl.textContent="";
     bannerAction.textContent=tr("Premium · {price}",{price:DGPremium.price()});
     bannerAction.onclick=()=>DGPremium.buy().then(close);
