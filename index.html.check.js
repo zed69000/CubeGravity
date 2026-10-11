@@ -110,6 +110,17 @@ soundToggle.textContent="♪ Musique du menu : "+(menuMusicOn?"oui":"non");
 ["pointerdown","keydown"].forEach(evt=>window.addEventListener(evt,()=>{if(menuMusicOn)startMenuMusic();},{once:true,passive:true}));
 soundToggle.addEventListener("click",()=>setMusicState(!menuMusicOn));
 
+/* --- commandes du jeu : glisser (par défaut) ou deux boutons de rotation. Même réglage que dans la pause du jeu. */
+const CONTROLS_KEY="dg_controls";
+const controlsToggle=document.getElementById("controlsToggle");
+function controlsMode(){try{return localStorage.getItem(CONTROLS_KEY)==="buttons"?"buttons":"swipe";}catch(e){return "swipe";}}
+function showControlsMode(){controlsToggle.textContent="Commandes : "+(controlsMode()==="buttons"?"boutons":"glisser");}
+controlsToggle.addEventListener("click",()=>{
+  try{localStorage.setItem(CONTROLS_KEY,controlsMode()==="buttons"?"swipe":"buttons");}catch(e){}
+  playOpenSound();showControlsMode();
+});
+showControlsMode();
+
 /* --- options */
 function openOptions(){playOpenSound();overlay.classList.remove("hidden");overlay.setAttribute("aria-hidden","false");}
 function closeOptions(){playCloseSound();overlay.classList.add("hidden");overlay.setAttribute("aria-hidden","true");}

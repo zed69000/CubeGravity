@@ -218,6 +218,7 @@ function baseDoorOpen(){
 }
 let fallToken=0;
 function resetPlay(){
+  if(moves>0&&!(gameOver&&!deadPlayer&&p.x===exit.x&&p.y===exit.y))dgHelpFail();
   fallToken++;
   setBoardSizeFromLevel(levels[currentLevel]);
   normalize();
@@ -1944,7 +1945,6 @@ document.getElementById("companionSkip").onclick=()=>{
   }
   hideCompanion(true);
 };
-document.getElementById("companionHelp").onclick=()=>showCompanion(companionMessage("hint"),false);
 
 document.getElementById("toggleEdit").onclick=()=>{if(!window.CG_EDITOR_MODE){edit=false;draw();return;}edit=!edit;if(!edit){resetPlay();scheduleCompanion(true)}else{busy=false;gameOver=false;hideBanner();hideCompanion(false);draw()}};
 document.getElementById("companionSkip").onclick=()=>{
@@ -1954,7 +1954,11 @@ document.getElementById("companionSkip").onclick=()=>{
   }
   hideCompanion(true);
 };
-document.getElementById("companionHelp").onclick=()=>showCompanion(companionMessage("hint"),false);
+document.getElementById("companionHelp").onclick=()=>{
+  userAudioGesture();
+  if(dgHelp.on)dgHelpOffer();
+  else showCompanion(companionMessage("hint"),false);
+};
 document.getElementById("pauseBtn")?.addEventListener("click",()=>{userAudioGesture();setPaused(!gamePaused);});
 document.getElementById("pauseResume")?.addEventListener("click",()=>setPaused(false));
 document.getElementById("pauseSfxToggle")?.addEventListener("click",()=>{
@@ -2185,6 +2189,7 @@ function ingameAnimationLoop(ts){
     if(levels.length && Array.isArray(b) && b.length && !edit && !gamePaused && !document.querySelector(".screen.show")){
       dgMotes(dt);
       dgIdle();
+      dgHelpUpdate();
       dgFlush();
       draw();
     }
@@ -2361,6 +2366,53 @@ function dgTint(ci){
   const svg='<svg xmlns="http://www.w3.org/2000/svg" width="180" height="180" fill="none" stroke="'+dgC2+'" stroke-opacity=".5" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="'+bio[1]+'"/><g transform="translate(98 94) scale(.7)"><path d="'+bio[1]+'"/></g></svg>';
   root.setProperty("--biome",'url("data:image/svg+xml,'+encodeURIComponent(svg)+'")');
 }
+/* Coup de pouce. Le joueur « peine » sur un niveau après deux essais ratés ou recommencés, trois coups
+   de trop, ou une minute et demie sans réussir. La personne à rejoindre propose alors son aide : une
+   bulle « ? » au-dessus de sa tête, et sa réplique change. Rien ne s'ouvre tout seul. */
+let dgHelp={level:-1,fails:0,since:0,snooze:false,on:false};
+function dgHelpTrack(){
+  if(dgHelp.level!==currentLevel)dgHelp={level:currentLevel,fails:0,since:performance.now(),snooze:false,on:dgHelp.on};
+}
+function dgHelpFail(){dgHelpTrack();dgHelp.fails++;dgHelp.snooze=false;}
+function dgHelpUpdate(){
+  dgHelpTrack();
+  const l=levels[currentLevel],max=Number(l&&l.maxMoves)||0;
+  const stuck=dgHelp.fails>=2||(max>0&&max<999&&moves>=max+3)||performance.now()-dgHelp.since>90000;
+  const on=stuck&&!dgHelp.snooze&&!gameOver&&!edit&&!!(l&&l.solution);
+  if(on===dgHelp.on)return;
+  dgHelp.on=on;
+  document.getElementById("companionDock").classList.toggle("help",on);
+  if(!dgTutoActive)dgSetReact(dgReactLine(),false);
+}
+function dgHelpOffer(){
+  const person=dgCurPerson(),alt=document.getElementById("bannerAlt");
+  dgPortrait("bannerArt",person.kind,dgDateSex(),{eye:"happy"});
+  bannerTitle.textContent="Un coup de pouce ?";
+  bannerText.textContent=person.name+" peut te montrer comment la rejoindre. Tu peux aussi continuer à chercher.".replace("la rejoindre",dgDateSex()==="m"?"le rejoindre":"la rejoindre");
+  starsEl.textContent="";
+  bannerAction.innerHTML='💡 Voir la solution<span class="adtag">PUB</span>';
+  bannerAction.onclick=()=>{dgHelp.snooze=true;banner.classList.add("hidden");dgRequestSolution();};
+  alt.textContent="Je continue";
+  alt.onclick=()=>{dgHelp.snooze=true;banner.classList.add("hidden");};
+  banner.classList.remove("lose");
+  banner.classList.remove("hidden");
+}
+/* Commandes : glisser (par défaut) ou deux boutons de rotation. Le choix se fait dans les options du menu
+   ou dans la pause ; il est gardé dans le téléphone. Le geste reste actif même avec les boutons. */
+const DG_CONTROLS_KEY="dg_controls";
+function dgControls(){
+  try{return localStorage.getItem(DG_CONTROLS_KEY)==="buttons"?"buttons":"swipe";}catch(e){return "swipe";}
+}
+function dgApplyControls(){
+  const buttons=dgControls()==="buttons";
+  document.body.classList.toggle("btnCtl",buttons);
+  document.getElementById("pauseControls").textContent="Commandes : "+(buttons?"boutons":"glisser");
+}
+document.getElementById("pauseControls").onclick=()=>{
+  try{localStorage.setItem(DG_CONTROLS_KEY,dgControls()==="buttons"?"swipe":"buttons");}catch(e){}
+  dgApplyControls();
+};
+dgApplyControls();
 /* rappel du swipe : seulement quand le joueur ne fait rien depuis un moment (plus longtemps s'il connaît déjà le geste) */
 let dgIdleAt=performance.now(),dgHintOn=false,dgHintDelay=3500;
 function dgIdle(){
@@ -2486,6 +2538,7 @@ function dgUiOpen(){
 
 /* --- bulle : tutoriel, indice, ou petite phrase selon l'avancée */
 function dgReactLine(){
+  if(dgHelp.on)return "Besoin d'un coup de pouce ? Touche-moi.";
   const max=Number(levels[currentLevel]?.maxMoves)||0;
   if(moves===0)return "Je t'attends, viens !";
   const left=max-moves;
