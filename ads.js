@@ -164,13 +164,26 @@
       setTimeout(()=>done("timeout"),90000);
     });
   }
+  // L'interstitiel est chargé à l'avance : le charger au moment du clic sur « Suivant » faisait attendre
+  // le joueur plusieurs secondes devant un écran figé. S'il n'est pas prêt à temps, on n'en montre pas.
+  let interReady=null;
   const admob={
+    preload(){
+      if(!interReady)interReady=(async()=>{
+        await admobInit();
+        await AdMob.prepareInterstitial({adId:admobUnits().interstitial,isTesting:config.admobTesting});
+        return true;
+      })().catch(e=>{console.warn("[ADS] interstitiel non chargé",e);interReady=null;return false;});
+      return interReady;
+    },
     async interstitial(){
-      await admobInit();
-      await AdMob.prepareInterstitial({adId:admobUnits().interstitial,isTesting:config.admobTesting});
+      const ready=await Promise.race([admob.preload(),new Promise(r=>setTimeout(()=>r(false),1200))]);
+      if(!ready)return {completed:false,notShown:true};
+      interReady=null;
       const closed=admobOnce(["interstitialAdDismissed","interstitialAdFailedToShow"]);
       await AdMob.showInterstitial();
       await closed;
+      admob.preload(); // la suivante se charge pendant qu'on joue
       return {completed:true};
     },
     async rewarded(){
@@ -217,7 +230,7 @@
     }catch(e){
       console.warn("[ADS] échec",kind,e);
     }
-    markAdShown();
+    if(!result.notShown)markAdShown();
     showing=false;
     try{DGAds.onEnd&&DGAds.onEnd(kind);}catch(e){}
     return result;
@@ -234,13 +247,15 @@
       if(!config.enabled || window.CG_EDITOR_MODE)return false;
       if(window.DGPremium&&DGPremium.isOn())return false; // Premium : plus aucune pub
       winsSinceAd++;
+      // dans l'application, la prochaine pub se charge pendant les niveaux qui précèdent
+      if(config.provider==="admob"&&(ctx&&ctx.chapterIndex||0)>=1&&winsSinceAd>=config.interstitialEveryLevels-1)admob.preload();
       if(!config.debug){
         if(config.firstChapterAdFree && (ctx&&ctx.chapterIndex||0)<1)return false;
         if(winsSinceAd<config.interstitialEveryLevels)return false;
         if((now()-readLastAd())/1000<config.minSecondsBetweenAds)return false;
       }
-      await run("interstitial");
-      return true;
+      const r=await run("interstitial");
+      return !r.notShown;
     },
 
     /* Pub choisie par le joueur. Sans pub disponible, la récompense est offerte. */

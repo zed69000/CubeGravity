@@ -1,0 +1,64 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Date Gravity · ambiances</title>
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;700;900&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#070a20;--panel:#11163a;--panel2:#18204f;--line:#26306b;--ink:#eef1ff;--muted:#9aa6d6;--c1:#f6ff3d;--c2:#19e3ff}
+*{box-sizing:border-box}
+body{margin:0;min-height:100vh;background:var(--bg);color:var(--ink);font:500 15px/1.45 Rubik,system-ui,Arial,sans-serif;display:grid;grid-template-columns:1fr auto;gap:2rem;padding:1.6rem 2rem}
+h1{margin:0 0 .3rem;font-size:1.4rem;font-weight:900}
+h1 span{background:linear-gradient(90deg,var(--c1),var(--c2));-webkit-background-clip:text;background-clip:text;color:transparent}
+p{margin:0 0 1.2rem;color:var(--muted);max-width:44rem}
+h2{margin:1.4rem 0 .6rem;font-size:.75rem;font-weight:800;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.row{display:flex;flex-wrap:wrap;gap:.45rem}
+button{appearance:none;border:0;border-radius:99px;padding:.55rem .95rem;font:700 .88rem/1 Rubik,Arial,sans-serif;color:var(--ink);background:var(--panel2);box-shadow:inset 0 0 0 1.5px var(--line);cursor:pointer}
+button:hover{box-shadow:inset 0 0 0 1.5px var(--c2)}
+button.on{background:linear-gradient(90deg,var(--c1),var(--c2));color:#0b0f2c;box-shadow:0 0 18px rgba(25,227,255,.35)}
+.chap{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.5rem}
+.chap button{border-radius:14px;padding:.7rem .6rem;text-align:left;line-height:1.25}
+.chap button small{display:block;font-weight:500;opacity:.75;margin-top:.2rem}
+.phone{width:390px;height:780px;border-radius:44px;padding:12px;background:#000;box-shadow:0 0 0 2px #26306b,0 30px 80px rgba(0,0,0,.6);position:sticky;top:1.6rem}
+iframe{width:100%;height:100%;border:0;border-radius:34px;background:#0d1230}
+.note{margin-top:1.4rem;padding:.8rem 1rem;border-radius:14px;background:var(--panel);color:var(--muted);font-size:.86rem}
+</style>
+</head>
+<body>
+<div>
+  <h1><span>Date Gravity</span> · ambiances</h1>
+  <p>Chaque chapitre a son moment de la journée et sa météo. Choisis un chapitre pour voir ce que je propose, ou compose ta propre ambiance avec les boutons du bas. L'aperçu à droite, c'est le vrai jeu.</p>
+  <h2>Ma proposition par chapitre</h2>
+  <div class="chap" id="chaps"></div>
+  <h2>Moment de la journée</h2>
+  <div class="row" id="times"></div>
+  <h2>Météo</h2>
+  <div class="row" id="weathers"></div>
+  <div class="note">Tout est fait pour ne pas ralentir le téléphone : les particules sont des motifs que la carte graphique fait glisser, sans rien repeindre. Elles s'arrêtent si le téléphone demande moins d'animations.</div>
+</div>
+<div class="phone"><iframe id="frame" title="Aperçu du jeu"></iframe></div>
+<script src="../ambiance.js"></script>
+<script>
+const NAMES={dawn:"Aube",day:"Jour",golden:"Fin d'après-midi",sunset:"Coucher de soleil",dusk:"Crépuscule",night:"Nuit"};
+const WEATHERS={none:"Aucune",snow:"Neige",rain:"Pluie",storm:"Orage",leaves:"Feuilles",sand:"Sable",petals:"Pétales et lucioles",stars:"Étoiles filantes"};
+const CH=["Premier pas","Sortir du cadre","Boutons du cœur","Zones dangereuses","Têtes qui tournent","Coup de foudre","C'est compliqué","Le grand amour"];
+let state={ch:0,time:"dawn",weather:"none"},levels=null;
+async function show(){
+  if(!levels){const d=await (await fetch("../levels.json")).json();levels=d;}
+  // un niveau du chapitre, joué en mode test (sans pub, sans toucher à la progression)
+  const ch=levels.chapters[state.ch],lv=levels.levels.filter(l=>l.chapter===ch.id)[4]||levels.levels[0];
+  localStorage.setItem("dg_editor_test",JSON.stringify({level:lv,chapter:ch,settings:levels.settings}));
+  document.getElementById("frame").src="../game.html?test=1&ads=off&ambiance="+state.time+","+state.weather+"&t="+Date.now();
+  document.querySelectorAll("[data-time]").forEach(b=>b.classList.toggle("on",b.dataset.time===state.time));
+  document.querySelectorAll("[data-weather]").forEach(b=>b.classList.toggle("on",b.dataset.weather===state.weather));
+  document.querySelectorAll("[data-ch]").forEach(b=>b.classList.toggle("on",+b.dataset.ch===state.ch));
+}
+const mk=(host,label,data,fn)=>{const b=document.createElement("button");b.innerHTML=label;Object.assign(b.dataset,data);b.onclick=fn;document.getElementById(host).appendChild(b);};
+CH.forEach((n,i)=>{const a=DGAmbiance.CHAPTERS[i];mk("chaps",n+"<small>"+NAMES[a.time]+" · "+WEATHERS[a.weather]+"</small>",{ch:i},()=>{state={ch:i,time:a.time,weather:a.weather};show();});});
+Object.keys(NAMES).forEach(t=>mk("times",NAMES[t],{time:t},()=>{state.time=t;show();}));
+Object.keys(WEATHERS).forEach(w=>mk("weathers",WEATHERS[w],{weather:w},()=>{state.weather=w;show();}));
+show();
+</script>
+</body>
+</html>

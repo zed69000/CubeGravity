@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Date Gravity · banc d'écoute</title>
+<style>
+body{margin:0;padding:1.4rem;background:#0d1230;color:#e8eaf6;font:500 15px/1.45 system-ui,Arial,sans-serif;max-width:46rem}
+h1{margin:0 0 .3rem;font-size:1.4rem}
+h2{margin:1.6rem 0 .6rem;font-size:1.05rem;color:#19e3ff}
+p{margin:0 0 1rem;color:#9aa3c7}
+.row{display:flex;flex-wrap:wrap;gap:.5rem}
+button{appearance:none;border:0;border-radius:99rem;padding:.7rem 1.1rem;font:700 14px/1 system-ui,Arial,sans-serif;color:#e8eaf6;background:#172052;box-shadow:inset 0 0 0 2px #2b3a8c;cursor:pointer}
+button.on{background:linear-gradient(90deg,#f6ff3d,#19e3ff);color:#0d1230;box-shadow:none}
+button.stop{background:#4b2435}
+label{display:flex;align-items:center;gap:.6rem;margin:.4rem 0}
+input[type=range]{flex:1}
+</style>
+</head>
+<body>
+<h1>Banc d'écoute · musique et bruitages</h1>
+<p>Tout est en do majeur : n'importe quel bruitage par-dessus n'importe quelle ambiance doit sonner juste. Lance une ambiance, puis clique les bruitages pendant qu'elle joue.</p>
+
+<label>Musique <input id="vm" type="range" min="0" max="100" value="15"></label>
+<label>Bruitages <input id="vs" type="range" min="0" max="100" value="30"></label>
+
+<h2>Ambiances</h2>
+<div class="row" id="styles"></div>
+<div class="row" style="margin-top:.5rem"><button class="stop" id="stop">Arrêter la musique</button><button id="old">Ancienne boucle (pour comparer)</button></div>
+
+<h2>Bruitages</h2>
+<div class="row" id="sfx"></div>
+
+<script src="../audio.js"></script>
+<script>
+const NAMES={menu:"Menu",0:"Ch.1 Premier pas",1:"Ch.2 Sortir du cadre",2:"Ch.3 Boutons du cœur",3:"Ch.4 Zones dangereuses",4:"Ch.5 Têtes qui tournent",5:"Ch.6 Coup de foudre",6:"Ch.7 C'est compliqué",7:"Ch.8 Le grand amour"};
+const vol=()=>DGAudio.setVolumes(vm.value/100,vs.value/100);
+vm.oninput=vs.oninput=vol;
+let old=null;
+const styles=document.getElementById("styles");
+Object.keys(NAMES).forEach(k=>{
+  const b=document.createElement("button");b.textContent=NAMES[k];
+  b.onclick=()=>{DGAudio.ctx();vol();if(old){old.pause();}DGAudio.music.start(k==="menu"?"menu":+k);
+    styles.querySelectorAll("button").forEach(x=>x.classList.toggle("on",x===b));};
+  styles.appendChild(b);
+});
+document.getElementById("stop").onclick=()=>{DGAudio.music.stop();if(old)old.pause();styles.querySelectorAll("button").forEach(x=>x.classList.remove("on"));};
+document.getElementById("old").onclick=()=>{DGAudio.music.stop();if(!old){old=new Audio("../audio/music/Petals_in_Perfect_Order.mp3");old.loop=true;}old.volume=vm.value/100;old.play();};
+const hz=DGAudio.hz,wall=[60,64,67,62,69,72,76,74];
+const SFX=[
+  ["Rotation",()=>DGAudio.sfx.rotate(1)],
+  ["Atterrissage (petit)",()=>{DGAudio.sfx.thump(.2);DGAudio.sfx.note(hz(rnd()),.06);}],
+  ["Atterrissage (grand)",()=>{DGAudio.sfx.thump(1);DGAudio.sfx.note(hz(rnd()),.1);}],
+  ["Chute (vent)",()=>{let v=0;const t=setInterval(()=>{v+=.12;DGAudio.sfx.whoosh(Math.min(1,v));if(v>1.2){clearInterval(t);DGAudio.sfx.whoosh(0);DGAudio.sfx.thump(.9);}},90);}],
+  ["Bouton / porte",()=>DGAudio.sfx.door()],
+  ["Téléporteur",()=>DGAudio.sfx.teleport()],
+  ["Case mortelle",()=>{DGAudio.sfx.crash();DGAudio.sfx.lose();}],
+  ["Chute sans fin",()=>{DGAudio.sfx.eternal();DGAudio.sfx.lose();}],
+  ["Victoire",()=>{wall.forEach((m,i)=>DGAudio.sfx.note(hz(m),.06,i*.095));DGAudio.sfx.winChord(wall.length*.095+.06);}],
+  ["Bouton du menu",()=>DGAudio.sfx.ui("ok")]
+];
+function rnd(){return wall[Math.floor(Math.random()*wall.length)];}
+const box=document.getElementById("sfx");
+SFX.forEach(([n,f])=>{const b=document.createElement("button");b.textContent=n;b.onclick=()=>{DGAudio.ctx();vol();f();};box.appendChild(b);});
+</script>
+</body>
+</html>

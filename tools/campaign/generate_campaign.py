@@ -67,10 +67,10 @@ WORLDS = [
     dict(id="w06", count=20, score=(6.5, 20), subtitle="Coup de foudre", biome="garden", mech="teleporter",
          sizes=(11, 12), moves=(4, 10), frame="open", dens=(0.14, 0.26),
          extras={"button": 0.3, "danger": 0.4, "rotator": 0.2}),
-    dict(id="w07", count=20, score=(9, 23.5), subtitle="C’est compliqué", biome="kiss", mech="mix",
+    dict(id="w07", count=20, score=(9, 23.5), subtitle="C’est compliqué", biome="kiss", mech="fragile",
          sizes=(12, 13), moves=(5, 12), frame="open", dens=(0.15, 0.27),
          extras={"button": 0.7, "danger": 0.6, "rotator": 0.5, "teleporter": 0.5}),
-    dict(id="w08", count=20, score=(11, 28), subtitle="Le grand amour", biome="love", mech="mix",
+    dict(id="w08", count=20, score=(11, 28), subtitle="Le grand amour", biome="love", mech="heart",
          sizes=(12, 13), moves=(7, 16), frame="open", dens=(0.16, 0.28),
          extras={"button": 0.8, "danger": 0.7, "rotator": 0.6, "teleporter": 0.6}),
 ]
@@ -193,6 +193,16 @@ def place_mechanics(g, mechs, visited, rng, frame, rich):
     if "danger" in mechs:
         for _ in range(rng.randint(1, 4 if rich else 2)):
             put("X", prefer_visited=rng.random() < 0.6)
+    if "fragile" in mechs:
+        # des murs deviennent du verre : de préférence ceux sur lesquels le personnage atterrit
+        landing = [(x, y + 1) for x, y in visited if y + 1 < n and g[y + 1][x] == "#"]
+        walls = [(x, y) for y in range(n) for x in range(n) if g[y][x] == "#"]
+        rng.shuffle(landing)
+        rng.shuffle(walls)
+        for x, y in (landing + walls)[:rng.randint(1, 3 if rich else 2)]:
+            g[y][x] = "F"
+    if "heart" in mechs:
+        put("H", prefer_visited=rng.random() < 0.35)   # souvent hors du chemin direct : il faut un détour
 
 
 def strip(rows, chars):
@@ -220,6 +230,10 @@ def mechanics_in(rows):
         out.append("button")
     if "X" in s:
         out.append("danger")
+    if "F" in s:
+        out.append("fragile")
+    if "H" in s:
+        out.append("heart")
     if any(c in s for c in "RL"):
         out.append("rotator")
     if any(c in s for c in "123"):
@@ -244,7 +258,7 @@ def candidate(world, tier, rng):
     g[ay][ax] = "A"
 
     mechs = set()
-    if mech in ("button", "danger", "rotator", "teleporter"):
+    if mech in ("button", "danger", "rotator", "teleporter", "fragile", "heart"):
         mechs.add(mech)
     if not disc:
         for m, prob in world["extras"].items():
@@ -310,10 +324,17 @@ def candidate(world, tier, rng):
     elif mech == "teleporter":
         if "T" not in used or solve_min(strip(rows, "123")) is not None:
             return None
+    elif mech == "fragile":
+        if "F" not in used or solve_min([r.replace("F", "#") for r in rows]) == a["min"]:
+            return None
+    elif mech == "heart":
+        if "H" not in used or (solve_min(strip(rows, "H")) or 99) >= a["min"]:
+            return None                                  # le cœur doit demander un détour
     elif mech == "mix":
         if len(used & {"S", "T", "rot"}) < 2:
             return None
-    if disc and (a["softlocks"] or deaths > 2):
+    # (un niveau à cœur a presque toujours des impasses : passer à côté du cœur en est une)
+    if disc and ((a["softlocks"] and mech != "heart") or deaths > 2):
         return None
     # Les mécaniques secondaires présentes doivent servir, pas décorer.
     if "button" in mechs and mech != "button" and "S" not in used:

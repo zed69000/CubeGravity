@@ -3,6 +3,7 @@
 .git
 .claude/
 .gitignore
+.github/
 .assetsignore
 Mockup/
 Levels/
@@ -12,7 +13,6 @@ node_modules/
 www/
 ios/
 android/
-*.check.js
 *.psd
 *.bat
 *.ps1

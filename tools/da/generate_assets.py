@@ -3,7 +3,7 @@
 """
 Génère vector_assets.json dans la DA "Néon Circuit" : les blocs en pictos.
 
-  python tools/da/generate_assets.py            # écrit vector_assets.json + vector_assets_runtime.json
+  python tools/da/generate_assets.py            # écrit vector_assets.json
 
 Le fichier reste au format de l'éditeur d'assets (layers rect / circle / polygon /
 path / text, canvas 40x40) : chaque bloc peut être retouché dans asset_svg_editor.html.
@@ -112,12 +112,31 @@ def teleporter(kind):
              "fill": WHITE, "stroke": "none", "strokeWidth": 0}]
 
 
+def fragile():
+    # mur fragile : un bloc de verre fêlé. Il casse sous une chute d'au moins 2 cases.
+    glass = "#a8f4fa"
+    return [rect("glass", 3, 3, 34, 34, 8, glass, opacity=0.28),
+            rect("edge", 3, 3, 34, 34, 8, "none", stroke=glass, strokeWidth=2.4),
+            pth("shine", "M9 9.5H18", stroke=WHITE, sw=2.2, opacity=0.7),
+            pth("crack", "M21 5.5l-3 8 5.5 4.5 -4 7.5 2.5 9 M18 13.5l-8.5 2.5 M23.5 18l9 -2.5 M19.5 25.5l-7 6", stroke=WHITE, sw=1.9, opacity=0.9)]
+
+
+def heart_pickup():
+    # cœur à ramasser : doré (le rose est celui des cœurs brisés, mortels), il flotte dans un halo
+    GOLD = "#ffd23f"
+    bob = {"type": "bob", "amp": 1.2, "speed": 0.005}
+    return [circle("halo", 20, 20, 16, GOLD, opacity=0.22, anim={"type": "pulse", "amp": 1.3, "speed": 0.006, "pivotX": 20, "pivotY": 20}),
+            pth("heart", "M20 31L9.5 20.5Q5 13.5 11 10Q16 7.5 20 13.5Q24 7.5 29 10Q35 13.5 30.5 20.5Z", fill=GOLD, stroke=WHITE, sw=1.6, anim=bob),
+            pth("shine", "M12.5 14.5q1.8-2.6 4.6-1.6", stroke=WHITE, sw=2.2, opacity=0.85, anim=bob)]
+
+
 def build():
     assets = {
         "button_off": button(False), "button_on": button(True),
         "block_up": block_up(), "block_down": block_down(),
         "danger": danger(),
         "rotator_right": rotator(True), "rotator_left": rotator(False),
+        "fragile": fragile(), "heart_pickup": heart_pickup(),
     }
     for k in TELEPORT:
         assets["teleporter_" + k] = teleporter(k)
@@ -136,7 +155,6 @@ def main():
     root = Path(__file__).resolve().parents[2]
     data = build()
     (root / "vector_assets.json").write_text(json.dumps(data, ensure_ascii=False, indent=2) + "\n", encoding="utf-8")
-    (root / "vector_assets_runtime.json").write_text(json.dumps(data, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
     print("%d assets écrits (%d layers)." % (len(data["assets"]), sum(len(a["layers"]) for a in data["assets"].values())))
 
 

@@ -1,0 +1,41 @@
+# Fabrique l'apk de test Android sur les machines gratuites de GitHub (le dépôt est public).
+# Même recette que le workflow android-debug de codemagic.yaml.
+# Se lance à chaque push sur main, ou à la main : onglet Actions > « Android · apk de test » > Run workflow.
+# L'apk se télécharge en bas de la page du build, dans « Artifacts ».
+name: Android · apk de test
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  apk:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Dépendances
+        run: npm install
+      - name: Copie du jeu dans www
+        run: npm run build:web
+      - name: Projet Android
+        run: |
+          npx cap add android
+          npm run native:android
+          npx cap sync android
+      - name: Compilation de l'apk
+        run: |
+          cd android
+          ./gradlew assembleDebug
+      - uses: actions/upload-artifact@v4
+        with:
+          name: date-gravity-apk
+          path: android/app/build/outputs/apk/debug/*.apk

@@ -2,7 +2,9 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<script>window.CG_EDITOR_MODE=new URLSearchParams(location.search).get("editor")==="1";document.documentElement.classList.toggle("editor-enabled",window.CG_EDITOR_MODE);</script>
+<script>window.CG_EDITOR_MODE=new URLSearchParams(location.search).get("editor")==="1";
+// mode test : l'éditeur de niveaux (editor.html) fait jouer un seul niveau, sans pub et sans toucher à la progression du joueur
+window.DG_TEST=new URLSearchParams(location.search).get("test")==="1";document.documentElement.classList.toggle("editor-enabled",window.CG_EDITOR_MODE);</script>
 <script>/* arrivée depuis une autre page du jeu : les rubans sont déjà fermés, on les ouvrira une fois prêt */
 try{if(sessionStorage.getItem("dg_tx")==="1"){sessionStorage.removeItem("dg_tx");document.documentElement.classList.add("tx-in");}}catch(e){}</script>
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover,user-scalable=no">
@@ -46,7 +48,16 @@ button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:poin
 .btn.sm{padding:1rem .4rem;font-size:1.15rem;letter-spacing:.03em}
 .btn:disabled{opacity:.5}
 .two{display:flex;gap:.9rem;margin:0 1.8rem}
-.two .btn{flex:1;width:auto;margin:0;white-space:nowrap}
+.two .btn{flex:1;width:auto;min-width:0;margin:0;white-space:nowrap}
+.btn{overflow:hidden;text-overflow:ellipsis}
+/* petits écrans (Android milieu de gamme, barre de navigation affichée) : les fenêtres se resserrent pour que tout tienne */
+@media (max-height:720px){
+  .modal{gap:.6rem;padding-top:1.1rem}
+  .btn{padding:1.05rem 1rem}
+  .btn.sm{padding:.85rem .4rem}
+  .modal .art{width:7.5rem;height:7.5rem}
+  #winScreen .wHearts{font-size:2rem}
+}
 .chip{flex:none;display:inline-block;white-space:nowrap;padding:.6rem 1rem;border-radius:99rem;background:var(--navy3);box-shadow:inset 0 0 0 .15rem var(--line);font-weight:800;font-size:1.1rem}
 .round{flex:none;width:3.4rem;height:3.4rem;border-radius:50%;display:grid;place-items:center;background:var(--navy3);box-shadow:inset 0 0 0 .2rem var(--c2),0 0 1.2rem color-mix(in srgb,var(--c2) 45%,transparent);font-weight:900;font-size:1.25rem}
 .round:disabled{opacity:.3;box-shadow:inset 0 0 0 .2rem var(--line)}
@@ -68,11 +79,12 @@ body.premium .adtag{display:none!important}
 #gfx::before{content:"";position:absolute;inset:0;opacity:.4;
   -webkit-mask-image:linear-gradient(#000 0,#000 9%,transparent 17%,transparent 71%,#000 80%);mask-image:linear-gradient(#000 0,#000 9%,transparent 17%,transparent 71%,#000 80%);
   background:var(--biome,url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180' fill='none' stroke='%232a3a8c' stroke-width='1.5' stroke-linecap='round'%3E%3Cpath d='M20 0v46q0 12 12 12h40M120 30v60q0 12 -12 12h-58M150 100v50q0 12 12 12h18M60 130v50M0 80h14q12 0 12 12v30'/%3E%3C/svg%3E"))}
-#motes{position:absolute;inset:0;
-  background:
-    radial-gradient(ellipse .1rem .34rem,rgba(143,160,216,.6) 90%,transparent) 0 0/5.3rem 7.1rem,
-    radial-gradient(ellipse .08rem .26rem,color-mix(in srgb,var(--c2) 60%,transparent) 90%,transparent) 2.1rem 1.3rem/3.7rem 9.3rem;
-  background-position:0 calc(var(--my,0)*1px),2.1rem calc(1.3rem + var(--my,0)*1.6px)}
+/* deux calques de poussière, chacun un peu plus haut que l'écran : le jeu les fait glisser par transform,
+   ce que le téléphone fait sans rien repeindre (déplacer le fond lui-même repeignait tout l'écran à chaque image) */
+#motes{position:absolute;inset:0;overflow:hidden}
+#motes i{position:absolute;left:0;right:0;top:-10rem;bottom:0;will-change:transform}
+#motes i:first-child{background:radial-gradient(ellipse .1rem .34rem,rgba(143,160,216,.6) 90%,transparent) 0 0/5.3rem 7.1rem}
+#motes i+i{background:radial-gradient(ellipse .08rem .26rem,color-mix(in srgb,var(--c2) 60%,transparent) 90%,transparent) 2.1rem 1.3rem/3.7rem 9.3rem}
 
 /* ---------- en-tête de jeu */
 #title{min-width:0;flex:1;text-align:center;font:900 1.25rem/1.08 Rubik,Arial,sans-serif;text-transform:uppercase;letter-spacing:.02em}
@@ -96,8 +108,6 @@ body.premium .adtag{display:none!important}
 .boardWrap svg{display:block;width:100%;height:auto;aspect-ratio:1;overflow:visible}
 .ghostBoard{position:absolute!important;z-index:2;pointer-events:none}
 .hitcell{pointer-events:all}
-.grav{display:grid;place-items:center;position:absolute;left:50%;bottom:-2.1rem;z-index:2;width:2.6rem;height:2.6rem;margin-left:-1.3rem;border-radius:50%;color:var(--c2);font-weight:900;font-size:1.5rem;box-shadow:inset 0 0 0 .2rem var(--c2),0 0 1rem color-mix(in srgb,var(--c2) 55%,transparent);animation:gGrav 1.1s ease-in infinite;pointer-events:none}
-@keyframes gGrav{0%{transform:translateY(-.3rem);opacity:.4}70%{transform:translateY(.5rem);opacity:1}100%{transform:translateY(.5rem);opacity:0}}
 
 /* ---------- bas d'écran : la personne du chapitre te parle, puis la zone du pouce */
 #foot{height:7rem;padding:0 1.2rem calc(1.4rem + env(safe-area-inset-bottom));display:flex;flex-direction:column;justify-content:flex-end}
@@ -127,6 +137,7 @@ body.editing #hintStrip,body.editing #hintCount{display:none}
 /* la bulle grandit vers le haut, par-dessus l'espace libre sous le plateau, sans pousser la zone du pouce */
 .react p{position:absolute;left:5.4rem;bottom:.6rem;max-width:calc(100% - 5.4rem);z-index:5;margin:0;padding:.8rem 1.1rem;border-radius:1.4rem 1.4rem 1.4rem .3rem;background:var(--navy3);box-shadow:inset 0 0 0 .2rem var(--c2),0 0 1.2rem color-mix(in srgb,var(--c2) 40%,transparent);font-weight:500;font-size:1.15rem;line-height:1.25;transform-origin:0 100%}
 .react p.pop{animation:gPop .35s cubic-bezier(.2,1.6,.4,1)}
+.react p.quiet{display:none}
 @keyframes gPop{0%{transform:scale(.6);opacity:0}100%{transform:scale(1);opacity:1}}
 #companionSkip{margin-left:.6rem;padding:.2rem .8rem;border-radius:99rem;background:var(--c2);color:var(--navy);font-weight:900;font-size:1.05rem}
 /* rappel du geste : il n'apparaît sous le plateau que si le joueur ne fait rien, et s'efface dès qu'il joue */
@@ -148,7 +159,6 @@ body.editing #hintStrip,body.editing #hintCount{display:none}
 @keyframes gHand{0%,100%{transform:translateX(0)}18%{transform:translateX(1.2rem)}36%,50%{transform:translateX(0)}68%{transform:translateX(-1.2rem)}86%{transform:translateX(0)}}
 @keyframes gTap{0%{transform:scale(.6);opacity:.9}70%,100%{transform:scale(1.8);opacity:0}}
 body.editing #swipeHint{display:none}
-.kbdOnly{display:none}
 /* commandes « boutons » (option) : deux gros boutons de rotation sous la bulle, à la place du geste */
 #controls{display:none}
 #controls #reset{display:none}
@@ -229,9 +239,11 @@ body.btnCtl #swipeHint{display:none}
 /* victoire : un bandeau bas et compact, le plateau et les deux personnages restent visibles */
 #winScreen .modal{padding-top:1.1rem;gap:.5rem}
 #winScreen h3{font-size:1.8rem;margin-bottom:0}
+#winScreen h3:empty{display:none}
 #winScreen .wHearts{font-size:2.4rem}
 #winScreen .melody{height:1.8rem}
 #winScreen .two{margin-top:.3rem}
+#winScreen #winReplay{flex:0 0 5rem}   /* le bouton « rejouer » n'a qu'une flèche : la place va à « Suivant » */
 #winReplay{flex:0 0 5.6rem;font-size:1.7rem;padding:0}
 @keyframes ovIn{from{opacity:0}to{opacity:1}}
 .modal{width:100%;max-height:100%;overflow-y:auto;padding:1.6rem .4rem calc(1.8rem + env(safe-area-inset-bottom));border-radius:2.6rem 2.6rem 0 0;background:var(--navy2);box-shadow:inset 0 .25rem 0 var(--c2),0 -1rem 3rem rgba(0,0,0,.4);display:flex;flex-direction:column;gap:.9rem;animation:mdIn .28s cubic-bezier(.2,1.3,.3,1) both}
@@ -251,6 +263,7 @@ body.btnCtl #swipeHint{display:none}
 .sl span{width:5.8rem}
 .sl input[type=range]{flex:1;height:2.4rem;margin:0;accent-color:var(--c2);background:none}
 .link{align-self:center;padding:.4rem 1rem;font-size:1.05rem;font-weight:800;color:var(--muted);text-decoration:underline}
+.ver{align-self:center;font:700 .8rem/1 Rubik,Arial,sans-serif;color:var(--muted);opacity:.55}
 /* victoire : un bandeau bas, le plateau reste visible */
 .wHearts{text-align:center;font-size:3rem;letter-spacing:.5rem;line-height:1;color:var(--pink);text-shadow:0 0 1.4rem var(--pink)}
 .wHearts u{text-decoration:none;opacity:.22;text-shadow:none}
@@ -304,7 +317,7 @@ body.editing #hud{display:none}
 body.editing #top{max-height:42dvh;overflow:auto;padding:.8rem;background:var(--navy2);border-bottom:.2rem solid var(--line)}
 body.editing #status{display:block;margin:0 0 .6rem;padding:.6rem .9rem;border-radius:.8rem;background:var(--navy);font:500 12px/1.3 Rubik,Arial,sans-serif;color:var(--ink)}
 body.editing #bar{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
-body.editing #foot,body.editing .grav{display:none}
+body.editing #foot{display:none}
 /* en test de jeu depuis l'éditeur, seul le bouton pour revenir à l'édition reste affiché */
 html.editor-enabled body:not(.editing) #bar{display:block;position:absolute;right:1.2rem;top:5.6rem;z-index:25}
 html.editor-enabled body:not(.editing) #compactEdit{display:none}
@@ -329,7 +342,7 @@ html:not(.editor-enabled) #toggleEdit,html:not(.editor-enabled) #compactEdit{dis
 </head>
 <body>
 <div id="app">
-  <div id="gfx" aria-hidden="true"><div id="motes"></div></div>
+  <div id="gfx" aria-hidden="true"><div id="motes"><i></i><i></i></div></div>
 
   <header id="top">
     <div id="hud" class="hd">
@@ -433,6 +446,7 @@ html:not(.editor-enabled) #toggleEdit,html:not(.editor-enabled) #compactEdit{dis
       <div class="two"><button class="btn ghost sm" id="pauseSolution" type="button">💡 Indice · <span id="pauseHintCount" data-no-i18n></span></button><button class="btn ghost sm" id="pauseMainMenu" type="button">Menu</button></div>
       <button class="btn ghost sm" id="pauseControls" type="button"></button>
       <button class="link" id="pauseFullscreen" type="button">Plein écran</button>
+      <div class="ver" id="pauseVersion" data-no-i18n></div>
     </div>
   </div>
 
@@ -457,10 +471,13 @@ html:not(.editor-enabled) #toggleEdit,html:not(.editor-enabled) #compactEdit{dis
   </div>
 </div>
 
+<script src="version.js"></script>
 <script src="i18n.js"></script>
 <script src="premium.js"></script>
 <script src="ads.js"></script>
 <script src="spirits.js"></script>
+<script src="audio.js"></script>
+<script src="ambiance.js"></script>
 <script>
 const tr=DGi18n.t; // traduction : tr("texte français", {variables})
 DGi18n.apply();
@@ -584,22 +601,16 @@ const editPanel=document.getElementById("editPanel"),levelNameInput=document.get
 const banner=document.getElementById("banner"),bannerTitle=document.getElementById("bannerTitle"),bannerText=document.getElementById("bannerText"),starsEl=document.getElementById("stars"),bannerAction=document.getElementById("bannerAction");
 
 let levels=[];
-const GAME_VERSION="V49-neon-circuit";
-setTimeout(()=>{const v=document.getElementById("gameVersionBadge"); if(v)v.textContent=GAME_VERSION;},0);
+setTimeout(()=>{const v=document.getElementById("pauseVersion"); if(v)v.textContent="v"+(window.DG_VERSION||"?");},0);
 let gameSettings={fallDelayMs:135,rotationDurationMs:320};
 
 let currentLevel=0,baseMap=[],b=[],p={x:0,y:0},start={x:0,y:0},exit={x:0,y:0};
 let door=false,busy=false,edit=!!window.CG_EDITOR_MODE,moves=0,gameOver=false,confettiTimer=null,deadPlayer=false,idleTick=0,painting=false,lastPaintKey='',visualOri=0,soundOn=true,sfxOn=true,musicOn=true,audioCtx=null,rotatorCooldown=false,teleporterCooldownType=null,gamePaused=false;
 let playerTrail=[]; // V43.18 : afterimages visuels pendant la chute, sans effet gameplay.
-let eternalFallWraps=0,elevatorMusicTimer=null,elevatorMusicStarted=false,bgMusic=null,musicSourceNode=null,musicGainNode=null;
-const BG_MUSIC_PATH="audio/music/Petals_in_Perfect_Order.mp3";
-// V43.31 : audio protégé iPhone.
- // Musique MP3 routée dans WebAudio GainNode si possible, car iOS ignore parfois HTMLAudioElement.volume.
- // SFX = volume WebAudio global multiplié par un boost maître.
+let eternalFallWraps=0,elevatorMusicStarted=false;
+// Musique et bruitages : audio.js (DGAudio). Les curseurs règlent ses deux volumes.
 const DEFAULT_MUSIC_VOLUME=0.15;
 const DEFAULT_SFX_VOLUME=0.30;
-const SFX_GAIN_BOOST=10.0;
-const SFX_MAX_GAIN=0.95;
 let musicVolume=DEFAULT_MUSIC_VOLUME;
 let sfxVolume=DEFAULT_SFX_VOLUME;
 let activeSwitchKey=null;
@@ -686,7 +697,7 @@ function resetPlay(){
   b=arr(levels[currentLevel].map);
   door=baseDoorOpen();
   dgFallAnim=null;dgImpact=null;dgRot=null;dgMelody=[];dgQueue=[];dgWhoosh(0);dgHistory="";
-  moves=0;busy=false;gameOver=false;deadPlayer=false;rotatorCooldown=false;teleporterCooldownType=null;eternalFallWraps=0;gamePaused=false;activeSwitchKey=null;activeSwitchHeld=false;resetPlayerTrail();hideBanner();
+  moves=0;busy=false;gameOver=false;deadPlayer=false;heartTaken=false;rotatorCooldown=false;teleporterCooldownType=null;eternalFallWraps=0;gamePaused=false;activeSwitchKey=null;activeSwitchHeld=false;resetPlayerTrail();hideBanner();
   rot.setAttribute("transform",`rotate(0 ${BOARD/2} ${BOARD/2})`);visualOri=0;
   for(let y=0;y<H;y++)for(let x=0;x<W;x++){
     if(b[y][x]=="A"){p={x,y};start={x,y};b[y][x]="."}
@@ -733,34 +744,10 @@ function toggleLock(){
 }
 function ensureAudio(){
   if(!soundOn)return null;
-  if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)();
-  if(audioCtx.state==="suspended")audioCtx.resume().catch(()=>{});
+  audioCtx=DGAudio.ctx(); // un seul contexte pour la musique et les bruitages (voir audio.js)
   return audioCtx;
 }
 
-function ensureMusicRouting(){
-  if(!bgMusic)return null;
-  const ac=ensureAudio();
-  if(!ac)return null;
-
-  if(!musicGainNode){
-    musicGainNode=ac.createGain();
-    musicGainNode.connect(ac.destination);
-  }
-
-  if(!musicSourceNode){
-    try{
-      musicSourceNode=ac.createMediaElementSource(bgMusic);
-      musicSourceNode.connect(musicGainNode);
-      bgMusic.volume=1;
-    }catch(e){
-      // Si le navigateur refuse la route WebAudio, on garde le fallback HTMLAudioElement.volume.
-      console.warn("[AUDIO] routing musique WebAudio impossible, fallback HTML volume", e);
-    }
-  }
-
-  return musicGainNode;
-}
 function clamp01(v){return Math.max(0,Math.min(1,Number(v)||0));}
 function percent(v){return Math.round(clamp01(v)*100);}
 function syncAudioSliders(){
@@ -776,60 +763,19 @@ function syncAudioSliders(){
 function applyAudioVolumes(){
   musicVolume=clamp01(musicVolume);
   sfxVolume=clamp01(sfxVolume);
-
-  const targetMusicVolume=(soundOn && musicOn) ? musicVolume : 0;
-
-  if(bgMusic){
-    if(musicGainNode && audioCtx){
-      try{
-        musicGainNode.gain.cancelScheduledValues(audioCtx.currentTime);
-        musicGainNode.gain.setTargetAtTime(targetMusicVolume,audioCtx.currentTime,0.025);
-        // Quand la musique passe par WebAudio, le volume HTML reste à 1.
-        // Le vrai contrôle est musicGainNode.gain. Oui, iOS mérite une petite laisse.
-        bgMusic.volume=1;
-      }catch(e){
-        bgMusic.volume=targetMusicVolume;
-      }
-    }else{
-      bgMusic.volume=targetMusicVolume;
-    }
-  }
-
+  DGAudio.setVolumes((soundOn&&musicOn)?musicVolume:0,(soundOn&&sfxOn)?sfxVolume:0);
   syncAudioSliders();
 }
-function beep(freq=440,dur=.08,type="square",gain=.04,kind="sfx"){
-  if(kind==="sfx" && (!soundOn || !sfxOn || sfxVolume<=0))return;
-  if(kind==="music" && (!soundOn || !musicOn || musicVolume<=0))return;
-  const ac=ensureAudio(); if(!ac)return;
-  const o=ac.createOscillator(), g=ac.createGain(), f=ac.createBiquadFilter();
-  o.type=type; o.frequency.value=freq;
-  f.type="lowpass"; f.frequency.value=kind==="music"?1200:4200;
-  const baseVolume = kind==="music" ? musicVolume : sfxVolume;
-  const boost = kind==="sfx" ? SFX_GAIN_BOOST : 1;
-  const maxGain = kind==="sfx" ? SFX_MAX_GAIN : 0.18;
-  const finalGain=Math.max(0.0001,Math.min(maxGain,gain*baseVolume*boost));
-  g.gain.setValueAtTime(finalGain,ac.currentTime);
-  g.gain.exponentialRampToValueAtTime(0.001,ac.currentTime+Math.max(.02,dur));
-  o.connect(f); f.connect(g); g.connect(ac.destination); o.start(); o.stop(ac.currentTime+dur);
-}
 function startElevatorMusic(){
-  if(!soundOn || !musicOn || gamePaused || edit || gameOver)return;
-  if(!bgMusic){
-    bgMusic=new Audio(BG_MUSIC_PATH);
-    bgMusic.loop=true;
-    bgMusic.preload="auto";
-    bgMusic.playsInline=true;
-  }
-  ensureMusicRouting();
+  if(!soundOn || !musicOn || gamePaused || edit)return;
+  if(!ensureAudio())return;
   applyAudioVolumes();
-  if(!bgMusic.paused)return;
+  DGAudio.music.start(dgChapterIndexOfLevel(currentLevel||0)); // même chapitre : continue (et remonte si baissée)
   elevatorMusicStarted=true;
-  bgMusic.play().catch(()=>{elevatorMusicStarted=false;});
 }
 function stopElevatorMusic(){
-  if(elevatorMusicTimer){clearInterval(elevatorMusicTimer);elevatorMusicTimer=null;}
   elevatorMusicStarted=false;
-  if(bgMusic)bgMusic.pause();
+  DGAudio.music.stop();
 }
 function updatePauseButtons(){
   const a=document.getElementById("pauseSfxToggle"),m=document.getElementById("pauseMusicToggle"),e=document.getElementById("soundToggle");
@@ -841,21 +787,22 @@ function setPaused(v){
   gamePaused=!!v;
   const menu=document.getElementById("pauseMenu");
   if(menu)menu.classList.toggle("hidden",!gamePaused);
+  if(gamePaused)dgFitButtons(menu);
   if(gamePaused)stopElevatorMusic(); else if(!edit&&!gameOver)startElevatorMusic();
 }
+function sfxReady(){return soundOn&&sfxOn&&sfxVolume>0&&ensureAudio();}
 function soundRotate(d){
   // discret : la mélodie, ce sont les murs qui la jouent
-  beep(d>0?330:294,.05,"sine",.012,"sfx");
+  if(sfxReady())DGAudio.sfx.rotate(d);
 }
 
-function soundCrash(){beep(110,.14,"triangle",.026,"sfx");setTimeout(()=>beep(82,.18,"sine",.018,"sfx"),90)}
-function soundLose(){beep(330,.16,"triangle",.026,"sfx");setTimeout(()=>beep(294,.18,"triangle",.022,"sfx"),170);setTimeout(()=>beep(247,.34,"sine",.018,"sfx"),350)}
-function soundDoor(){beep(180,.045,"square",.024,"sfx");setTimeout(()=>beep(420,.10,"triangle",.024,"sfx"),60);}
-function soundEternalFall(){beep(150,.14,"triangle",.025,"sfx");setTimeout(()=>beep(120,.20,"sine",.020,"sfx"),150);setTimeout(()=>beep(98,.28,"sine",.016,"sfx"),330)}
+function soundCrash(){if(sfxReady())DGAudio.sfx.crash();}
+function soundLose(){if(sfxReady())DGAudio.sfx.lose();}
+function soundDoor(){if(sfxReady())DGAudio.sfx.door();}
+function soundEternalFall(){if(sfxReady())DGAudio.sfx.eternal();}
 function userAudioGesture(){
   ensureAudio();
-  // Ne jamais appeler bgMusic.load() ici : sur mobile, chaque rotation déclenche userAudioGesture(),
-  // et load() remet le MP3 au début / provoque une coupure. La musique doit survivre aux rotations.
+  // appelé à chaque rotation sur mobile : la musique, si elle tourne déjà, continue sans coupure
   if(musicOn && !gamePaused && !edit && !gameOver)startElevatorMusic();
 }
 function toggleSound(){
@@ -872,7 +819,7 @@ function hideBanner(){
 }
 
 function showBanner(title,msg,stars,kind){
-  hideCompanion(false);stopElevatorMusic();
+  hideCompanion(false);DGAudio.music.duck(true);
   const level=currentLevel, token=fallToken;
   const stillThere=()=>gameOver&&level===currentLevel&&token===fallToken; // le joueur a pu relancer pendant le tampon
   if(kind==="win"||kind==="final"){
@@ -899,6 +846,8 @@ function showBanner(title,msg,stars,kind){
 }
 function starScore(){
   const max=levels[currentLevel].maxMoves||999;
+  // niveau avec un cœur à ramasser : 1 cœur pour la victoire, 1 pour le cœur ramassé, 1 pour le sans-faute
+  if(levelHasHeart())return 1+(heartTaken?1:0)+(moves<=max?1:0);
   if(moves<=max)return 3;
   if(moves<=max+2)return 2;
   if(moves<=max+4)return 1;
@@ -921,8 +870,8 @@ function validateVectorAssetsData(data){
 }
 
 async function loadVectorAssets(){
-  setLoadingText("Chargement vector_assets_runtime.json…");
-  const candidates=["./vector_assets_runtime.json","vector_assets_runtime.json","/vector_assets_runtime.json","./vector_assets.json","vector_assets.json","/vector_assets.json"];
+  setLoadingText("Chargement vector_assets.json…");
+  const candidates=["./vector_assets.json","vector_assets.json","/vector_assets.json"];
   let lastErr=null;
   for(const path of candidates){
     try{
@@ -946,7 +895,7 @@ async function loadVectorAssets(){
   vectorAssetPack=null;
   window.__vectorAssetsLoadedFrom=null;
   showVectorAssetsError(lastErr);
-  throw lastErr || new Error("vector_assets_runtime.json / vector_assets.json introuvables");
+  throw lastErr || new Error("vector_assets.json introuvable");
 }
 function vectorAsset(name){return vectorAssetPack&&vectorAssetPack.assets?vectorAssetPack.assets[name]:null}
 function readCharacterGender(key,fallback){
@@ -1214,11 +1163,7 @@ function refreshTeleporterCooldown(){
   const c=currentTeleporterType();
   if(!c || c!==teleporterCooldownType)teleporterCooldownType=null;
 }
-function soundTeleport(){
-  beep(520,.045,"sine",.026,"sfx");
-  setTimeout(()=>beep(780,.055,"triangle",.018,"sfx"),48);
-  setTimeout(()=>beep(1040,.045,"sine",.012,"sfx"),95);
-}
+function soundTeleport(){if(sfxReady())DGAudio.sfx.teleport();}
 function teleportFx(x,y,type){
   const svgRect=svg.getBoundingClientRect();
   const scale=svgRect.width/BOARD;
@@ -1387,6 +1332,8 @@ function draw(){
     else if(isTeleporterChar(c))name=teleporterAssetName(c);
     else if(c==="X")name="danger";
     else if(c==="D")name="block_up";
+    else if(c==="F")name="fragile";
+    else if(c==="H")name="heart_pickup";
     else if(c==="O")name="block_down";
     if(!name)continue;
     if(ang){
@@ -1427,11 +1374,11 @@ function draw(){
   drawPlayerSpeedTrail();
   // 3) le joueur : il s'étire en tombant, s'écrase à l'impact, puis rebondit
   if(!edit&&!deadPlayer){
-    let py=p.y,fv=0;
+    let py=p.y,fv=0,falling=false;
     const fa=dgFallAnim;
     if(fa&&fa.x===p.x&&fa.to===p.y){
       const k=Math.min(1,(now-fa.t0)/fa.dur);
-      py=fa.from+(fa.to-fa.from)*k;fv=fa.v;
+      py=fa.from+(fa.to-fa.from)*k;fv=fa.v;falling=true;
     }
     const X=p.x*T,Y=py*T;
     const o={rot:-ang+lean,state:{t:now}};
@@ -1441,16 +1388,20 @@ function draw(){
     }
     if(won){o.state.eye="happy";o.state.mouth="grin";o.dy=hop(0);o.dx=T*.25;}
     else if(lost){o.state.eye="sad";o.state.mouth="sad";}
-    else if(fa&&fv>0){
-      o.sx=1-fv*.2;o.sy=1+fv*.38;
-      o.state.stretch=fv;o.state.ey=1.5;
-      if(fv>.35)o.state.mouth="o";
+    else if(falling){
+      // étirement cartoon : il s'allonge dès qu'il décolle, et de plus en plus avec la vitesse
+      const st=Math.max(.32,fv);
+      o.sx=1-st*.2;o.sy=1+st*.42;
+      o.state.stretch=st;o.state.ey=1.5;
+      if(st>.35)o.state.mouth="o";
     }else{
-      if(idt<420){
-        const s=imp*Math.exp(-idt/85)*Math.cos(idt/36);
-        o.sx=1+s*.42;o.sy=1-s*.36;
-        if(idt<170&&imp>.3)o.state.eye="hit";
-        if(idt<220&&imp>.2)o.state.mouth="o";
+      // écrasement à l'atterrissage, puis deux petits rebonds qui s'amortissent (ancré par les pieds)
+      const sq=dgImpact?dgImpact.sq||0:0;
+      if(idt<560&&sq){
+        const s=sq*Math.exp(-idt/115)*Math.cos(idt/40);
+        o.sx=1+s*.42;o.sy=1-s*.34;
+        if(idt<190&&sq>.3)o.state.eye="hit";
+        if(idt<240&&sq>.2)o.state.mouth="o";
       }
       if(!o.state.eye){
         if(now%3400<130)o.state.eye="blink";
@@ -1491,7 +1442,15 @@ function draw(){
     }
   }
   if(!window.CG_EDITOR_MODE && edit){ edit=false; }
-  const editing=edit && window.CG_EDITOR_MODE;
+  dgSyncEditUI();
+}
+/* boutons de l'éditeur : on ne touche à la page que si quelque chose a changé (draw() tourne à chaque image) */
+let dgEditUIKey="";
+function dgSyncEditUI(){
+  const editing=!!(edit && window.CG_EDITOR_MODE);
+  const key=editing+"|"+currentLevel+"|"+isLocked();
+  if(key===dgEditUIKey)return;
+  dgEditUIKey=key;
   document.body.classList.toggle("editing",editing);
   const editToggle=document.getElementById("toggleEdit");
   editToggle.textContent=editing?"Quitter l’édition":"Éditer";
@@ -1500,11 +1459,18 @@ function draw(){
   document.getElementById("levelInput").value=currentLevel+1;updateLockUI();
 }
 /* la poussière du décor tombe en continu (elle montre le sens de la gravité) et accélère pendant une chute */
+let dgMoteEls=null,dgRem=0;
+window.addEventListener("resize",()=>{dgRem=0;});
 function dgMotes(dt){
   const v=dgFallAnim?dgFallAnim.v:0;
   dgMoteY=(dgMoteY+dt*(.035+v*.5))%100000;
-  const m=document.getElementById("motes");
-  if(m)m.style.setProperty("--my",dgMoteY.toFixed(1));
+  if(document.getElementById("gfx")?.classList.contains("dgWeather"))return; // météo affichée : poussière masquée
+  if(!dgMoteEls)dgMoteEls=document.querySelectorAll("#motes i");
+  if(dgMoteEls.length<2)return;
+  if(!dgRem)dgRem=parseFloat(getComputedStyle(document.documentElement).fontSize)||16;
+  // chaque calque avance de moins d'un motif puis revient : la boucle ne se voit pas
+  dgMoteEls[0].style.transform="translate3d(0,"+(dgMoteY%(7.1*dgRem)).toFixed(1)+"px,0)";
+  dgMoteEls[1].style.transform="translate3d(0,"+((dgMoteY*1.6)%(9.3*dgRem)).toFixed(1)+"px,0)";
 }
 
 let levelUndoStack=[];
@@ -1598,7 +1564,19 @@ window.addEventListener("blur",stopPaint);
 document.addEventListener("mouseleave",stopPaint);
 document.addEventListener("visibilitychange",()=>{if(document.hidden)stopPaint()});
 
-function block(c){return c=="#"||c=="D"} // D bloque. O ne bloque jamais.
+function block(c){return c=="#"||c=="D"||c=="F"} // D et le mur fragile bloquent. O ne bloque jamais.
+/* Mur fragile (F) : il cède quand le personnage atterrit dessus après une chute d'au moins FRAGILE_FALL cases.
+   Cœur à ramasser (H) : optionnel, ramassé au passage ; dans un niveau qui en a un, il vaut un cœur de victoire. */
+const FRAGILE_FALL=2;
+let heartTaken=false;
+function levelHasHeart(){return (levels[currentLevel]?.map||[]).some(r=>r.includes("H"));}
+function touchHeart(){
+  if(!p||!b[p.y]||b[p.y][p.x]!=="H")return;
+  b[p.y][p.x]=".";heartTaken=true;
+  if(sfxReady())DGAudio.sfx.pickup();
+  floatingHearts();
+  draw();
+}
 function solid(x,y){return x<0||y<0||x>=W||y>=H||block(b[y][x])}
 function cw(m){let o=Array.from({length:H},()=>Array(W).fill("."));for(let y=0;y<H;y++)for(let x=0;x<W;x++)o[x][H-1-y]=m[y][x];return o}
 function ccw(m){let o=Array.from({length:H},()=>Array(W).fill("."));for(let y=0;y<H;y++)for(let x=0;x<W;x++)o[W-1-x][y]=m[y][x];return o}
@@ -1631,6 +1609,7 @@ function buttonIsPressed(x,y){
 
 function touchSwitch(){
   if(!p || !b[p.y])return false;
+  touchHeart(); // le cœur se ramasse partout où passe le personnage (touchSwitch est appelé à chaque case)
   const onSwitch=b[p.y][p.x]==="S";
   if(!onSwitch){
     // Le bouton ne sera réarmé qu'après avoir réellement quitté une case bouton.
@@ -1833,6 +1812,16 @@ function fall(){
       touchSwitch();
       setTimeout(step,ms);
     }else{
+      // atterrissage brutal sur un mur fragile : il cède et la chute continue
+      const fx=wrapX(p.x),fy=wrapY(p.y+1);
+      if(b[fy]&&b[fy][fx]==="F"&&dist>=FRAGILE_FALL){
+        b[fy][fx]=".";
+        if(sfxReady())DGAudio.sfx.crack();
+        shake(3);gravelFx(4);
+        draw();
+        setTimeout(step,getFallDelayMs());
+        return;
+      }
       const switched=touchSwitch();
 
       // Si le bouton vient d’ouvrir une porte sous le cube, on ne force pas un arrêt artificiel.
@@ -1852,8 +1841,8 @@ function fall(){
         let stars="♥".repeat(s)+"♡".repeat(3-s);
         status.textContent="Niveau gagné.";
         bigHeart();
-        floatingHearts();
-        startConfetti();
+        const chEnd=dgChapterOfLevel(currentLevel), big=currentLevel===levels.length-1||(!!chEnd&&chEnd.levelIds[chEnd.levelIds.length-1]===currentLevel);
+        if(big){floatingHearts();startConfetti();}
         saveWinProgress();
         if(currentLevel===levels.length-1){
           showBanner("",tr("Tu as terminé les {n} niveaux. Après tous ces rendez-vous, cette fois c'était la bonne personne.",{n:levels.length}),"","final");
@@ -2259,7 +2248,7 @@ function testCurrentLevel(){
 
 // V45 : la progression est rangée par id de niveau. Avant elle l'était par position,
 // donc insérer ou réordonner un niveau décalait toute la sauvegarde du joueur.
-const PROGRESS_KEY="gravity_cube_player_progress_v2";
+const PROGRESS_KEY=window.DG_TEST?"dg_editor_test_progress":"gravity_cube_player_progress_v2";
 
 function levelKey(idx){
   const l=levels[idx];
@@ -2311,10 +2300,13 @@ function currentLevelString(){
 }
 function currentMechanics(){
   const s=currentLevelString();
-  return {button:/[SDO]/.test(s), death:s.includes("X"), rot:/[RL]/.test(s), teleporter:/[123]/.test(s)};
+  return {button:/[SDO]/.test(s), death:s.includes("X"), rot:/[RL]/.test(s), teleporter:/[123]/.test(s), fragile:s.includes("F"), heart:s.includes("H")};
 }
 function companionStage(){
   const m=currentMechanics();
+  // la brique la plus récente d'abord : c'est elle que le compagnon présente
+  if(m.heart)return "heart";
+  if(m.fragile)return "fragile";
   if(m.teleporter)return "teleporter";
   if(m.rot)return "rotator";
   if(m.death)return "death";
@@ -2329,6 +2321,16 @@ function companionMessage(kind="intro"){
   const stage=companionStage();
   if(stage==="core"){
     return "Glisse à droite ou à gauche pour tourner le plateau. Je tombe, et je m'arrête au premier obstacle.";
+  }
+  if(stage==="fragile"){
+    return kind==="hint"
+      ? "Indice : une petite chute ne casse pas le verre. Prends de l'élan avant de tomber dessus."
+      : "Nouveauté : le mur de verre. Si je tombe dessus de haut, il se brise et je continue ma chute.";
+  }
+  if(stage==="heart"){
+    return kind==="hint"
+      ? "Indice : le cœur est en option, mais il vaut un cœur de victoire. Trouve le détour qui passe par lui."
+      : "Nouveauté : un cœur à ramasser. Passe dessus avant de me rejoindre, et la victoire sera plus belle.";
   }
   if(stage==="wrap"){
     return kind==="hint"
@@ -2625,6 +2627,17 @@ async function loadStaticLevels(){
   setLoadingText("Chargement levels.json…");
   // levels.json est la seule source des niveaux : s'il manque, on l'explique au lieu de servir une vieille copie.
   try{
+    if(window.DG_TEST){
+      // le niveau envoyé par l'éditeur, seul dans son chapitre ; la rencontre est déjà faite, pas de carte d'intro
+      const t=JSON.parse(localStorage.getItem("dg_editor_test")||"null");
+      if(t&&t.level){
+        const ch=Object.assign({},t.chapter||{id:"test",number:1,name:"Test"});
+        t.level.chapter=ch.id;
+        localStorage.setItem(PROGRESS_KEY,JSON.stringify({best:{},met:{[ch.id]:true},hints:99}));
+        applyLevelsData({version:6,settings:t.settings||{},chapters:[ch],levels:[t.level]},"éditeur");
+        return;
+      }
+    }
     const result=await fetchJsonFromCandidates("LEVELS",["./levels.json","levels.json","/levels.json"]);
     applyLevelsData(result.data,result.path);
   }catch(err){
@@ -2639,7 +2652,7 @@ async function loadStaticLevels(){
    avec un cap à 60 fps et un garde-fou pour ne rien dessiner avant le chargement.
 */
 const INGAME_ANIM_FPS=60;
-let lastIngameAnimTs=0;
+let lastIngameAnimTs=0,dgCalmFrame=false;
 function ingameAnimationLoop(ts){
   if(!lastIngameAnimTs)lastIngameAnimTs=ts;
   const minDt=1000/INGAME_ANIM_FPS;
@@ -2653,7 +2666,13 @@ function ingameAnimationLoop(ts){
       dgIdle();
       dgHelpUpdate();
       dgFlush();
-      draw();
+      // au repos, seuls les yeux, le halo et le petit cœur bougent : une image sur deux suffit,
+      // et le téléphone chauffe moins (il ralentit quand il chauffe)
+      const calm=!busy&&!dgRot&&!dgFallAnim&&!gameOver&&!(dgImpact&&ts-dgImpact.t<700)&&!playerTrail.length;
+      dgCalmFrame=!dgCalmFrame;
+      // pendant le défilement vers le niveau suivant, le plateau ne bouge pas : le redessiner obligerait le
+      // téléphone à repeindre tout le plateau en mouvement à chaque image (c'était l'attente sur Android)
+      if((!calm||dgCalmFrame)&&!dgTx.busy)draw();
     }
   }
   requestAnimationFrame(ingameAnimationLoop);
@@ -2778,7 +2797,7 @@ function dgSafeStartLevel(){
    écrans (chapitres, niveaux, rencontres), fenêtres (victoire, défaite, indice), transitions,
    notes de musique, effets de chute et d'impact. Les règles (turn / fall / blocs) ne changent pas. */
 const DG_WORLDS=DGSpirit.WORLDS; // deux couleurs par chapitre, partagées avec le menu
-const DG_MECH_LABEL={base:"tourner, tomber",wrap:"bords ouverts",button:"clés et cadenas",danger:"cœurs brisés",rotator:"rotateurs",teleporter:"téléporteurs",mix:"tout mélangé"};
+const DG_MECH_LABEL={base:"tourner, tomber",wrap:"bords ouverts",button:"clés et cadenas",danger:"cœurs brisés",rotator:"rotateurs",teleporter:"téléporteurs",fragile:"murs de verre",heart:"cœurs à ramasser",mix:"tout mélangé"};
 let dgC1=DG_WORLDS[0][0],dgC2=DG_WORLDS[0][1];
 let dgTutoActive=false;
 let dgSkipProfileOnce=false;
@@ -2827,7 +2846,18 @@ function dgTint(ci){
   root.setProperty("--bg",bio[0]);
   const svg='<svg xmlns="http://www.w3.org/2000/svg" width="180" height="180" fill="none" stroke="'+dgC2+'" stroke-opacity=".5" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="'+bio[1]+'"/><g transform="translate(98 94) scale(.7)"><path d="'+bio[1]+'"/></g></svg>';
   root.setProperty("--biome",'url("data:image/svg+xml,'+encodeURIComponent(svg)+'")');
+  dgApplyAmbiance(ci);
 }
+/* Ambiance du chapitre : moment de la journée et météo (ambiance.js). game.html?ambiance=night,snow pour essayer. */
+function dgApplyAmbiance(ci){
+  if(!window.DGAmbiance)return;
+  const q=new URLSearchParams(location.search).get("ambiance");
+  let opt=DGAmbiance.CHAPTERS[ci%DGAmbiance.CHAPTERS.length];
+  if(q){const [time,weather]=q.split(",");opt={time:time||opt.time,weather:weather||"none"};}
+  let ok=true;try{ok=localStorage.getItem("dg_weather")!=="0";}catch(e){}
+  DGAmbiance.apply(document.getElementById("gfx"),ok?opt:{time:opt.time,weather:"none"});
+}
+if(window.DGAmbiance)DGAmbiance.onThunder=()=>{if(sfxReady())DGAudio.sfx.thunder();};
 /* Coup de pouce. Le joueur « peine » sur un niveau après deux essais ratés ou recommencés, trois coups
    de trop, ou une minute et demie sans réussir. La personne à rejoindre propose alors son aide : une
    bulle « ? » au-dessus de sa tête, et sa réplique change. Rien ne s'ouvre tout seul. */
@@ -3084,6 +3114,18 @@ function dgShowScreen(id){
   if(!el)return;
   el.classList.add("show");
   el.setAttribute("aria-hidden","false");
+  dgFitButtons(el);
+}
+/* Un libellé trop long pour son bouton (« Chapitre suivant », l'allemand…) rapetisse jusqu'à tenir,
+   au lieu de déborder de l'écran. */
+function dgFitButtons(root){
+  if(!root)return;
+  requestAnimationFrame(()=>root.querySelectorAll(".btn").forEach(el=>{
+    el.style.fontSize="";
+    if(!el.clientWidth)return;
+    let fs=parseFloat(getComputedStyle(el).fontSize),n=0;
+    while(el.scrollWidth>el.clientWidth+1&&n++<14){fs*=.92;el.style.fontSize=fs.toFixed(1)+"px";}
+  }));
 }
 function dgHideScreen(id){
   const el=document.getElementById(id);
@@ -3099,12 +3141,9 @@ function dgUiOpen(){
 function dgReactLine(){
   if(dgHelp.on)return tr("Besoin d'un coup de pouce ? Touche-moi.");
   const max=Number(levels[currentLevel]?.maxMoves)||0;
-  if(moves===0)return tr("Je t'attends, viens !");
-  const left=max-moves;
-  if(left>1)return tr("Encore {n} coups pour le sans-faute.",{n:left});
-  if(left===1)return tr("Plus qu'un coup pour le sans-faute !");
-  if(left===0)return tr("C'était le dernier coup du sans-faute…");
-  return tr("Prends ton temps, je ne bouge pas.");
+  // une seule phrase, et seulement quand le sans-faute vient d'être dépassé : ça rassure sans compter les coups
+  if(max&&moves>max&&!gameOver)return tr("Prends ton temps, je ne bouge pas.");
+  return "";
 }
 function dgSetReact(text,tuto){
   const t=document.getElementById("companionText");
@@ -3113,8 +3152,9 @@ function dgSetReact(text,tuto){
   if(!t)return;
   if(t.textContent!==text){
     t.textContent=text;
-    if(bubble){bubble.classList.remove("pop");void bubble.offsetWidth;bubble.classList.add("pop");}
+    if(bubble&&text){bubble.classList.remove("pop");void bubble.offsetWidth;bubble.classList.add("pop");}
   }
+  if(bubble)bubble.classList.toggle("quiet",!text); // rien à dire : la bulle disparaît
   if(skip)skip.classList.toggle("hidden",!tuto);
   dgTutoActive=!!tuto;
 }
@@ -3122,7 +3162,8 @@ function dgSetReact(text,tuto){
 /* --- musique du plateau
    Chaque mur a sa note, toujours la même : en avançant dans le niveau on compose une petite phrase,
    rejouée à la victoire. Gamme pentatonique (aucune fausse note possible), une tonalité par chapitre. */
-const DG_SCALES=[[60,[0,2,4,7,9]],[62,[0,2,4,7,9]],[57,[0,3,5,7,10]],[64,[0,2,4,7,9]],[55,[0,2,4,7,9]],[58,[0,3,5,7,10]],[65,[0,2,4,7,9]],[60,[0,3,5,7,10]]];
+// la gamme de la musique (audio.js) : do ré mi sol la. Les murs ne peuvent donc jamais jouer faux par-dessus.
+const DG_SCALES=[[60,DGAudio.SCALE]];
 const dgHz=midi=>440*Math.pow(2,(midi-69)/12);
 function dgNoteAt(cx,cy){
   // le plateau a tourné : on ramène la case dans le repère d'origine pour qu'un mur garde sa note
@@ -3132,47 +3173,15 @@ function dgNoteAt(cx,cy){
   const i=(((q.x*2+q.y*3)%10)+10)%10;
   return dgHz(sc[0]+sc[1][i%5]+12*Math.floor(i/5));
 }
-function dgGain(g){
-  if(!soundOn||!sfxOn||sfxVolume<=0)return 0;
-  return Math.min(SFX_MAX_GAIN,g*sfxVolume*SFX_GAIN_BOOST);
-}
 function dgPluck(freq,gain=.03,when=0){
-  const vol=dgGain(gain);
-  if(!vol||!audioCtx)return;
-  const ac=audioCtx,t=ac.currentTime+when;
-  [[1,"triangle",1],[2,"sine",.32]].forEach(v=>{
-    const o=ac.createOscillator(),g=ac.createGain();
-    o.type=v[1];o.frequency.value=freq*v[0];
-    g.gain.setValueAtTime(.0001,t);
-    g.gain.exponentialRampToValueAtTime(vol*v[2],t+.012);
-    g.gain.exponentialRampToValueAtTime(.0001,t+.52);
-    o.connect(g);g.connect(ac.destination);o.start(t);o.stop(t+.56);
-  });
+  if(!sfxReady())return;
+  DGAudio.sfx.note(freq,Math.min(.16,gain*2.6),when);
 }
-function dgThump(imp){
-  const vol=dgGain(.02+imp*.05);
-  if(!vol||!audioCtx)return;
-  const ac=audioCtx,t=ac.currentTime,o=ac.createOscillator(),g=ac.createGain();
-  o.type="sine";o.frequency.setValueAtTime(150+imp*40,t);o.frequency.exponentialRampToValueAtTime(42,t+.13);
-  g.gain.setValueAtTime(vol,t);g.gain.exponentialRampToValueAtTime(.0001,t+.16+imp*.12);
-  o.connect(g);g.connect(ac.destination);o.start(t);o.stop(t+.36);
-}
-let dgNoise=null;
+function dgThump(imp){if(sfxReady())DGAudio.sfx.thump(imp);}
 function dgWhoosh(v){
-  if(!audioCtx)return;
-  const ac=audioCtx;
-  if(!dgNoise){
-    if(v<=0)return;
-    const buf=ac.createBuffer(1,ac.sampleRate,ac.sampleRate),d=buf.getChannelData(0);
-    for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
-    const src=ac.createBufferSource();src.buffer=buf;src.loop=true;
-    const f=ac.createBiquadFilter();f.type="bandpass";f.Q.value=1.2;
-    const g=ac.createGain();g.gain.value=0;
-    src.connect(f);f.connect(g);g.connect(ac.destination);src.start();
-    dgNoise={f,g};
-  }
-  dgNoise.g.gain.setTargetAtTime(dgGain(.006)*v,ac.currentTime,.03);
-  dgNoise.f.frequency.setTargetAtTime(500+v*2600,ac.currentTime,.03);
+  if(!soundOn||!sfxOn){v=0;}
+  if(!audioCtx&&v<=0)return;
+  if(ensureAudio())DGAudio.sfx.whoosh(v);
 }
 /* à la victoire : on rejoue la phrase du niveau, puis l'accord de la tonalité */
 function dgPlayMelody(){
@@ -3181,8 +3190,7 @@ function dgPlayMelody(){
     dgPluck(f,.024,i*.095);
     setTimeout(()=>{if(bars[i])bars[i].classList.add("on");},i*95);
   });
-  const sc=DG_SCALES[dgChapterIndexOfLevel(currentLevel||0)%DG_SCALES.length], end=notes.length*.095+.06;
-  [0,sc[1][2],7,12].forEach((semi,i)=>dgPluck(dgHz(sc[0]+semi),.02,end+i*.03));
+  if(sfxReady())DGAudio.sfx.winChord(notes.length*.095+.06);
 }
 
 /* --- chute et impact */
@@ -3201,7 +3209,8 @@ function dgLand(dist){
   dgFallAnim=null;
   dgWhoosh(0);
   const imp=Math.min(1,dist/6);
-  dgImpact={t:performance.now(),imp:Math.max(.1,imp),x:p.x,y:p.y,flash:dist>0};
+  // sq : force de l'écrasement du personnage. Même une petite chute se voit, une grande l'aplatit franchement.
+  dgImpact={t:performance.now(),imp:Math.max(.1,imp),sq:dist>0?Math.min(1,.45+dist/8):0,x:p.x,y:p.y,flash:dist>0};
   if(dist>0){shake(dist);gravelFx(dist);dgThump(imp);}
   if(dist===0&&moves===0)return; // posé au départ du niveau : pas encore de note
   const f=dgNoteAt(wrapX(p.x),wrapY(p.y+1));
@@ -3233,7 +3242,10 @@ function dgShowWin(kind,finalText){
   const l=levels[currentLevel], s=starScore(), info=dgLevelPos(currentLevel);
   const last=currentLevel===levels.length-1;
   const chapterDone=!!info.ch && info.ch.levelIds[info.ch.levelIds.length-1]===currentLevel;
-  document.getElementById("winTitle").textContent=tr(last?"Fin de l'histoire":(chapterDone?"Chapitre terminé":"Match !"));
+  // le tampon « MATCH ! » vient de le dire : la fenêtre d'un niveau normal n'a pas de titre
+  const big=last||chapterDone;
+  document.getElementById("winTitle").textContent=big?tr(last?"Fin de l'histoire":"Chapitre terminé"):"";
+  document.getElementById("winMelody").classList.toggle("hidden",!big);
   document.getElementById("winHearts").innerHTML="<span>♥</span>".repeat(s)+"<u>"+"♥".repeat(3-s)+"</u>";
   document.getElementById("winMoves").textContent=(last&&finalText?finalText+" ":"")+tr(moves>1?"{n} coups · objectif {max}":"{n} coup · objectif {max}",{n:moves,max:l.maxMoves||"?"});
   // la phrase composée pendant le niveau
@@ -3259,7 +3271,10 @@ function dgShowWin(kind,finalText){
   }
   const next=document.getElementById("winNext"), replay=document.getElementById("winReplay");
   next.disabled=false;
-  if(last){
+  if(last&&window.DG_TEST){
+    next.textContent=tr("Rejouer");
+    next.onclick=()=>resetPlay();
+  }else if(last){
     next.textContent=tr("Mes rencontres");
     next.onclick=()=>dgRubans(()=>{hideBanner();dgShowCollection();});
   }else{
@@ -3274,7 +3289,8 @@ function dgShowWin(kind,finalText){
   }
   replay.onclick=()=>resetPlay();
   document.getElementById("winScreen").classList.remove("hidden");
-  dgPlayMelody();
+  dgFitButtons(document.getElementById("winScreen"));
+  if(big)dgPlayMelody();else if(sfxReady())DGAudio.sfx.winChord(.05);
 }
 
 /* --- Premium : proposé juste après une pub, une fois sur trois, jamais plus. C'est le moment où le joueur
@@ -3301,36 +3317,6 @@ function dgPremiumOffer(){
 }
 
 /* --- solution contre pub récompensée */
-const dgSolutionSeen=new Set(); // solutions déjà débloquées pendant cette session
-async function dgRequestSolution(){
-  if(edit || !levels[currentLevel])return;
-  const key=levelKey(currentLevel);
-  if(!levels[currentLevel].solution){showInfoBanner(tr("Pas de solution"),tr("Ce niveau n'a pas encore de solution enregistrée."));return;}
-  if(!(window.CG_EDITOR_MODE || dgSolutionSeen.has(key))){
-    const ok=await (window.DGAds?DGAds.showRewarded("solution"):Promise.resolve(true));
-    if(!ok || levelKey(currentLevel)!==key)return;
-    dgSolutionSeen.add(key);
-  }
-  dgShowSolution();
-}
-function showLevelRecap(){return dgRequestSolution();}
-function dgShowSolution(){
-  const l=levels[currentLevel];
-  const seq=String(l.solution||"");
-  const helper=DGSpirit.person(dgChapterIndexOfLevel(currentLevel)+3);
-  dgPortrait("bannerArt",helper.kind,dgDateSex()==="f"?"m":"f",{eye:"happy"});
-  bannerTitle.textContent=tr("Le coup de pouce");
-  bannerText.textContent=tr("{name} te souffle la solution, depuis le début du niveau :",{name:helper.name});
-  starsEl.innerHTML='<div class="seq">'+seq.split("").map(c=>c==="R"?'<b class="r">⟳</b>':'<b>⟲</b>').join("")+'</div>'+
-    '<p>'+tr(seq.length>1?"{n} coups · ⟳ tourne vers la droite, ⟲ tourne vers la gauche":"{n} coup · ⟳ tourne vers la droite, ⟲ tourne vers la gauche",{n:seq.length})+'</p>';
-  const alt=document.getElementById("bannerAlt");
-  bannerAction.textContent=tr("Recommencer");
-  bannerAction.onclick=()=>resetPlay();
-  alt.textContent=gameOver?"":tr("Fermer");
-  alt.onclick=()=>banner.classList.add("hidden");
-  banner.classList.remove("lose");
-  banner.classList.remove("hidden");
-}
 
 /* --- nouvelle rencontre : affichée une seule fois, au premier niveau de chaque chapitre */
 function dgShowIntro(){
@@ -3646,7 +3632,6 @@ loadVectorAssets()
           if(typeof musicVolume!=="undefined")musicVolume=Math.max(0,Math.min(1,Number(ms.value)/100));
           if(typeof musicOn!=="undefined")musicOn=musicVolume>0;
           if(typeof soundOn!=="undefined")soundOn=(typeof sfxOn==="undefined"?true:sfxOn)||musicOn;
-          if(typeof ensureMusicRouting==="function")ensureMusicRouting();
           if(typeof applyAudioVolumes==="function")applyAudioVolumes();
           if(typeof updatePauseButtons==="function")updatePauseButtons();
         },{passive:true});

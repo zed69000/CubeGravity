@@ -8,18 +8,19 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const out = join(root, "www");
 const FILES = [
   "index.html",
+  "version.js",
   "game.html",
   "ads.js",
   "i18n.js",
   "premium.js",
   "lang",
   "spirits.js",
+  "audio.js",
+  "ambiance.js",
   "levels.json",
   "vector_assets.json",
-  "vector_assets_runtime.json",
   "manifest.webmanifest",
   "icons",
-  "audio/music/Petals_in_Perfect_Order.mp3",
 ];
 
 rmSync(out, { recursive: true, force: true });

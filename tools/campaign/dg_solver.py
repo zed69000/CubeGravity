@@ -7,7 +7,9 @@ Sert à valider et noter les niveaux hors du navigateur :
   python tools/campaign/dg_solver.py levels.json
 
 Tuiles : # mur, A départ, B arrivée, S bouton, D bloc sorti, O bloc rentré,
-X mort, R/L rotateurs, 1/2/3 téléporteurs.
+X mort, R/L rotateurs, 1/2/3 téléporteurs,
+F mur fragile (il casse quand on atterrit dessus après une chute d'au moins FRAGILE_FALL cases),
+H cœur à ramasser (optionnel : dans un niveau qui en a un, « gagner » veut dire l'avoir ramassé).
 """
 from __future__ import annotations
 
@@ -18,6 +20,8 @@ from collections import deque
 MAX_FALL_STEPS = 160  # même garde-fou que le jeu ("Boucle stoppée pour sécurité")
 MAX_AUTO_ROTATIONS = 6  # au-delà, deux rotateurs se renvoient le cube sans fin : niveau invalide
 ETERNAL_WRAPS = 3
+FRAGILE_FALL = 2  # même seuil que le jeu : une chute de 2 cases ou plus brise le mur fragile
+SOLID = "#DF"
 
 
 def cw(m):
@@ -66,6 +70,7 @@ def fall(b, p, telecd, held, ori, used, trace=None):
     rotcd = False
     safety = 0
     autorot = 0
+    dist = 0          # cases parcourues depuis le début de cette chute (le jeu repart à zéro après une rotation)
     b = [r[:] for r in b]
 
     def switch():
@@ -93,6 +98,9 @@ def fall(b, p, telecd, held, ori, used, trace=None):
         if trace is not None:
             trace.add(unrot(p, ori, n))
         switch()
+        if b[p[1]][p[0]] == "H":                       # cœur ramassé au passage
+            b[p[1]][p[0]] = "."
+            used.add("H")
         c = b[p[1]][p[0]]
         if c == "X":
             return "dead", b, p, telecd, held, ori
@@ -117,12 +125,13 @@ def fall(b, p, telecd, held, ori, used, trace=None):
             ori += d
             used.add("rot")
             safety = 0  # le jeu relance un fall() neuf après la rotation auto
+            dist = 0
             continue
         ny = p[1] + 1
         leaves = ny >= n
         if leaves:
             ny = 0
-        if b[ny][p[0]] not in "#D":
+        if b[ny][p[0]] not in SOLID:
             if leaves:
                 wraps += 1
                 used.add("wrap")
@@ -130,10 +139,15 @@ def fall(b, p, telecd, held, ori, used, trace=None):
                     return "eternal", b, p, telecd, held, ori
             p = (p[0], ny)
             rotcd = False
+            dist += 1
             switch()
             continue
+        if b[ny][p[0]] == "F" and dist >= FRAGILE_FALL:  # atterrissage brutal : le mur fragile cède
+            b[ny][p[0]] = "."
+            used.add("F")
+            continue
         if switch():
-            if b[(p[1] + 1) % n][p[0]] not in "#D":
+            if b[(p[1] + 1) % n][p[0]] not in SOLID:
                 continue
         return "land", b, p, telecd, held, ori
 
@@ -172,10 +186,14 @@ def explore(rows, win=True, maxstates=300, trace=None):
         return res
     nodes = res["nodes"]
 
+    heart = any("H" in r for r in rows)
+
     def add(b, p, t, h, o, depth, parent, move, used):
+        end = win and b[p[1]][p[0]] == "B"            # le jeu s'arrête sur la rencontre
         nodes.append({"b": b, "p": p, "t": t, "h": h, "o": o, "depth": depth,
                       "parent": parent, "move": move, "used": used,
-                      "cell": unrot(p, o, n), "win": win and b[p[1]][p[0]] == "B",
+                      "cell": unrot(p, o, n), "end": end,
+                      "win": end and not (heart and any("H" in r for r in b)),
                       "edges": []})
         return len(nodes) - 1
 
@@ -184,7 +202,7 @@ def explore(rows, win=True, maxstates=300, trace=None):
     while q:
         i = q.popleft()
         nd = nodes[i]
-        if nd["win"]:
+        if nd["end"]:
             continue
         for d, ch in ((-1, "L"), (1, "R")):
             u = set(nd["used"])

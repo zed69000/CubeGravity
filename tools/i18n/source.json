@@ -128,22 +128,6 @@
   "contexte": "écran de jeu (texte dynamique)"
  },
  {
-  "fr": "Je t'attends, viens !",
-  "contexte": "écran de jeu (texte dynamique)"
- },
- {
-  "fr": "Encore {n} coups pour le sans-faute.",
-  "contexte": "écran de jeu (texte dynamique)"
- },
- {
-  "fr": "Plus qu'un coup pour le sans-faute !",
-  "contexte": "écran de jeu (texte dynamique)"
- },
- {
-  "fr": "C'était le dernier coup du sans-faute…",
-  "contexte": "écran de jeu (texte dynamique)"
- },
- {
   "fr": "Prends ton temps, je ne bouge pas.",
   "contexte": "écran de jeu (texte dynamique)"
  },
@@ -153,10 +137,6 @@
  },
  {
   "fr": "Chapitre terminé",
-  "contexte": "écran de jeu (texte dynamique)"
- },
- {
-  "fr": "Match !",
   "contexte": "écran de jeu (texte dynamique)"
  },
  {
@@ -173,6 +153,10 @@
  },
  {
   "fr": "rejoue pour aller plus loin",
+  "contexte": "écran de jeu (texte dynamique)"
+ },
+ {
+  "fr": "Rejouer",
   "contexte": "écran de jeu (texte dynamique)"
  },
  {
@@ -201,26 +185,6 @@
  },
  {
   "fr": "Plus tard",
-  "contexte": "écran de jeu (texte dynamique)"
- },
- {
-  "fr": "Le coup de pouce",
-  "contexte": "écran de jeu (texte dynamique)"
- },
- {
-  "fr": "{name} te souffle la solution, depuis le début du niveau :",
-  "contexte": "écran de jeu (texte dynamique)"
- },
- {
-  "fr": "{n} coups · ⟳ tourne vers la droite, ⟲ tourne vers la gauche",
-  "contexte": "écran de jeu (texte dynamique)"
- },
- {
-  "fr": "{n} coup · ⟳ tourne vers la droite, ⟲ tourne vers la gauche",
-  "contexte": "écran de jeu (texte dynamique)"
- },
- {
-  "fr": "Recommencer",
   "contexte": "écran de jeu (texte dynamique)"
  },
  {
@@ -320,15 +284,15 @@
   "contexte": "écran de jeu (bouton, titre ou libellé)"
  },
  {
-  "fr": "Rejouer",
-  "contexte": "écran de jeu (bouton, titre ou libellé)"
- },
- {
   "fr": "Menu pause",
   "contexte": "écran de jeu (bouton, titre ou libellé)"
  },
  {
   "fr": "Reprendre",
+  "contexte": "écran de jeu (bouton, titre ou libellé)"
+ },
+ {
+  "fr": "Recommencer",
   "contexte": "écran de jeu (bouton, titre ou libellé)"
  },
  {
@@ -377,6 +341,10 @@
  },
  {
   "fr": "Aucun achat à restaurer.",
+  "contexte": "menu principal (texte dynamique)"
+ },
+ {
+  "fr": "Effacer toute ta progression et recommencer depuis le premier niveau ?",
   "contexte": "menu principal (texte dynamique)"
  },
  {
@@ -436,7 +404,27 @@
   "contexte": "menu principal (bouton, titre ou libellé)"
  },
  {
+  "fr": "Recommencer depuis le début",
+  "contexte": "menu principal (bouton, titre ou libellé)"
+ },
+ {
   "fr": "Glisse à droite ou à gauche pour tourner le plateau. Je tombe, et je m'arrête au premier obstacle.",
+  "contexte": "bulle de tutoriel dite par le personnage"
+ },
+ {
+  "fr": "Indice : une petite chute ne casse pas le verre. Prends de l'élan avant de tomber dessus.",
+  "contexte": "bulle de tutoriel dite par le personnage"
+ },
+ {
+  "fr": "Nouveauté : le mur de verre. Si je tombe dessus de haut, il se brise et je continue ma chute.",
+  "contexte": "bulle de tutoriel dite par le personnage"
+ },
+ {
+  "fr": "Indice : le cœur est en option, mais il vaut un cœur de victoire. Trouve le détour qui passe par lui.",
+  "contexte": "bulle de tutoriel dite par le personnage"
+ },
+ {
+  "fr": "Nouveauté : un cœur à ramasser. Passe dessus avant de me rejoindre, et la victoire sera plus belle.",
   "contexte": "bulle de tutoriel dite par le personnage"
  },
  {
@@ -505,6 +493,14 @@
  },
  {
   "fr": "téléporteurs",
+  "contexte": "mécanique d'un chapitre, en minuscules"
+ },
+ {
+  "fr": "murs de verre",
+  "contexte": "mécanique d'un chapitre, en minuscules"
+ },
+ {
+  "fr": "cœurs à ramasser",
   "contexte": "mécanique d'un chapitre, en minuscules"
  },
  {
@@ -600,11 +596,11 @@
   "contexte": "titre de chapitre"
  },
  {
-  "fr": "Premier regard",
+  "fr": "Bonjour timide",
   "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
  },
  {
-  "fr": "Bonjour timide",
+  "fr": "Premier regard",
   "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
  },
  {
@@ -616,27 +612,23 @@
   "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
  },
  {
-  "fr": "Sourire en coin",
-  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
- },
- {
   "fr": "Petit signe",
   "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
  },
  {
-  "fr": "Les yeux baissés",
-  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
- },
- {
-  "fr": "Premier rendez-vous",
-  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
- },
- {
-  "fr": "Hors des sentiers",
+  "fr": "Le grand détour",
   "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
  },
  {
   "fr": "Faire le tour",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Prendre le large",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Hors des sentiers",
   "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
  },
  {
@@ -648,19 +640,11 @@
   "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
  },
  {
-  "fr": "Prendre le large",
-  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
- },
- {
   "fr": "Tourner autour du pot",
   "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
  },
  {
   "fr": "Sortir de sa bulle",
-  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
- },
- {
-  "fr": "Le grand détour",
   "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
  },
  {
@@ -672,7 +656,7 @@
   "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
  },
  {
-  "fr": "Le déclic",
+  "fr": "Sourire en coin",
   "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
  },
  {
@@ -680,11 +664,15 @@
   "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
  },
  {
-  "fr": "Porte entrouverte",
+  "fr": "Briser la glace",
   "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
  },
  {
-  "fr": "Briser la glace",
+  "fr": "Le déclic",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
+  "fr": "Porte entrouverte",
   "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
  },
  {
@@ -717,14 +705,6 @@
  },
  {
   "fr": "Jeanne labyrinthe",
-  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
- },
- {
-  "fr": "Fermer à clé",
-  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
- },
- {
-  "fr": "Cœur à code",
   "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
  },
  {
@@ -773,22 +753,6 @@
  },
  {
   "fr": "Message supprimé",
-  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
- },
- {
-  "fr": "Dîner chez belle-maman",
-  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
- },
- {
-  "fr": "Ligne rouge",
-  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
- },
- {
-  "fr": "Pas ce soir",
-  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
- },
- {
-  "fr": "Cœur en miettes",
   "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
  },
  {
@@ -848,30 +812,6 @@
   "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
  },
  {
-  "fr": "Demi-tour droite",
-  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
- },
- {
-  "fr": "Carrousel",
-  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
- },
- {
-  "fr": "Montagnes russes",
-  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
- },
- {
-  "fr": "Perdre le nord",
-  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
- },
- {
-  "fr": "Grand huit",
-  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
- },
- {
-  "fr": "Vertige d’amour",
-  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
- },
- {
   "fr": "En un éclair",
   "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
  },
@@ -924,30 +864,6 @@
   "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
  },
  {
-  "fr": "Aller-retour",
-  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
- },
- {
-  "fr": "Trou de ver",
-  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
- },
- {
-  "fr": "Tête dans les étoiles",
-  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
- },
- {
-  "fr": "Deux adresses",
-  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
- },
- {
-  "fr": "Transit",
-  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
- },
- {
-  "fr": "Téléportés",
-  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
- },
- {
   "fr": "Statut flou",
   "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
  },
@@ -980,10 +896,6 @@
   "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
  },
  {
-  "fr": "Première dispute",
-  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
- },
- {
   "fr": "Réconciliation",
   "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
  },
@@ -992,35 +904,15 @@
   "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
  },
  {
+  "fr": "Première dispute",
+  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
+ },
+ {
   "fr": "Double jeu",
   "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
  },
  {
   "fr": "Le tiroir vide",
-  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
- },
- {
-  "fr": "Compromis",
-  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
- },
- {
-  "fr": "Les clés de chez toi",
-  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
- },
- {
-  "fr": "Carton plein",
-  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
- },
- {
-  "fr": "Emménager",
-  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
- },
- {
-  "fr": "Tout ou rien",
-  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
- },
- {
-  "fr": "Le cap des trois ans",
   "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
  },
  {
@@ -1044,11 +936,11 @@
   "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
  },
  {
-  "fr": "Le canapé du dimanche",
+  "fr": "Pour de vrai",
   "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
  },
  {
-  "fr": "Pour de vrai",
+  "fr": "Le canapé du dimanche",
   "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
  },
  {
@@ -1077,30 +969,6 @@
  },
  {
   "fr": "À la folie",
-  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
- },
- {
-  "fr": "Plus fort que tout",
-  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
- },
- {
-  "fr": "Le grand oui",
-  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
- },
- {
-  "fr": "Pour toujours",
-  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
- },
- {
-  "fr": "Âmes sœurs",
-  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
- },
- {
-  "fr": "Destinée",
-  "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
- },
- {
-  "fr": "La bonne personne",
   "contexte": "nom de niveau : court, clin d'œil à la drague et aux rencontres"
  }
 ]

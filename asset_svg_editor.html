@@ -173,7 +173,7 @@ body.hide-transform-box [data-transform-box] {
 <header>
   <h1><span class="a">GRAVITY</span> <span class="b">CUBE</span> SVG Asset Studio <small>V43.46 group-only + faithful merge</small></h1>
   <div class="row">
-    <button id="toggleTransformBtn" title="Ctrl+T">Cadre transform</button><button id="undoBtn">Undo</button><button id="redoBtn">Redo</button><button id="copyJson">Copier JSON</button><button id="downloadJson" class="primary">Télécharger source éditeur</button><button id="downloadRuntimeJson" class="green">Télécharger runtime baked</button>
+    <button id="toggleTransformBtn" title="Ctrl+T">Cadre transform</button><button id="undoBtn">Undo</button><button id="redoBtn">Redo</button><button id="copyJson">Copier JSON</button><button id="downloadJson" class="primary">Télécharger source éditeur</button>
   </div>
 </header>
 <main>
@@ -230,7 +230,7 @@ body.hide-transform-box [data-transform-box] {
 
   <div class="tab" data-panel="json">
     <label>Importer vector_assets.json</label><input id="fileInput" type="file" accept=".json,application/json">
-    <label>JSON courant</label><textarea id="jsonView" spellcheck="false"></textarea><div class="row" style="margin-top:8px"><button id="applyJson">Appliquer JSON texte</button><button id="mergeTeleporters" class="green">Fusionner téléporteurs</button></div>
+    <label>JSON courant</label><textarea id="jsonView" spellcheck="false"></textarea><div class="row" style="margin-top:8px"><button id="applyJson">Appliquer JSON texte</button></div>
   </div>
 </section>
 
@@ -361,8 +361,7 @@ const $=id=>document.getElementById(id),svg=$("svgPreview"),levelSvg=$("levelPre
 const clone=o=>JSON.parse(JSON.stringify(o));const asset=()=>pack.assets[currentAsset]||(pack.assets[currentAsset]={layers:[],groups:[]});const layers=()=>asset().layers||(asset().layers=[]);const groups=()=>asset().groups||(asset().groups=[]);const setStatus=s=>statusEl.textContent=s;const selectedIndices=()=>[...selected].filter(i=>layers()[i]).sort((a,b)=>a-b);const activeLayer=()=>layers()[activeLayerIndex];
 
 /* ===== V43.15 EXTERNAL MERGE / LOAD HELPERS =====
-   Rien n'est codé en dur ici : l'éditeur lit vector_assets.json et, si besoin,
-   lit teleporter_vector_assets_patch.json pour ajouter les trois téléporteurs manquants.
+   Rien n'est codé en dur ici : l'éditeur lit vector_assets.json.
 */
 function assertEditableVectorPack(data,source){
   if(!data || typeof data!=="object")throw new Error(source+" : JSON vide ou invalide");
@@ -400,35 +399,6 @@ async function loadVectorAssetsFromDisk(){
   selectFirstUsefulAsset();
   return path;
 }
-async function mergeTeleporterPatchFromDisk(options={}){
-  if(!pack.assets)pack.assets={};
-  try{
-    const {data,path}=await fetchJsonFromCandidates(["./teleporter_vector_assets_patch.json","teleporter_vector_assets_patch.json","/teleporter_vector_assets_patch.json"],"teleporter_vector_assets_patch.json");
-    const patchAssets=data.assets||data;
-    let added=0;
-    ["teleporter_1","teleporter_2","teleporter_3"].forEach(name=>{
-      if(!pack.assets[name] && patchAssets[name]){
-        pack.assets[name]=clone(patchAssets[name]);
-        added++;
-      }
-    });
-    if(!options.silent){
-      renderAll();
-      setStatus(added?"Téléporteurs fusionnés depuis "+path+" : "+added:"Téléporteurs déjà présents, rien à fusionner.");
-    }
-    return added;
-  }catch(e){
-    console.warn("[SVG_EDITOR] patch téléporteurs non chargé",e);
-    if(!options.silent)setStatus("Patch téléporteurs introuvable ou invalide : teleporter_vector_assets_patch.json.");
-    return 0;
-  }
-}
-async function mergeTeleportersNow(){
-  const added=await mergeTeleporterPatchFromDisk({silent:true});
-  selectFirstUsefulAsset();
-  renderAll();
-  setStatus(added?"Téléporteurs fusionnés depuis le patch externe : "+added:"Téléporteurs déjà présents, rien à écraser.");
-}
 
 function hexToRgba(hex,a){if(!/^#[0-9a-fA-F]{6}$/.test(hex))return hex;const r=parseInt(hex.slice(1,3),16),g=parseInt(hex.slice(3,5),16),b=parseInt(hex.slice(5,7),16);a=Number(a);return a>=1?hex:`rgba(${r},${g},${b},${a})`}
 function currentFill(){return $("fillEnabled").checked?hexToRgba($("fillColor").value,$("fillAlpha").value):"none"}function currentStroke(){return $("strokeEnabled").checked?hexToRgba($("strokeColor").value,$("strokeAlpha").value):"none"}function currentStrokeWidth(){return $("strokeEnabled").checked?Math.max(1,Number($("strokeWidth").value||2)):0}
@@ -457,12 +427,6 @@ function ensureSelectionStablePivot(){
   if(g) ensureGroupStablePivot(g);
 }
 
-function moveGroupPivotWithDelta(g,dx,dy){
-  if(!g) return;
-  ensureGroupStablePivot(g);
-  g.pivotX=Number(g.pivotX)+dx;
-  g.pivotY=Number(g.pivotY)+dy;
-}
 
 function staticTransform(l){
   const parts=[];
@@ -641,29 +605,6 @@ function download(){const blob=new Blob([JSON.stringify(pack,null,2)],{type:"app
 // V22 runtime export: bake static transforms for the game, keep source editor non destructive.
 function cloneJson(o){return JSON.parse(JSON.stringify(o));}
 function num(v,d=0){const n=Number(v);return Number.isFinite(n)?n:d;}
-function bboxOfLayer(l){
-  if(!l)return {x:0,y:0,w:0,h:0};
-  if(l.shape==="circle"){const r=num(l.r,0);return {x:num(l.x,0)-r,y:num(l.y,0)-r,w:r*2,h:r*2};}
-  if(l.shape==="polygon"||l.shape==="line"){
-    const pts=(l.points||[]).map(p=>Array.isArray(p)?{x:num(p[0]),y:num(p[1])}:(()=>{const a=String(p).replace(","," ").split(/\s+/);return {x:num(a[0]),y:num(a[1])};})());
-    if(!pts.length)return {x:0,y:0,w:0,h:0};
-    const xs=pts.map(p=>p.x),ys=pts.map(p=>p.y);const x=Math.min(...xs),y=Math.min(...ys);return {x,y,w:Math.max(...xs)-x,h:Math.max(...ys)-y};
-  }
-  if(l.shape==="text"){const fs=num(l.fontSize,12);return {x:num(l.x,0),y:num(l.y,0)-fs,w:String(l.text||"").length*fs*.6,h:fs};}
-  return {x:num(l.x,0),y:num(l.y,0),w:num(l.w,10),h:num(l.h,10)};
-}
-function basePointsForBake(l){
-  const shape=l.shape||"rect";
-  if(shape==="rect"){const x=num(l.x,0),y=num(l.y,0),w=num(l.w,10),h=num(l.h,10);return [[x,y],[x+w,y],[x+w,y+h],[x,y+h]];}
-  if(shape==="circle"){const cx=num(l.x,20),cy=num(l.y,20),r=num(l.r,8);return Array.from({length:24},(_,i)=>[cx+Math.cos(i*Math.PI*2/24)*r,cy+Math.sin(i*Math.PI*2/24)*r]);}
-  if(shape==="polygon"||shape==="line")return (l.points||[]).map(p=>Array.isArray(p)?[num(p[0]),num(p[1])]:(()=>{const a=String(p).replace(","," ").split(/\s+/);return [num(a[0]),num(a[1])];})());
-  return null;
-}
-function applyStaticTransformToPoints(pts,l){
-  const b=bboxOfLayer(l);const cx=num(l.pivotX,b.x+b.w/2),cy=num(l.pivotY,b.y+b.h/2);
-  const sx=num(l.scaleX,1),sy=num(l.scaleY,1);const r=num(l.rotation,0)*Math.PI/180;const c=Math.cos(r),s=Math.sin(r);
-  return pts.map(([x,y])=>{const dx=(x-cx)*sx,dy=(y-cy)*sy;return [Number((dx*c-dy*s+cx).toFixed(3)),Number((dx*s+dy*c+cy).toFixed(3))];});
-}
 
 function compactNum(v){v=Number(v);if(!Number.isFinite(v))return 0;return Math.abs(v-Math.round(v))<1e-6?Math.round(v):Number(v.toFixed(3))}
 function basePointsForRuntimeBake(l){
@@ -702,23 +643,7 @@ function bakeLayerForRuntime(layer){
   if(l.rx!==undefined && l.ry===undefined)l.ry=l.rx;
   return l;
 }
-function buildRuntimePack(){
-  const out={version:pack.version||1,canvasSize:pack.canvasSize||40,runtimeBaked:true,assets:{}};
-  if(pack.themePreview)out.themePreview=cloneJson(pack.themePreview);
-  Object.entries(pack.assets||{}).forEach(([id,a])=>{
-    out.assets[id]={layers:(a.layers||[]).map(bakeLayerForRuntime)};
-    if(a.groups&&a.groups.length){
-      out.assets[id].groups=a.groups.map(g=>{
-        const o={};
-        ["id","name","children","anim","visible","tx","ty","scaleX","scaleY","rotation","pivotX","pivotY"].forEach(k=>{if(g[k]!==undefined)o[k]=cloneJson(g[k])});
-        return o;
-      });
-    }
-  });
-  return out;
-}
 
-function downloadRuntime(){v43CommitCornerRadiusBeforeExport();const runtime=buildRuntimePack();const blob=new Blob([JSON.stringify(runtime)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="vector_assets_runtime.json";a.click();URL.revokeObjectURL(a.href);setStatus("Runtime baked exporté : animations/groupes conservés, transforms statiques baked quand possible.");}
 
 function bindTabs(){document.querySelectorAll("#tabs button").forEach(b=>b.onclick=()=>{document.querySelectorAll("#tabs button").forEach(x=>x.classList.remove("active"));document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));b.classList.add("active");const panel=document.querySelector(`[data-panel="${b.dataset.tab}"]`);if(panel)panel.classList.add("active");if(b.dataset.tab==='json')renderJson?.()})}
 
@@ -727,10 +652,9 @@ function loadInitial(){
     try{
       setStatus("Chargement de vector_assets.json…");
       const source=await loadVectorAssetsFromDisk();
-      const added=await mergeTeleporterPatchFromDisk({silent:true});
       renderAll();
       loop();
-      setStatus("vector_assets.json chargé par défaut depuis "+source+(added?" · téléporteurs fusionnés : "+added:"."));
+      setStatus("vector_assets.json chargé par défaut depuis "+source+".");
     }catch(e){
       console.error(e);
       setStatus("Impossible de charger vector_assets.json. Lance run_local_server.bat et vérifie que vector_assets.json est à côté de asset_svg_editor.html.");
@@ -772,9 +696,6 @@ function v37RestorePaintIfNeeded(l){
   if($("fillEnabled") && $("fillEnabled").checked && (!l.fill || l.fill==="none" || l.fill==="transparent")){
     l.fill = l._lastFill || $("fillColor")?.value || "#ffffff";
   }
-}
-function v37SelectedLayerIds(){
-  return selectedIndices().map(i=>layers()[i]?.id).filter(Boolean);
 }
 function v37CurrentGroup(){
   if(activeGroupId) return groups().find(g=>g.id===activeGroupId) || null;
@@ -914,9 +835,6 @@ function v38RememberLayerPaint(l){
   if(Number(l.strokeWidth) > 0) l._lastStrokeWidth = Number(l.strokeWidth);
   if(l.fill && l.fill !== "none" && l.fill !== "transparent") l._lastFill = l.fill;
 }
-function v38RememberSelectedPaint(){
-  selectedIndices().forEach(i=>v38RememberLayerPaint(layers()[i]));
-}
 function v38ApplyStrokeEnabledToSelection(){
   const enabled = $("strokeEnabled") ? $("strokeEnabled").checked : true;
   pushHistory();
@@ -989,11 +907,6 @@ function v43ApplyCornerRadiusToSelection(options={}){
   if(hiddenRx) hiddenRx.value = r;
   if(!options.noRender) renderAll();
   if(!options.silent) setStatus("Arrondi appliqué : " + r);
-}
-function v43CommitCornerRadiusBeforeExport(){
-  const el = $("cornerRadiusInput");
-  if(!el || el.disabled) return;
-  v43ApplyCornerRadiusToSelection({silent:true,noRender:true});
 }
 function v43SyncCornerRadiusFromActive(){
   const l = activeLayer && activeLayer();
@@ -1368,7 +1281,7 @@ setTimeout(()=>{
 
 
 bindTabs();
-svg.addEventListener("pointerdown",startDraw);svg.addEventListener("pointermove",moveDraw);svg.addEventListener("pointerup",endDraw);svg.addEventListener("pointercancel",()=>drag=null);["Select","Rect","Circle","Line","Free","Text"].forEach(n=>{$("tool"+n).onclick=()=>setTool(n.toLowerCase());const rb=$("railTool"+n);if(rb)rb.onclick=()=>setTool(n.toLowerCase())});["layerId","x","y","rx","w","h","r","textValue"].forEach(id=>$(id).addEventListener("change",writeFormToActive));assetSelect.onchange=()=>{currentAsset=assetSelect.value;selected.clear();activeLayerIndex=0;activeGroupId="";renderAll()};$("selectAll").onclick=()=>{selected=new Set(layers().map((_,i)=>i));activeLayerIndex=0;renderAll()};$("clearSelection").onclick=()=>{selected.clear();renderAll()};$("deleteSelected").onclick=deleteSelected;$("duplicateSelected").onclick=duplicateSelected;$("moveUp").onclick=()=>moveLayer(activeLayerIndex,-1);$("moveDown").onclick=()=>moveLayer(activeLayerIndex,1);$("copySelected").onclick=copySelected;$("copyAll").onclick=copyAll;$("pasteLayers").onclick=pasteLayers;$("createGroup").onclick=createGroup;$("addSelectedToGroup").onclick=addSelectedToGroup;$("removeSelectedFromGroup").onclick=removeSelectedFromGroup;$("selectGroupFromDock").onclick=selectGroupChildren;if($("applyGroupAnimDock"))$("applyGroupAnimDock").onclick=applyGroup;$("activeGroupSelect").onchange=syncActiveGroupSelect;$("selectGroupChildren").onclick=selectGroupChildren;$("deleteGroup").onclick=deleteGroup;$("applyGroup").onclick=applyGroup;$("clearGroupAnim").onclick=clearGroupAnim;$("applyFillToSelection").onclick=()=>recolorSelected({fill:true});$("applyStrokeToSelection").onclick=()=>recolorSelected({stroke:true});$("applyColorsToSelection").onclick=()=>recolorSelected({fill:true,stroke:true});["fillEnabled","fillColor","fillAlpha"].forEach(id=>$(id).addEventListener("change",()=>{if(selected.size){v37RememberPaintBeforeDisable();recolorSelected({fill:true});}else renderAll()}));["strokeEnabled","strokeColor","strokeAlpha","strokeWidth"].forEach(id=>$(id).addEventListener("change",()=>{if(selected.size){v37RememberPaintBeforeDisable();recolorSelected({stroke:true});}else renderAll()}));$("pointEdit").addEventListener("change",renderAll);$("curveMode").addEventListener("change",()=>{const ids=selectedIndices();if(!ids.length)return;pushHistory();ids.forEach(i=>{const l=layers()[i];if(Array.isArray(l.points)){if($("curveMode").value==="linear"){l.shape="polygon";delete l.d;delete l.curveMode}else{l.shape="path";l.curveMode=$("curveMode").value;l.d=pointsToPath(l.points,l.curveMode)}}});renderAll()});$("scaleSelectedHalf").onclick=()=>scaleSelected(.5);$("scaleSelectedUp").onclick=()=>scaleSelected(1.2);$("scaleSelectedDouble").onclick=()=>scaleSelected(2);$("resetAsset").onclick=()=>{selected.clear();setStatus("Reset manuel non destructif : recharge le fichier si besoin.")};$("undoBtn").onclick=undo;$("redoBtn").onclick=redo;$("downloadJson").onclick=download;if($("downloadRuntimeJson"))$("downloadRuntimeJson").onclick=downloadRuntime;$("copyJson").onclick=async()=>{await navigator.clipboard.writeText(JSON.stringify(pack,null,2));alert("JSON copié.")};$("applyJson").onclick=async()=>{try{pack=JSON.parse(jsonView.value);assertEditableVectorPack(pack,"JSON texte");selectFirstUsefulAsset();const added=await mergeTeleporterPatchFromDisk({silent:true});renderAll();setStatus("JSON appliqué"+(added?" · téléporteurs fusionnés : "+added:"."))}catch(e){alert("JSON invalide : "+e.message)}};$("fileInput").onchange=async e=>{const f=e.target.files[0];if(!f)return;pack=JSON.parse(await f.text());assertEditableVectorPack(pack,f.name);selectFirstUsefulAsset();const added=await mergeTeleporterPatchFromDisk({silent:true});renderAll();setStatus("Fichier importé : "+f.name+(added?" · téléporteurs fusionnés : "+added:"."))};if($("mergeTeleporters"))$("mergeTeleporters").onclick=mergeTeleportersNow;$("applyTheme").onclick=applyTheme;$("resetTheme").onclick=resetTheme;["previewDevice","previewMode","previewLevel","replaceTarget","realSize"].forEach(id=>$(id).addEventListener("change",renderAll));$("testReadability").onclick=()=>{$("previewMode").value="level";renderAll();setStatus("Preview lisibilité en contexte réel activée.")};document.querySelectorAll("[data-set-preview]").forEach(b=>b.onclick=()=>{$("previewMode").value=b.dataset.setPreview;renderAll()});document.querySelectorAll("[data-set-device]").forEach(b=>b.onclick=()=>{$("previewDevice").value=b.dataset.setDevice;renderAll()});document.querySelectorAll('#rightTabs button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#rightTabs button').forEach(x=>x.classList.remove('active'));document.querySelectorAll('[data-right-panel]').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelector(`[data-right-panel="${b.dataset.right}"]`)?.classList.add('active')});if($('applyLayerAnim'))$('applyLayerAnim').onclick=applyLayerAnim;if($('clearLayerAnim'))$('clearLayerAnim').onclick=clearLayerAnim;
+svg.addEventListener("pointerdown",startDraw);svg.addEventListener("pointermove",moveDraw);svg.addEventListener("pointerup",endDraw);svg.addEventListener("pointercancel",()=>drag=null);["Select","Rect","Circle","Line","Free","Text"].forEach(n=>{$("tool"+n).onclick=()=>setTool(n.toLowerCase());const rb=$("railTool"+n);if(rb)rb.onclick=()=>setTool(n.toLowerCase())});["layerId","x","y","rx","w","h","r","textValue"].forEach(id=>$(id).addEventListener("change",writeFormToActive));assetSelect.onchange=()=>{currentAsset=assetSelect.value;selected.clear();activeLayerIndex=0;activeGroupId="";renderAll()};$("selectAll").onclick=()=>{selected=new Set(layers().map((_,i)=>i));activeLayerIndex=0;renderAll()};$("clearSelection").onclick=()=>{selected.clear();renderAll()};$("deleteSelected").onclick=deleteSelected;$("duplicateSelected").onclick=duplicateSelected;$("moveUp").onclick=()=>moveLayer(activeLayerIndex,-1);$("moveDown").onclick=()=>moveLayer(activeLayerIndex,1);$("copySelected").onclick=copySelected;$("copyAll").onclick=copyAll;$("pasteLayers").onclick=pasteLayers;$("createGroup").onclick=createGroup;$("addSelectedToGroup").onclick=addSelectedToGroup;$("removeSelectedFromGroup").onclick=removeSelectedFromGroup;$("selectGroupFromDock").onclick=selectGroupChildren;if($("applyGroupAnimDock"))$("applyGroupAnimDock").onclick=applyGroup;$("activeGroupSelect").onchange=syncActiveGroupSelect;$("selectGroupChildren").onclick=selectGroupChildren;$("deleteGroup").onclick=deleteGroup;$("applyGroup").onclick=applyGroup;$("clearGroupAnim").onclick=clearGroupAnim;$("applyFillToSelection").onclick=()=>recolorSelected({fill:true});$("applyStrokeToSelection").onclick=()=>recolorSelected({stroke:true});$("applyColorsToSelection").onclick=()=>recolorSelected({fill:true,stroke:true});["fillEnabled","fillColor","fillAlpha"].forEach(id=>$(id).addEventListener("change",()=>{if(selected.size){v37RememberPaintBeforeDisable();recolorSelected({fill:true});}else renderAll()}));["strokeEnabled","strokeColor","strokeAlpha","strokeWidth"].forEach(id=>$(id).addEventListener("change",()=>{if(selected.size){v37RememberPaintBeforeDisable();recolorSelected({stroke:true});}else renderAll()}));$("pointEdit").addEventListener("change",renderAll);$("curveMode").addEventListener("change",()=>{const ids=selectedIndices();if(!ids.length)return;pushHistory();ids.forEach(i=>{const l=layers()[i];if(Array.isArray(l.points)){if($("curveMode").value==="linear"){l.shape="polygon";delete l.d;delete l.curveMode}else{l.shape="path";l.curveMode=$("curveMode").value;l.d=pointsToPath(l.points,l.curveMode)}}});renderAll()});$("scaleSelectedHalf").onclick=()=>scaleSelected(.5);$("scaleSelectedUp").onclick=()=>scaleSelected(1.2);$("scaleSelectedDouble").onclick=()=>scaleSelected(2);$("resetAsset").onclick=()=>{selected.clear();setStatus("Reset manuel non destructif : recharge le fichier si besoin.")};$("undoBtn").onclick=undo;$("redoBtn").onclick=redo;$("downloadJson").onclick=download;$("copyJson").onclick=async()=>{await navigator.clipboard.writeText(JSON.stringify(pack,null,2));alert("JSON copié.")};$("applyJson").onclick=async()=>{try{pack=JSON.parse(jsonView.value);assertEditableVectorPack(pack,"JSON texte");selectFirstUsefulAsset();renderAll();setStatus("JSON appliqué.")}catch(e){alert("JSON invalide : "+e.message)}};$("fileInput").onchange=async e=>{const f=e.target.files[0];if(!f)return;pack=JSON.parse(await f.text());assertEditableVectorPack(pack,f.name);selectFirstUsefulAsset();renderAll();setStatus("Fichier importé : "+f.name+".")};$("applyTheme").onclick=applyTheme;$("resetTheme").onclick=resetTheme;["previewDevice","previewMode","previewLevel","replaceTarget","realSize"].forEach(id=>$(id).addEventListener("change",renderAll));$("testReadability").onclick=()=>{$("previewMode").value="level";renderAll();setStatus("Preview lisibilité en contexte réel activée.")};document.querySelectorAll("[data-set-preview]").forEach(b=>b.onclick=()=>{$("previewMode").value=b.dataset.setPreview;renderAll()});document.querySelectorAll("[data-set-device]").forEach(b=>b.onclick=()=>{$("previewDevice").value=b.dataset.setDevice;renderAll()});document.querySelectorAll('#rightTabs button').forEach(b=>b.onclick=()=>{document.querySelectorAll('#rightTabs button').forEach(x=>x.classList.remove('active'));document.querySelectorAll('[data-right-panel]').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelector(`[data-right-panel="${b.dataset.right}"]`)?.classList.add('active')});if($('applyLayerAnim'))$('applyLayerAnim').onclick=applyLayerAnim;if($('clearLayerAnim'))$('clearLayerAnim').onclick=clearLayerAnim;
 if($('toggleTransformBtn'))$('toggleTransformBtn').onclick=toggleTransformBox;
 if($('animPlayPause'))$('animPlayPause').onclick=()=>{animPlaying=!animPlaying;if(!animPlaying)animClock=0;$('animPlayPause').textContent=animPlaying?'⏸ Pause preview anims':'▶ Play preview anims';setStatus(animPlaying?'Animations preview relancées.':'Animations preview stoppées : retour à la pose de base.');renderAll();};
 if($('showPivotBtn'))$('showPivotBtn').onclick=()=>{showPivots=!showPivots;$('showPivotBtn').textContent=showPivots?'Masquer pivots':'Afficher pivots';renderAll();};
@@ -1726,7 +1639,6 @@ function _v23Target(){
   if(g)return {type:'group',group:g,indices:(g.children||[]).map(id=>_v17FindLayerIndexById(id)).filter(i=>i>=0)};
   return activeLayer()?{type:'layers',indices:[activeLayerIndex]}:{type:'none',indices:[]};
 }
-function _v18TargetIndices(){return _v23Target().indices||[];}
 function _v21RawCorners(l){const b=layerBBox(l);return [[b.minX,b.minY],[b.maxX,b.minY],[b.maxX,b.maxY],[b.minX,b.maxY]];}
 function _v21TransformPointForLayer(l,x,y){
   const c=layerCenter(l);const cx=Number(l.pivotX??c.x),cy=Number(l.pivotY??c.y);
@@ -1756,7 +1668,6 @@ function _v23TargetCorners(target){
   const minX=Math.min(...bs.map(b=>b.minX)),minY=Math.min(...bs.map(b=>b.minY)),maxX=Math.max(...bs.map(b=>b.maxX)),maxY=Math.max(...bs.map(b=>b.maxY));
   return [[minX,minY],[maxX,minY],[maxX,maxY],[minX,maxY]];
 }
-function _v18BBoxForIndices(indices){return _v23BBoxFromCorners(_v23TargetCorners({type:'layers',indices}));}
 function _v18ApplyRotateFromOriginal(target,orig,angle,cx,cy){
   Object.keys(target).forEach(k=>delete target[k]);Object.assign(target,clone(orig));
   target.rotation=Number(orig.rotation||0)+angle*180/Math.PI;target.pivotX=cx;target.pivotY=cy;
@@ -1764,10 +1675,6 @@ function _v18ApplyRotateFromOriginal(target,orig,angle,cx,cy){
 function _v18ApplyScaleFromOriginal(target,orig,sx,sy,cx,cy){
   Object.keys(target).forEach(k=>delete target[k]);Object.assign(target,clone(orig));
   target.scaleX=Number(((Number(orig.scaleX??1))*sx).toFixed(4));target.scaleY=Number(((Number(orig.scaleY??1))*sy).toFixed(4));target.pivotX=cx;target.pivotY=cy;
-}
-function _v23ApplyMoveFromOriginal(target,orig,dx,dy){
-  Object.keys(target).forEach(k=>delete target[k]);Object.assign(target,clone(orig));
-  if(target.type==='group')return;
 }
 function _v23ApplyLayerMoveFromOriginal(target,orig,dx,dy){Object.keys(target).forEach(k=>delete target[k]);Object.assign(target,clone(orig));moveLayerData(target,dx,dy);}
 function _v23ApplyGroupMove(g,orig,dx,dy){Object.keys(g).forEach(k=>delete g[k]);Object.assign(g,clone(orig));g.tx=Number(((Number(orig.tx||0))+dx).toFixed(3));g.ty=Number(((Number(orig.ty||0))+dy).toFixed(3));}
@@ -2070,8 +1977,9 @@ document.addEventListener("drop", e=>{
     if(rot) rot.value = finite(l.rotation,0);
     if(sx) sx.value = finite(l.scaleX,1);
     if(sy) sy.value = finite(l.scaleY,1);
-    if(px) px.value = finite(l.pivotX,b.cx).toFixed(1);
-    if(py) py.value = finite(l.pivotY,b.cy).toFixed(1);
+    // layerBBox renvoie {x,y,w,h} : le pivot par défaut est le centre de la boîte
+    if(px) px.value = Number(finite(l.pivotX,b.x+b.w/2)).toFixed(1);
+    if(py) py.value = Number(finite(l.pivotY,b.y+b.h/2)).toFixed(1);
   }
 
   const previousRenderForm = window.renderForm || renderForm;
@@ -2948,7 +2856,6 @@ document.addEventListener("drop", e=>{
   function groupById(id){return groups().find(g=>g && g.id===id)||null;}
   function currentGroupSafe(){return activeGroupId ? groupById(activeGroupId) : null;}
   function groupLayerIndices(g){return (g?.children||[]).map(layerIndexById).filter(i=>i>=0);}
-  function activeGroupIndices(){return groupLayerIndices(currentGroupSafe());}
   function activeTargetIndices(){
     const g=currentGroupSafe();
     if(g) return groupLayerIndices(g);
@@ -5033,5 +4940,140 @@ document.addEventListener("drop", e=>{
 
 </script>
 
+
+<!-- ===== Habillage 2026 =====
+     Même thème et même logique de lecture que l'éditeur de niveaux (editor.html) :
+     outils à gauche, dessin au centre, calques à droite, libellés en français, enregistrement direct dans le fichier.
+     Ce bloc ne change que l'apparence et les textes : il passe après toutes les couches précédentes. -->
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@400;500;700;800;900&display=swap" rel="stylesheet">
+<style id="dgSkin">
+:root{--bg:#070a20;--panel:#0f1436;--panel2:#18204f;--line:#26306b;--ink:#eef1ff;--muted:#9aa6d6;--c1:#f6ff3d;--c2:#19e3ff;--cyan:#19e3ff;--yellow:#f6ff3d}
+body{background:radial-gradient(60rem 40rem at 50% 30%,rgba(25,227,255,.10),transparent 70%),radial-gradient(40rem 30rem at 10% 100%,rgba(246,255,61,.07),transparent 70%),var(--bg)!important;color:var(--ink)!important;font-family:Rubik,system-ui,Arial,sans-serif!important;font-size:14px}
+button,input,select,textarea{font-family:Rubik,system-ui,Arial,sans-serif!important}
+header{height:60px!important;display:flex!important;align-items:center!important;gap:.6rem;padding:0 1.1rem!important;background:rgba(15,20,54,.85)!important;border-bottom:1px solid var(--line)!important;backdrop-filter:blur(8px)}
+header h1{font:900 1.1rem/1 Rubik,Arial,sans-serif!important;letter-spacing:.02em!important;margin:0!important;white-space:nowrap;display:flex;align-items:center;gap:.6rem}
+header h1 small,header h1 .a,header h1 .b{display:none!important}
+header h1::before{content:"";width:34px;height:34px;border-radius:10px;background:url(icons/icon-192.png) center/cover;box-shadow:0 0 18px rgba(255,79,216,.45)}
+header h1::after{content:"Date Gravity · assets";background:linear-gradient(90deg,var(--c1),var(--c2));-webkit-background-clip:text;background-clip:text;color:transparent}
+header h1{font-size:0!important}
+header h1::after{font-size:1.1rem}
+header .row{margin-left:auto;display:flex!important;gap:.5rem!important;align-items:center}
+button{min-height:0!important;height:auto!important;padding:.5rem .9rem!important;border-radius:99px!important;background:var(--panel2)!important;color:var(--ink)!important;box-shadow:inset 0 0 0 1.5px var(--line)!important;border:0!important;outline:0!important;font-weight:700!important;font-size:.85rem!important;line-height:1.15!important;white-space:normal;transition:box-shadow .15s,transform .08s}
+button:hover{box-shadow:inset 0 0 0 1.5px var(--c2),0 0 14px rgba(25,227,255,.25)!important}
+button:active{transform:scale(.97)}
+button.active,button.on{box-shadow:inset 0 0 0 2px var(--c2),0 0 16px rgba(25,227,255,.3)!important;background:#1f2a66!important}
+button.primary,#downloadJson{background:linear-gradient(90deg,var(--c1),var(--c2))!important;color:#0b0f2c!important;box-shadow:0 0 18px rgba(25,227,255,.35)!important}
+button.warn,#deleteSelected{color:#ff8b9b!important}
+button.green{color:#7dffb0!important}
+button.pink{color:#ff8fc0!important}
+button:disabled{opacity:.4}
+input,select,textarea{background:var(--bg)!important;color:var(--ink)!important;border:0!important;border-radius:10px!important;box-shadow:inset 0 0 0 1.5px var(--line)!important;padding:.5rem .65rem!important;font-size:.88rem!important}
+input:focus,select:focus,textarea:focus{box-shadow:inset 0 0 0 1.5px var(--c2)!important;outline:0!important}
+input[type=color]{height:2.4rem;padding:.25rem!important;cursor:pointer}
+input[type=range]{box-shadow:none!important;padding:0!important;background:transparent!important;accent-color:var(--c2)}
+input[type=checkbox]{accent-color:var(--c2);box-shadow:none!important}
+label{font:800 .72rem/1.2 Rubik,Arial,sans-serif!important;letter-spacing:.1em!important;text-transform:uppercase!important;color:var(--muted)!important;margin:1rem 0 .4rem!important;display:block}
+.checkRow{background:transparent!important;padding:.2rem 0!important;color:var(--ink)!important;font-size:.88rem!important}
+hr{border:0;border-top:1px solid var(--line);margin:1rem 0}
+main{height:calc(100vh - 60px)!important;grid-template-columns:330px minmax(0,1fr) 340px!important;grid-template-rows:52px minmax(0,1fr)!important;gap:0!important;padding:0!important;background:transparent!important}
+.panel{border-radius:0!important;border:0!important;background:rgba(15,20,54,.82)!important;box-shadow:none!important}
+.topDock{grid-column:1/4!important;height:52px!important;max-height:52px!important;padding:0 .9rem!important;border-bottom:1px solid var(--line)!important}
+.topDock>.tabs button{height:auto!important;padding:.45rem 1rem!important;font-size:.84rem!important}
+.toolRail{visibility:hidden}
+.topDock>.tab.active{top:112px!important;left:0!important;width:330px!important;bottom:0!important;max-height:none!important;border-radius:0!important;border:0!important;border-right:1px solid var(--line)!important;background:rgba(15,20,54,.92)!important;padding:.4rem 1.1rem 1.4rem!important;box-shadow:none!important}
+.topDock>.tab[data-panel="json"].active{width:520px!important;box-shadow:20px 0 40px rgba(0,0,0,.4)!important}
+.topDock>.tab.active .toolGrid{gap:.45rem!important}
+.topDock>.tab.active .toolGrid button{display:flex!important;flex-direction:column;align-items:center;gap:.25rem;border-radius:14px!important;padding:.7rem .3rem!important}
+.topDock>.tab.active .toolGrid button .iconBig{font-size:1.4rem;line-height:1}
+.workspace{background:transparent!important;border:0!important;border-radius:0!important;padding:1.2rem!important}
+.previewShell{background:transparent!important;border:0!important}
+.editorBox{border-radius:22px!important;border:0!important;box-shadow:0 0 0 2px rgba(25,227,255,.55),0 0 40px rgba(25,227,255,.22),0 30px 60px rgba(0,0,0,.45)!important;background:#0d1230!important}
+.rightSplit{border-left:1px solid var(--line)!important;padding:.9rem!important}
+.rightTabs button{font-size:.84rem!important}
+.layersDock,.propsDock{background:transparent!important;padding:.3rem 0!important}
+.item{border-radius:12px!important;background:var(--panel2)!important;border:0!important;transition:box-shadow .15s}
+.item:hover{box-shadow:inset 0 0 0 1.5px var(--line)}
+.item.selected,.item.active{box-shadow:inset 0 0 0 2px var(--c2),0 0 14px rgba(25,227,255,.2)!important}
+.item button{padding:.25rem .45rem!important;font-size:.75rem!important}
+#status{left:346px!important;right:356px!important;bottom:12px!important;background:rgba(24,32,79,.92)!important;border:0!important;box-shadow:inset 0 0 0 1.5px var(--line)!important;color:var(--muted)!important;font-size:.82rem!important}
+.multiEditHint,.floatingHint,.miniHint,.warnText,.toolRail small,.tab small,#v4332MultiHelp,#v4333GroupSafeHint,
+.tabs button[data-tab="brick"],.tabs button[data-tab="preview"],#downloadEditorLogs{display:none!important}
+.dgHelp{margin:.7rem 0 0;color:var(--muted);font-size:.8rem;line-height:1.5}
+.dgHelp kbd{font:700 .7rem/1 Rubik,Arial;padding:.1rem .3rem;border-radius:4px;background:rgba(255,255,255,.1)}
+a.dgLink{display:inline-flex;align-items:center;padding:.5rem .9rem;border-radius:99px;background:var(--panel2);box-shadow:inset 0 0 0 1.5px var(--line);color:var(--ink);font-weight:700;font-size:.85rem;text-decoration:none}
+a.dgLink:hover{box-shadow:inset 0 0 0 1.5px var(--c2),0 0 14px rgba(25,227,255,.25)}
+</style>
+<script>
+/* textes en français clair : beaucoup de boutons sont créés ou renommés par les anciennes couches, on repasse donc après elles */
+(function(){
+  const LABELS={
+    toggleTransformBtn:"Cadre de transformation",undoBtn:"↶",redoBtn:"↷",copyJson:"Copier le JSON",downloadJson:"Enregistrer",
+    toolSelect:"<span class='iconBig'>↖</span>Sélection",toolRect:"<span class='iconBig'>▭</span>Rectangle",toolCircle:"<span class='iconBig'>○</span>Cercle",
+    toolLine:"<span class='iconBig'>✦</span>Polygone",toolFree:"<span class='iconBig'>〰</span>Main levée",toolText:"<span class='iconBig'>T</span>Texte",
+    applyFillToSelection:"Appliquer le remplissage",applyStrokeToSelection:"Appliquer le contour",applyColorsToSelection:"Appliquer les deux",
+    selectAll:"Tout sélectionner",clearSelection:"Désélectionner",deleteSelected:"Supprimer",duplicateSelected:"Dupliquer",createGroup:"+ Groupe",
+    resetAsset:"Réinitialiser",mergeSelectedLayers:"Fusionner en un calque",moveInGroupUp:"↑ Dans le groupe",moveInGroupDown:"↓ Dans le groupe",
+    applyTextEdit:"Appliquer le texte",editTextPrompt:"Modifier vite",applyTransformEdit:"Appliquer",autoPivotTransform:"Pivot au centre",resetTransformEdit:"Annuler la transformation",
+    copySelected:"Copier la sélection",copyAll:"Copier tout le picto",pasteLayers:"Coller",applyJson:"Appliquer ce JSON",
+    applyTheme:"Appliquer à l'aperçu",resetTheme:"Réinitialiser",testReadability:"Voir dans un vrai niveau",
+    animPlayPause:"⏸ Pause des animations",showPivotBtn:"Afficher les pivots",applyGroup:"Appliquer au groupe",clearGroupAnim:"Retirer l'animation",
+    addSelectedToGroup:"Mettre la sélection dans le groupe",removeSelectedFromGroup:"Sortir la sélection du groupe",groupPivotAuto:"Centre"
+  };
+  const TABS={asset:"Dessin",plateau:"Plateau",ui:"Aperçu en jeu",json:"JSON"};
+  const RIGHT={layers:"Calques",props:"Propriétés",anim:"Animation"};
+  const TEXTS=[
+    ["Asset","Picto"],["Mode tracé","Type de tracé"],["Fill / Stroke","Couleurs"],["Stroke width","Épaisseur du contour"],
+    ["Arrondi forme","Arrondi des angles"],["Layers / Groupes","Calques et groupes"],["Renommer layer actif","Nom du calque"],
+    ["Transformation non destructive","Transformation"],["Texte éditable","Texte"],
+    ["Fond niveau","Fond du niveau"],["Cadre plateau","Cadre du plateau"],["Épaisseur grille","Épaisseur de la grille"],["Intensité décor","Intensité du décor"],
+    ["Format preview","Format"],["Mode preview","Affichage"],["Contexte niveau","Niveau d'essai"],["Injecter l’asset à la place de","Montrer le picto à la place de"],
+    ["Importer vector_assets.json","Ouvrir un vector_assets.json"],["JSON courant","JSON du picto"]
+  ];
+  const CHECKS=[["Fill actif","Remplissage"],["Outline / stroke actif","Contour"],["Taille réelle jeu","Taille réelle dans le jeu"],["Points","Modifier les points"]];
+  function apply(){
+    for(const id in LABELS){const b=document.getElementById(id);if(b&&b.dataset.dgL!==LABELS[id]){b.innerHTML=LABELS[id];b.dataset.dgL=LABELS[id];}}
+    document.querySelectorAll(".tabs button[data-tab]").forEach(b=>{const t=TABS[b.dataset.tab];if(t&&b.textContent!==t)b.textContent=t;});
+    document.querySelectorAll("#rightTabs button[data-right]").forEach(b=>{const t=RIGHT[b.dataset.right];if(t&&b.textContent!==t)b.textContent=t;});
+    document.querySelectorAll("label").forEach(l=>{const f=TEXTS.find(([a])=>l.textContent.trim()===a);if(f&&l.firstChild&&l.firstChild.nodeType===3)l.firstChild.nodeValue=f[1];});
+    document.querySelectorAll(".checkRow span").forEach(sp=>{const f=CHECKS.find(([a])=>sp.textContent.trim()===a);if(f)sp.textContent=f[1];});
+    const cm=document.getElementById("curveMode");
+    if(cm)[...cm.options].forEach(o=>{o.textContent={linear:"Lignes droites",auto:"Courbes automatiques",manual:"Courbes (poignées)"}[o.value]||o.textContent;});
+  }
+  const st=document.getElementById("status");
+  if(st)new MutationObserver(()=>{if(/^V\d+(\.\d+)?/.test(st.textContent))st.textContent="Prêt.";}).observe(st,{childList:true,characterData:true,subtree:true});
+  function help(){
+    const dock=document.querySelector(".layersDock");
+    if(dock&&!document.getElementById("dgHelp")){
+      const p=document.createElement("p");p.id="dgHelp";p.className="dgHelp";
+      p.innerHTML="<kbd>Ctrl</kbd> ou <kbd>Maj</kbd> + clic : sélection multiple · flèches : déplacer (<kbd>Maj</kbd> : par 5) · <kbd>Ctrl Z</kbd> / <kbd>Ctrl Y</kbd> : annuler / rétablir · double-clic sur un texte : le modifier";
+      dock.appendChild(p);
+    }
+  }
+  function links(){
+    const row=document.querySelector("header .row");
+    if(row&&!document.getElementById("dgLinks")){
+      const s=document.createElement("span");s.id="dgLinks";s.style.display="contents";
+      s.innerHTML='<a class="dgLink" href="editor.html">Niveaux</a><a class="dgLink" href="index.html">Jouer</a>';row.appendChild(s);
+    }
+  }
+  // « Enregistrer » écrit directement dans vector_assets.json (Chrome / Edge), sinon le télécharge
+  let handle=null;
+  async function save(){
+    const text=JSON.stringify(pack,null,2)+"\n";
+    try{
+      if(window.showSaveFilePicker){
+        if(!handle)handle=await showSaveFilePicker({suggestedName:"vector_assets.json",types:[{description:"Pictos",accept:{"application/json":[".json"]}}]});
+        const w=await handle.createWritable();await w.write(text);await w.close();
+        st.textContent="Enregistré dans "+handle.name+".";
+      }else{download();st.textContent="vector_assets.json téléchargé : remplace celui du projet.";}
+    }catch(e){if(e.name!=="AbortError")st.textContent="Échec de l'enregistrement : "+e.message;}
+  }
+  function bind(){const b=document.getElementById("downloadJson");if(b)b.onclick=save;}
+  document.addEventListener("keydown",e=>{if((e.ctrlKey||e.metaKey)&&e.key.toLowerCase()==="s"){e.preventDefault();save();}});
+  function all(){apply();help();links();bind();}
+  all();setTimeout(all,0);setTimeout(all,400);setTimeout(all,1500);
+  document.addEventListener("click",()=>setTimeout(apply,0),true);
+})();
+</script>
 </body>
 </html>

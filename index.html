@@ -123,6 +123,9 @@ html.splash .logoBig span{animation-play-state:paused}
 #premiumBtn{box-shadow:inset 0 0 0 .2rem var(--yellow),0 0 1.2rem color-mix(in srgb,var(--yellow) 35%,transparent);color:var(--yellow)}
 #premiumBtn.owned{box-shadow:inset 0 0 0 .2rem var(--line);color:var(--muted)}
 .link{align-self:center;padding:.2rem 1rem;font-size:1.05rem;font-weight:800;color:var(--muted);text-decoration:underline}
+/* numéro de version : discret, en bas du menu et des options */
+.ver{position:absolute;right:1rem;bottom:.7rem;z-index:3;font:700 .8rem/1 Rubik,Arial,sans-serif;color:var(--muted);opacity:.55;pointer-events:none}
+.modal .ver{position:static;align-self:center;margin-top:.2rem}
 #txLayer{position:absolute!important;inset:0;z-index:60!important;pointer-events:none;overflow:hidden}
 #txLayer.block{pointer-events:auto}
 .band{position:absolute;top:-10%;bottom:-10%;left:-30%;width:160%;transform:translateX(-130%) skewX(-18deg)}
@@ -156,6 +159,7 @@ html.tx-in .logoBig span{animation:none}
     <a class="btn play" href="game.html">Jouer<small id="resumeLine">chapitre 1, niveau 1</small></a>
     <div class="two"><a class="btn ghost sm" href="game.html?chapters=1">Chapitres</a><a class="btn ghost sm" href="game.html?collection=1">Rencontres<em id="metCount"></em></a></div>
   </nav>
+  <div class="ver" data-no-i18n></div>
 
   <div id="splash" aria-hidden="true" data-no-i18n><div class="spBlock"></div><svg viewBox="-74 -44 468 400" aria-hidden="true"><defs><filter id="spWob1" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency=".03" numOctaves="2" seed="2" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="9"/></filter><filter id="spWob2" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency=".03" numOctaves="2" seed="11" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="9"/></filter><filter id="spWob3" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency=".03" numOctaves="2" seed="23" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="9"/></filter></defs><g id="spArt" filter="url(#spWob1)" stroke="#f0e6cf" stroke-linecap="round" stroke-linejoin="round"><path class="spFloor" d="M-40 246H360" fill="none" stroke-width="4"/><g transform="translate(192 246) scale(.95) translate(-150 -286)"><g class="spBig" fill="#d8232f" stroke-width="6"><path d="M128 232V274M128 274L110 284M128 274L128 288M128 274L144 284M176 232V274M176 274L158 284M176 274L176 288M176 274L192 284" fill="none"/><path d="M214 120Q250 126 268 104Q250 88 256 64Q262 40 286 46Q306 54 300 82Q312 120 282 146Q250 168 212 150Z"/><path d="M266 100Q276 92 288 98" fill="none"/><g transform="translate(300 0) scale(-1 1)"><path d="M214 120Q250 126 268 104Q250 88 256 64Q262 40 286 46Q306 54 300 82Q312 120 282 146Q250 168 212 150Z"/><path d="M266 100Q276 92 288 98" fill="none"/></g><path d="M150 34Q184 34 190 66Q232 70 232 122Q232 200 196 228Q150 246 104 228Q68 200 68 122Q68 70 110 66Q116 34 150 34Z"/><path d="M100 150Q124 168 147 150M153 150Q176 168 200 150M150 170V214M134 184H166M136 202H164" fill="none"/><circle cx="134" cy="70" r="4.5" fill="#f0e6cf"/><circle cx="166" cy="70" r="4.5" fill="#f0e6cf"/><path d="M126 60L140 63M174 60L160 63" fill="none"/><path d="M141 74Q150 68 159 74Q150 86 141 74Z"/></g></g><path class="spTrail" d="M58 290L150 246L246 246L112 296Z" fill="#17130f" stroke="none"/><g transform="translate(79 290) scale(.3) translate(-150 -286)"><g class="spSmall" fill="#17130f" stroke-width="15"><path d="M128 232V274M128 274L110 284M128 274L128 288M128 274L144 284M176 232V274M176 274L158 284M176 274L176 288M176 274L192 284" fill="none"/><path d="M220 128Q252 116 254 86Q246 74 236 84Q238 102 212 110Z"/><g transform="translate(300 0) scale(-1 1)"><path d="M220 128Q252 116 254 86Q246 74 236 84Q238 102 212 110Z"/></g><path d="M150 34Q184 34 190 66Q232 70 232 122Q232 200 196 228Q150 246 104 228Q68 200 68 122Q68 70 110 66Q116 34 150 34Z"/><circle cx="134" cy="70" r="4.5" fill="#f0e6cf"/><circle cx="166" cy="70" r="4.5" fill="#f0e6cf"/><path d="M126 60L140 63M174 60L160 63" fill="none"/><path d="M141 74Q150 68 159 74Q150 86 141 74Z"/></g></g></g></svg><div class="spName">Musclor<br>Duck</div><div class="spTag">games</div></div>
   <div id="txLayer" aria-hidden="true"><div class="band boot" style="background:#f6ff3d"></div><div class="band boot" style="background:#19e3ff"></div><div class="band boot" style="background:#0d1230"></div></div>
@@ -169,26 +173,29 @@ html.tx-in .logoBig span{animation:none}
       <div class="langs" id="langGrid" data-no-i18n></div>
       <button class="btn ghost sm" id="controlsToggle" type="button">Commandes : glisser</button>
       <button class="btn ghost sm" id="fullscreenBtn" type="button">Plein écran</button>
+      <button class="btn ghost sm" id="resetBtn" type="button">Recommencer depuis le début</button>
       <div id="atelier" class="hidden" data-no-i18n>
         <div class="lbl">Atelier</div>
-        <div class="two"><a class="btn ghost sm" href="game.html?editor=1">Niveaux</a><a class="btn ghost sm" href="asset_svg_editor.html">Assets</a></div>
-        <button class="btn ghost sm" id="downloadProjectBtn" type="button">Télécharger le projet PC</button>
+        <div class="two"><a class="btn ghost sm" href="editor.html">Niveaux</a><a class="btn ghost sm" href="asset_svg_editor.html">Assets</a></div>
+        <button class="btn ghost sm" id="unlockAllBtn" type="button">Tout débloquer</button>
       </div>
       <button class="btn" id="closeOptions" type="button">Fermer</button>
+      <div class="ver" data-no-i18n></div>
     </div>
   </div>
 </main>
 
+<script src="version.js"></script>
 <script src="i18n.js"></script>
 <script src="premium.js"></script>
 <script src="spirits.js"></script>
+<script src="audio.js"></script>
 <script>
 /* ===== V49 NÉON CIRCUIT : menu principal ===== */
 const tr=DGi18n.t; // traduction : tr("texte français", {variables})
 DGi18n.apply();
 const PROGRESS_KEY="gravity_cube_player_progress_v2";
-const PROJECT_ZIP_NAME="date_gravity_project_pc.zip";
-const PROJECT_PASSWORD="Lulu69";
+document.querySelectorAll(".ver").forEach(e=>e.textContent="v"+(window.DG_VERSION||"?"));
 const overlay=document.getElementById("optionsOverlay");
 const soundToggle=document.getElementById("soundToggle");
 let bandColors=["#f6ff3d","#19e3ff","#0d1230"];
@@ -243,45 +250,19 @@ function bootReveal(){
 window.addEventListener("pageshow",e=>{if(e.persisted){document.querySelectorAll("#txLayer .band:not(.boot)").forEach(b=>b.remove());document.getElementById("txLayer").classList.remove("block");}});
 
 /* --- petite musique et sons du menu (Web Audio, aucun fichier) : mêmes notes pincées que les murs du jeu */
-let audioCtx=null,menuMusicTimer=null,menuMusicOn=true,musicStep=0;
+/* musique du menu et petits sons des boutons : audio.js, dans la même gamme que le jeu */
+let menuMusicOn=true;
 function getAudio(){
   if(!menuMusicOn)return null;
-  if(!audioCtx)audioCtx=new (window.AudioContext||window.webkitAudioContext)();
-  if(audioCtx.state==="suspended")audioCtx.resume().catch(()=>{});
-  return audioCtx;
+  const ac=DGAudio.ctx();
+  if(ac)DGAudio.setVolumes(.15,.3);
+  return ac;
 }
-function pluck(freq,gain=.03,when=0){
-  const ac=getAudio();
-  if(!ac)return;
-  const t=ac.currentTime+when;
-  [[1,"triangle",1],[2,"sine",.32]].forEach(v=>{
-    const o=ac.createOscillator(),g=ac.createGain();
-    o.type=v[1];o.frequency.value=freq*v[0];
-    g.gain.setValueAtTime(.0001,t);
-    g.gain.exponentialRampToValueAtTime(gain*v[2],t+.012);
-    g.gain.exponentialRampToValueAtTime(.0001,t+.5);
-    o.connect(g);g.connect(ac.destination);o.start(t);o.stop(t+.54);
-  });
-}
-function playButtonSound(){pluck(523.25,.06);pluck(783.99,.05,.06);}
-function playOpenSound(){pluck(392,.05);pluck(587.33,.04,.07);}
-function playCloseSound(){pluck(329.63,.045);}
-function startMenuMusic(){
-  if(!menuMusicOn||menuMusicTimer)return;
-  if(!getAudio())return;
-  const bass=[130.81,130.81,146.83,130.81,98,98,110,146.83];
-  const melody=[523.25,587.33,659.25,783.99,659.25,587.33,440,392];
-  const tick=()=>{
-    if(!menuMusicOn)return;
-    const i=musicStep++%melody.length;
-    pluck(bass[i],.016);
-    pluck(melody[i],.012,.14);
-    if(i%2)pluck(melody[(i+3)%melody.length],.007,.3);
-  };
-  tick();
-  menuMusicTimer=setInterval(tick,480);
-}
-function stopMenuMusic(){if(menuMusicTimer){clearInterval(menuMusicTimer);menuMusicTimer=null;}}
+function playButtonSound(){if(getAudio())DGAudio.sfx.ui("ok");}
+function playOpenSound(){if(getAudio())DGAudio.sfx.ui("open");}
+function playCloseSound(){if(getAudio())DGAudio.sfx.ui("close");}
+function startMenuMusic(){if(getAudio())DGAudio.music.start("menu");}
+function stopMenuMusic(){DGAudio.music.stop();}
 function setMusicState(v){
   menuMusicOn=!!v;
   try{localStorage.setItem("dcg_menu_music_on",menuMusicOn?"1":"0");}catch(e){}
@@ -365,21 +346,30 @@ document.getElementById("gearBtn").addEventListener("click",openOptions);
 document.getElementById("closeOptions").addEventListener("click",closeOptions);
 overlay.addEventListener("click",e=>{if(e.target===overlay)closeOptions();});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!overlay.classList.contains("hidden"))closeOptions();});
-document.getElementById("downloadProjectBtn").addEventListener("click",async()=>{
+/* Recommencer : efface la progression (niveaux, rencontres, indices, tutoriels vus).
+   Les réglages restent : langue, commandes, musique, Premium. */
+document.getElementById("resetBtn").addEventListener("click",()=>{
   playButtonSound();
-  const code=window.prompt("Code d’accès pour télécharger le projet PC :");
-  if(code===null)return;
-  if(code!==PROJECT_PASSWORD){alert("Code incorrect.");return;}
+  if(!confirm(tr("Effacer toute ta progression et recommencer depuis le premier niveau ?")))return;
   try{
-    const res=await fetch(PROJECT_ZIP_NAME,{method:"HEAD",cache:"no-store"});
-    if(!res.ok)throw new Error("missing");
-    const a=document.createElement("a");
-    a.href=PROJECT_ZIP_NAME+"?t="+Date.now();
-    a.download=PROJECT_ZIP_NAME;
-    document.body.appendChild(a);a.click();a.remove();
-  }catch(err){
-    alert("Fichier non disponible sur le site. Place un zip nommé '"+PROJECT_ZIP_NAME+"' à la racine du projet.");
-  }
+    Object.keys(localStorage).forEach(k=>{
+      if(k===PROGRESS_KEY||k.startsWith("gravity_cube_companion_")||k==="dg_swipe_count")localStorage.removeItem(k);
+    });
+  }catch(e){}
+  location.reload();
+});
+/* Atelier : tout débloquer, pour tester n'importe quel niveau (chaque niveau est marqué réussi en sans-faute) */
+document.getElementById("unlockAllBtn").addEventListener("click",async()=>{
+  playButtonSound();
+  try{
+    const data=await (await fetch("levels.json?v="+Date.now(),{cache:"no-store"})).json();
+    let pr={};try{pr=JSON.parse(localStorage.getItem(PROGRESS_KEY)||"{}")||{};}catch(e){}
+    pr.best=pr.best||{};pr.met=pr.met||{};
+    data.levels.forEach((l,i)=>{const k=l.id?String(l.id):"i"+i;if(!pr.best[k])pr.best[k]={moves:l.maxMoves||1,stars:3};});
+    data.chapters.forEach(c=>{pr.met[c.id]=true;});
+    localStorage.setItem(PROGRESS_KEY,JSON.stringify(pr));
+    location.reload();
+  }catch(e){alert("levels.json introuvable");}
 });
 
 /* --- les personnages : moi (la flamme) et la personne du chapitre en cours, chacun en lui ou en elle */
