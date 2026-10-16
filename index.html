@@ -335,7 +335,7 @@ showPremium();
   try{
     if(asked==="1")localStorage.setItem("dg_atelier","1");
     if(asked==="0")localStorage.removeItem("dg_atelier");
-    if(localStorage.getItem("dg_atelier")==="1")document.getElementById("atelier").classList.remove("hidden");
+    if(window.DG_TEST_BUILD||localStorage.getItem("dg_atelier")==="1")document.getElementById("atelier").classList.remove("hidden");
   }catch(e){}
 })();
 
