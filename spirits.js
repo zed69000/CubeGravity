@@ -61,27 +61,54 @@
 
   /* Une rencontre par chapitre. Les prénoms sont volontairement mixtes : chacun existe en lui et en elle. */
   const PEOPLE=[
-    {name:"Nami",kind:"vague",line:"Toujours partant·e pour un détour."},
-    {name:"Sylve",kind:"feuille",line:"Adore sortir des sentiers battus."},
-    {name:"Astre",kind:"etoile",line:"A la clé de toutes les portes."},
-    {name:"Nimbe",kind:"nuage",line:"Marche sur des œufs, et toi avec."},
-    {name:"Lune",kind:"lune",line:"Te fait tourner la tête."},
-    {name:"Volt",kind:"eclair",line:"Le coup de foudre, version express."},
-    {name:"Pétale",kind:"fleur",line:"C'est compliqué, mais ça sent bon."},
-    {name:"Opale",kind:"cristal",line:"Rare. Vraiment rare."}
+    {name:"Nami",kind:"vague",line:"Toujours partant·e pour un détour.",vow:"Tous mes détours menaient à toi."},
+    {name:"Sylve",kind:"feuille",line:"Adore sortir des sentiers battus.",vow:"Hors des sentiers, j'ai trouvé mieux : toi."},
+    {name:"Astre",kind:"etoile",line:"A la clé de toutes les portes.",vow:"La dernière porte, c'est toi qui l'as ouverte."},
+    {name:"Nimbe",kind:"nuage",line:"Marche sur des œufs, et toi avec.",vow:"Avec toi, je marche enfin sur un nuage."},
+    {name:"Lune",kind:"lune",line:"Te fait tourner la tête.",vow:"Tu tournes, je gravite. Pour toujours."},
+    {name:"Volt",kind:"eclair",line:"Le coup de foudre, version express.",vow:"Le coup de foudre a duré. Qui l'eût cru ?"},
+    {name:"Pétale",kind:"fleur",line:"C'est compliqué, mais ça sent bon.",vow:"C'était compliqué. Ça valait le coup."},
+    {name:"Opale",kind:"cristal",line:"Rare. Vraiment rare.",vow:"Rare, oui. Et maintenant, à toi."}
+  ];
+  /* Les paliers d'une relation, d'après la part de cœurs gagnés dans le chapitre (r).
+     Âme sœur demande tous les cœurs, donc tous les niveaux. */
+  const RANKS=[
+    {key:"known",label:"Connaissance",r:0},
+    {key:"friend",label:"Pote",r:.35},
+    {key:"crush",label:"Crush",r:.6},
+    {key:"love",label:"Grand amour",r:.85},
+    {key:"soul",label:"Âme sœur",r:1}
   ];
   /* Ce que la rencontre est devenue, d'après la part de cœurs gagnés dans son chapitre.
      Une rencontre ne finit pas forcément en histoire d'amour, et on peut toujours faire mieux en rejouant. */
   function status(done,total,stars){
     if(!done)return {key:"none",label:"Pas encore rencontré·e",rank:0};
     const r=stars/(3*total);
-    if(done>=total&&stars>=3*total)return {key:"soul",label:"Âme sœur",rank:5};
-    if(r>=.85)return {key:"love",label:"Grand amour",rank:4};
-    if(r>=.6)return {key:"crush",label:"Crush",rank:3};
-    if(r>=.35)return {key:"friend",label:"Pote",rank:2};
-    return {key:"known",label:"Connaissance",rank:1};
+    let i=RANKS.length-1;
+    while(i>0&&r<RANKS[i].r)i--;
+    return {key:RANKS[i].key,label:RANKS[i].label,rank:i+1};
   }
+  /* Le palier suivant et les cœurs qui manquent pour l'atteindre (null au sommet). */
+  function nextRank(done,total,stars){
+    const cur=status(done,total,stars).rank;
+    if(!total||cur>=RANKS.length)return null;
+    const R=RANKS[cur];
+    return {key:R.key,label:R.label,rank:cur+1,hearts:Math.max(0,Math.ceil(R.r*3*total-1e-9)-stars)};
+  }
+  /* Les souvenirs d'une rencontre, à collectionner dans l'album : un par palier, plus un gagné sans aide.
+     rank  : palier de relation à atteindre ; clean : niveaux du chapitre gagnés sans indice.
+     icon  : pictogramme dessiné par game.html (DG_ICONS).
+     gift  : indices offerts quand le joueur découvre le souvenir.
+     line  : {name} est le prénom ; sans line, c'est la phrase secrète de la personne (vow). */
+  const MEMORIES=[
+    {key:"meet",icon:"eye",title:"Premier regard",line:"{name} t'a remarqué·e dès le premier saut.",rank:1,gift:1,state:{eye:"dot",mouth:"o"}},
+    {key:"friend",icon:"rings",title:"Ça accroche",line:"Vous riez des mêmes chutes.",rank:2,gift:1,state:{eye:"happy",mouth:"smile"}},
+    {key:"crush",icon:"pulse",title:"Le cœur s'emballe",line:"{name} rougit quand tu fais tourner le monde.",rank:3,gift:2,state:{eye:"blink",mouth:"grin"}},
+    {key:"clean",icon:"chute",title:"Sans filet",line:"Des rendez-vous réussis sans le moindre indice.",clean:6,gift:2,state:{eye:"dot",mouth:"grin"}},
+    {key:"love",icon:"spark",title:"Grand amour",line:"{name} ne regarde plus que toi.",rank:4,gift:3,state:{eye:"happy",mouth:"grin"}},
+    {key:"soul",icon:"ring",title:"Âme sœur",rank:5,gift:5,state:{eye:"happy",mouth:"grin"}}
+  ];
   /* Les deux couleurs de chaque chapitre : tubes du plateau, boutons, halos. */
   const WORLDS=[["#f6ff3d","#19e3ff"],["#19e3ff","#b06cff"],["#ff9a3d","#ff4fd8"],["#7dff6a","#19b8ff"],["#ff4fd8","#7a5cff"],["#ffe14a","#ff7a3d"],["#ff5fa2","#ffd23f"],["#a8f4fa","#ff4f8b"]];
-  window.DGSpirit={KINDS,PEOPLE,WORLDS,svg,portrait,status,person:i=>PEOPLE[((i%PEOPLE.length)+PEOPLE.length)%PEOPLE.length]};
+  window.DGSpirit={KINDS,PEOPLE,WORLDS,RANKS,MEMORIES,svg,portrait,status,nextRank,person:i=>PEOPLE[((i%PEOPLE.length)+PEOPLE.length)%PEOPLE.length]};
 })();

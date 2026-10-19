@@ -231,6 +231,50 @@ body.btnCtl #swipeHint{display:none}
 .pcard.none{opacity:.55}
 .pcard.none .art{filter:brightness(0) invert(.25)}
 .pcard.love,.pcard.soul{box-shadow:inset 0 0 0 .25rem var(--pc2),0 0 1.6rem color-mix(in srgb,var(--pc2) 50%,transparent)}
+.pcard{position:relative}
+.pcard .memc{display:block;margin-top:.3rem;font-size:.95rem;font-weight:800;color:var(--muted)}
+.pcard .memc:empty{display:none}
+.pcard.fresh .memc{color:var(--yellow)}
+.pcard.fresh::after,#dgOpenCollection.fresh::after{content:"";position:absolute;top:.6rem;right:.6rem;width:1.1rem;height:1.1rem;border-radius:50%;background:var(--pink);box-shadow:0 0 .8rem var(--pink);animation:curPulse 1.4s ease-in-out infinite}
+#dgOpenCollection{position:relative;overflow:visible}
+#dgOpenCollection.fresh::after{content:attr(data-n);top:-.5rem;right:-.5rem;width:auto;min-width:1.7rem;height:1.7rem;padding:0 .4rem;display:grid;place-items:center;font-size:.95rem;color:#fff}
+
+/* fiche d'une rencontre : paliers et souvenirs */
+.psBody{flex:1;min-height:0;overflow-y:auto;padding:0 1.2rem 1rem;-webkit-overflow-scrolling:touch}
+.psTop{display:flex;align-items:center;gap:1rem;padding:.6rem .4rem 1rem}
+.psTop .art{flex:none;width:9rem;height:9rem;animation:pBob 2.4s ease-in-out infinite}
+.psTx{flex:1;min-width:0}
+.psTx .pname{font-size:2.6rem}
+.psRel{margin-top:.3rem;font-weight:800;font-size:1.15rem;color:var(--pc2,var(--c2))}
+.ladder{display:flex;gap:.4rem;margin:.6rem 0 .5rem}
+.ladder i{flex:1;height:.7rem;border-radius:99rem;background:var(--navy3);box-shadow:inset 0 0 0 .12rem var(--line)}
+.ladder i.on{background:linear-gradient(90deg,var(--pc1,var(--c1)),var(--pc2,var(--c2)));box-shadow:0 0 .7rem color-mix(in srgb,var(--pc2,var(--c2)) 55%,transparent)}
+#psNext{display:block;font-size:1rem;line-height:1.25;color:var(--muted)}
+.psHead{display:flex;align-items:center;justify-content:space-between;margin:.2rem .2rem .7rem;font:900 1.3rem/1 Rubik,Arial,sans-serif;text-transform:uppercase}
+.mems{display:grid;grid-template-columns:1fr 1fr;gap:.9rem}
+.mem{position:relative;display:flex;flex-direction:column;align-items:center;padding:.8rem .7rem 1rem;border-radius:1.6rem;text-align:center;background:var(--navy2);box-shadow:inset 0 0 0 .2rem var(--line)}
+.ico{display:inline-block;width:1.25em;height:1.25em;vertical-align:-.25em;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+.mem .ic{position:absolute;top:.6rem;left:.7rem;display:grid;place-items:center;width:2.4rem;height:2.4rem;border-radius:50%;background:var(--navy);color:var(--muted);box-shadow:inset 0 0 0 .15rem var(--line)}
+.mem .ic .ico{width:1.5rem;height:1.5rem;vertical-align:0}
+.mem.got .ic{color:var(--pc2,var(--c2));box-shadow:inset 0 0 0 .15rem var(--pc2,var(--c2)),0 0 .8rem color-mix(in srgb,var(--pc2,var(--c2)) 45%,transparent)}
+.mem.fresh .ic{color:var(--yellow);box-shadow:inset 0 0 0 .15rem var(--yellow)}
+.mem .art{width:6.4rem;height:6.4rem;margin:.2rem auto .3rem}
+.mem b{display:block;font:900 1.1rem/1.1 Rubik,Arial,sans-serif;text-transform:uppercase}
+.mem small{display:block;margin-top:.35rem;font-size:.95rem;line-height:1.25;color:var(--muted)}
+.mem.got{background:linear-gradient(160deg,color-mix(in srgb,var(--pc1,var(--c1)) 16%,var(--navy2)),var(--navy2) 60%);box-shadow:inset 0 0 0 .2rem var(--pc2,var(--c2))}
+.mem.got small{color:var(--ink)}
+.mem.lock .art{filter:brightness(0) invert(.22)}
+.mem.lock b,.mem.lock small{opacity:.7}
+.mem.fresh{box-shadow:inset 0 0 0 .25rem var(--yellow),0 0 1.4rem color-mix(in srgb,var(--yellow) 45%,transparent);animation:curPulse 1.4s ease-in-out infinite;will-change:transform}
+.mem.fresh .art{opacity:.3}
+.mem.fresh b{color:var(--yellow)}
+.mem.just{animation:memIn .32s cubic-bezier(.2,1.4,.4,1) both}
+@keyframes memIn{from{transform:perspective(40rem) rotateY(-90deg)}to{transform:none}}
+.mem .gift{position:absolute;left:50%;top:40%;padding:.4rem .9rem;border-radius:99rem;background:var(--yellow);color:var(--navy);font-weight:900;font-size:1.1rem;white-space:nowrap;pointer-events:none;animation:giftUp 1.6s ease-out both}
+@keyframes giftUp{0%{transform:translate(-50%,0) scale(.6);opacity:0}15%{transform:translate(-50%,-.5rem) scale(1.1);opacity:1}70%{opacity:1}100%{transform:translate(-50%,-4rem) scale(1);opacity:0}}
+#personScreen .cta{margin-top:.6rem}
+.rel.news{cursor:pointer;box-shadow:inset 0 0 0 .25rem var(--yellow),0 0 1.4rem color-mix(in srgb,var(--yellow) 40%,transparent)}
+.relNews{display:block;margin-top:.25rem;font-style:normal;font-weight:800;font-size:1.05rem;color:var(--yellow)}
 
 /* ---------- fenêtres posées sur le jeu (victoire, pause, défaite, indice, infos) */
 .overlay{position:absolute!important;inset:0;z-index:30!important;display:flex;align-items:flex-end;background:rgba(7,9,26,.72);animation:ovIn .18s ease both}
@@ -411,6 +455,24 @@ html:not(.editor-enabled) #toggleEdit,html:not(.editor-enabled) #compactEdit{dis
   <section id="collection" class="screen" aria-hidden="true" aria-label="Rencontres">
     <div class="hd"><button class="round" id="colBack" aria-label="Retour">←</button><h2 class="ttl">Rencontres</h2><span class="chip" id="colCount"></span></div>
     <div class="cards" id="colGrid"></div>
+  </section>
+
+  <section id="personScreen" class="screen" aria-hidden="true" aria-label="Souvenirs">
+    <div class="hd"><button class="round" id="psBack" aria-label="Retour aux rencontres">←</button><h2 class="ttl">Souvenirs</h2><span class="chip" id="psWhere"></span></div>
+    <div class="psBody">
+      <div class="psTop">
+        <div class="art" id="psArt"></div>
+        <div class="psTx">
+          <div class="pname gtext" id="psName"></div>
+          <div class="psRel" id="psRel"></div>
+          <div class="ladder" id="psLadder"></div>
+          <small id="psNext"></small>
+        </div>
+      </div>
+      <div class="psHead"><span>Album</span><span class="chip" id="psMemCount" data-no-i18n></span></div>
+      <div class="mems" id="psMems"></div>
+    </div>
+    <button class="btn cta" id="psPlay" type="button">Jouer le chapitre</button>
   </section>
 
   <section id="profileScreen" class="screen" aria-hidden="true" aria-label="Nouvelle rencontre">
@@ -2276,6 +2338,7 @@ function saveCurrentProgress(){
   saveProgress(pr);
 }
 function saveWinProgress(){
+  const ci=dgChapterIndexOfLevel(currentLevel), before=dgRelation(ci).rank;
   const pr=loadProgress();
   const stars=starScore();
   const key=levelKey(currentLevel);
@@ -2283,8 +2346,11 @@ function saveWinProgress(){
   if(!old || moves<old.moves || stars>old.stars){
     pr.best[key]={moves:moves,stars:stars};
   }
+  if(!dgRevealed()){pr.clean=pr.clean||{};pr.clean[key]=1;}
   pr.current=levelKey(Math.min(currentLevel+1,levels.length-1));
   saveProgress(pr);
+  const rel=dgRelation(ci);
+  dgWinNews={ci,rankUp:rel.rank>before&&before>0?rel:null,fresh:dgSyncMemories()};
 }
 function savedStartLevel(){
   const idx=levelIndexFromKey(loadProgress().current);
@@ -3024,6 +3090,68 @@ function dgRelation(ci){
   return Object.assign({done:p.done,total:p.total,stars:p.stars},DGSpirit.status(p.done,p.total,p.stars));
 }
 
+/* --- souvenirs (voir DGSpirit.MEMORIES)
+   pr.mem[chapitre][souvenir] : 1 = gagné mais pas encore découvert dans l'album, 2 = découvert.
+   pr.clean[niveau] : niveau gagné au moins une fois sans indice.
+   Le cadeau (des indices) n'est donné qu'à la découverte : c'est l'album qui le remet. */
+let dgWinNews=null;   // ce que la dernière victoire a changé : {ci, rankUp, fresh}
+/* Pictogrammes au trait de l'album, dessinés dans la couleur du texte (grille 24 x 24). */
+const DG_ICONS={
+  eye:"M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12ZM15 12a3 3 0 1 1-6 0a3 3 0 1 1 6 0Z",
+  rings:"M14 12a5 5 0 1 1-10 0a5 5 0 1 1 10 0ZM20 12a5 5 0 1 1-10 0a5 5 0 1 1 10 0Z",
+  pulse:"M12 20.5S3 15 3 8.8a4.6 4.6 0 0 1 9-2a4.6 4.6 0 0 1 9 2c0 6.2-9 11.7-9 11.7ZM6.5 11.5h3l1.3-2.4 2 4.8 1.4-2.4h3.3",
+  chute:"M3 11a9 7.5 0 0 1 18 0ZM3 11l9 8.5 9-8.5M9 11l3 8.5 3-8.5",
+  spark:"M10.5 20.5S3 16 3 10.6a4 4 0 0 1 7.5-1.8a4 4 0 0 1 7.5 1.8c0 5.4-7.5 9.9-7.5 9.9ZM19 2.5v5M16.5 5h5",
+  ring:"M9 7.5L7.5 5 9.5 2.5h5L16.5 5 15 7.5ZM18 15a6 6 0 1 1-12 0a6 6 0 1 1 12 0Z",
+  lock:"M6 11h12v9.5H6ZM8.5 11V8a3.5 3.5 0 0 1 7 0v3",
+  photo:"M3.5 5.5h17v13h-17ZM3.5 15l5-5 4 4 2.5-2.5 5.5 5.5M16 8.5h.01",
+  bulb:"M9.5 18h5M10.5 21h3M12 3a6 6 0 0 0-3.4 10.9c.5.4.9 1 .9 1.7V16h5v-.4c0-.7.4-1.3.9-1.7A6 6 0 0 0 12 3Z"
+};
+function dgIcon(name){return '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="'+(DG_ICONS[name]||"")+'"/></svg>';}
+function dgCleanCount(ch,pr){
+  pr=pr||loadProgress();
+  return ((ch&&ch.levelIds)||[]).filter(id=>pr.clean&&pr.clean[levelKey(id)]).length;
+}
+function dgMemNeed(m,ch){return m.clean?Math.min(m.clean,(ch&&ch.levelIds||[]).length||m.clean):0;}
+function dgMemEarned(m,ci,pr){
+  const ch=dgChapters[ci];
+  if(!ch)return false;
+  if(m.clean)return dgCleanCount(ch,pr)>=dgMemNeed(m,ch);
+  return dgRelation(ci).rank>=m.rank;
+}
+// inscrit les souvenirs gagnés depuis la dernière fois et renvoie les nouveaux
+function dgSyncMemories(){
+  const pr=loadProgress(), fresh=[];
+  pr.mem=pr.mem||{};
+  dgChapters.forEach((ch,ci)=>{
+    const box=pr.mem[ch.id]||{};
+    DGSpirit.MEMORIES.forEach(m=>{
+      if(!box[m.key]&&dgMemEarned(m,ci,pr)){box[m.key]=1;fresh.push({ci,m});}
+    });
+    if(Object.keys(box).length)pr.mem[ch.id]=box;
+  });
+  if(fresh.length)saveProgress(pr);
+  return fresh;
+}
+function dgMemState(ci,key,pr){
+  const ch=dgChapters[ci];
+  pr=pr||loadProgress();
+  return (ch&&pr.mem&&pr.mem[ch.id]&&pr.mem[ch.id][key])||0;
+}
+function dgMemCount(ci,pr){
+  pr=pr||loadProgress();
+  let got=0,fresh=0;
+  DGSpirit.MEMORIES.forEach(m=>{const s=dgMemState(ci,m.key,pr);if(s)got++;if(s===1)fresh++;});
+  return {got,fresh,total:DGSpirit.MEMORIES.length};
+}
+function dgFreshTotal(){
+  const pr=loadProgress();
+  return dgChapters.reduce((n,_,ci)=>n+dgMemCount(ci,pr).fresh,0);
+}
+function dgMemText(m,person){
+  return m.line?tr(m.line,{name:person.name}):"« "+tr(person.vow||person.line)+" »";
+}
+
 /* --- transitions
    Règle : les RUBANS pour tout ce qui est navigation, le TAMPON pour les moments de jeu,
    et un DÉFILEMENT du plateau entre deux niveaux d'un même chapitre. */
@@ -3269,6 +3397,28 @@ function dgShowWin(kind,finalText){
     }
     relEl.querySelector("span").textContent=rel.stars+" / "+(rel.total*3)+" ♥"+(gift||(rel.rank<5?" · "+tr("rejoue pour aller plus loin"):""));
   }
+  // nouveau palier ou nouveau souvenir : on le dit tout de suite, l'album le remettra
+  const news=dgWinNews&&dgWinNews.ci===info.ci?dgWinNews:null;
+  if(news&&(news.rankUp||news.fresh.length)){
+    const person=DGSpirit.person(info.ci);
+    if(!relEl.innerHTML){
+      relEl.innerHTML='<div class="art">'+DGSpirit.portrait(person.kind,dgDateSex(),{eye:"happy",mouth:"grin"})+'</div><div><b></b><span></span></div>';
+      relEl.querySelector("b").textContent=person.name+" · "+tr(dgRelation(info.ci).label);
+      relEl.querySelector("span").textContent="";
+    }
+    const line=document.createElement("em");
+    line.className="relNews";
+    if(news.rankUp)line.append(tr("Nouveau palier : {r} !",{r:tr(news.rankUp.label)}));
+    if(news.fresh.length){
+      if(news.rankUp)line.append(" · ");
+      line.insertAdjacentHTML("beforeend",dgIcon("photo")+" ");
+      line.append(tr(news.fresh.length>1?"{n} souvenirs à découvrir":"Souvenir à découvrir",{n:news.fresh.length}));
+    }
+    relEl.querySelector("div:last-child").appendChild(line);
+    relEl.classList.add("news");
+    relEl.onclick=()=>dgRubans(()=>{hideBanner();dgShowPerson(info.ci);});
+  }else{relEl.classList.remove("news");relEl.onclick=null;}
+  dgWinNews=null;
   const next=document.getElementById("winNext"), replay=document.getElementById("winReplay");
   next.disabled=false;
   if(last&&window.DG_TEST){
@@ -3367,7 +3517,9 @@ function dgRenderChapterList(){
 function dgShowChapterList(){
   setPaused(false);
   dgRenderChapterList();
-  ["chapterScreen","profileScreen","collection"].forEach(dgHideScreen);
+  dgSyncMemories();
+  dgCollectionBadge();
+  ["chapterScreen","profileScreen","collection","personScreen"].forEach(dgHideScreen);
   dgShowScreen("chapterList");
 }
 function dgRenderChapterScreen(chapterIndex=dgSelectedChapter){
@@ -3414,31 +3566,38 @@ function dgRenderChapterScreen(chapterIndex=dgSelectedChapter){
 function dgShowChapterScreen(chapterIndex=dgChapterIndexOfLevel(currentLevel||0)){
   setPaused(false);
   dgRenderChapterScreen(chapterIndex);
-  ["profileScreen","collection"].forEach(dgHideScreen);
+  ["profileScreen","collection","personScreen"].forEach(dgHideScreen);
   dgShowScreen("chapterScreen");
 }
 function dgHideChapterScreen(){
-  ["chapterScreen","chapterList","collection"].forEach(dgHideScreen);
+  ["chapterScreen","chapterList","collection","personScreen"].forEach(dgHideScreen);
 }
 /* la collection : une carte par personne rencontrée, avec ce qu'elle est devenue pour toi */
 function dgRenderCollection(){
   const host=document.getElementById("colGrid");
+  dgSyncMemories();
+  const pr=loadProgress();
   let met=0;
   host.innerHTML="";
   dgChapters.forEach((ch,i)=>{
-    const person=DGSpirit.person(i), rel=dgRelation(i), w=DG_WORLDS[i%DG_WORLDS.length];
+    const person=DGSpirit.person(i), rel=dgRelation(i), w=DG_WORLDS[i%DG_WORLDS.length], mc=dgMemCount(i,pr);
     if(rel.rank>0)met++;
     const card=document.createElement("button");
     card.type="button";
-    card.className="pcard "+rel.key;
+    card.className="pcard "+rel.key+(mc.fresh?" fresh":"");
     card.style.setProperty("--pc1",w[0]);card.style.setProperty("--pc2",w[1]);
-    card.innerHTML='<div class="art"></div><b></b><em></em><span class="bar"><i></i></span><small></small>';
+    card.innerHTML='<div class="art"></div><b></b><em></em><span class="bar"><i></i></span><small></small><span class="memc"></span>';
     dgPortrait(card.querySelector(".art"),person.kind,dgDateSex(),rel.rank>=3?{eye:"happy",mouth:"grin"}:null);
     card.querySelector("b").textContent=rel.rank?person.name:"???";
     card.querySelector("em").textContent=tr(rel.label);
     card.querySelector(".bar i").style.width=(rel.total?Math.round(rel.stars/(rel.total*3)*100):0)+"%";
     card.querySelector("small").textContent=rel.rank?(rel.stars+" / "+(rel.total*3)+" ♥"):tr("chapitre {c}",{c:i+1});
-    card.onclick=()=>{ if(dgChapterUnlocked(i))dgRubans(()=>dgShowChapterScreen(i)); };
+    if(rel.rank)card.querySelector(".memc").innerHTML=dgIcon("photo")+" "+mc.got+" / "+mc.total+(mc.fresh?" · "+tr("nouveau !"):"");
+    card.onclick=()=>{
+      userAudioGesture();
+      if(rel.rank)dgRubans(()=>dgShowPerson(i));
+      else if(dgChapterUnlocked(i))dgRubans(()=>dgShowChapterScreen(i));
+    };
     host.appendChild(card);
   });
   document.getElementById("colCount").textContent=met+" / "+dgChapters.length;
@@ -3446,13 +3605,106 @@ function dgRenderCollection(){
 function dgShowCollection(){
   setPaused(false);
   dgRenderCollection();
-  ["chapterScreen","profileScreen"].forEach(dgHideScreen);
+  ["chapterScreen","profileScreen","personScreen"].forEach(dgHideScreen);
   dgShowScreen("collection");
+}
+/* la fiche d'une rencontre : paliers de la relation et souvenirs à collectionner */
+let dgPersonIndex=0;
+function dgRenderPerson(ci){
+  dgPersonIndex=ci;
+  const person=DGSpirit.person(ci), rel=dgRelation(ci), w=DG_WORLDS[ci%DG_WORLDS.length], ch=dgChapters[ci];
+  const scr=document.getElementById("personScreen");
+  scr.style.setProperty("--pc1",w[0]);scr.style.setProperty("--pc2",w[1]);
+  document.getElementById("psWhere").textContent=tr("chapitre {c}",{c:ci+1});
+  dgPortrait("psArt",person.kind,dgDateSex(),rel.rank>=3?{eye:"happy",mouth:"grin"}:null);
+  document.getElementById("psName").textContent=person.name;
+  document.getElementById("psRel").textContent=tr(rel.label)+" · "+rel.stars+" / "+(rel.total*3)+" ♥";
+  // l'échelle de la relation : un cran par palier
+  const ladder=document.getElementById("psLadder");
+  ladder.innerHTML="";
+  DGSpirit.RANKS.forEach((R,i)=>{
+    const pip=document.createElement("i");
+    pip.className=i<rel.rank?"on":"";
+    pip.title=tr(R.label);
+    ladder.appendChild(pip);
+  });
+  const nx=DGSpirit.nextRank(rel.done,rel.total,rel.stars);
+  document.getElementById("psNext").textContent=nx
+    ?tr("Prochain palier : {r} · encore {n} ♥",{r:tr(nx.label),n:nx.hearts})
+    :tr("Le sommet. Rien ne vous séparera.");
+  // les souvenirs
+  const pr=loadProgress(), grid=document.getElementById("psMems"), mc=dgMemCount(ci,pr);
+  document.getElementById("psMemCount").innerHTML=dgIcon("photo")+" "+mc.got+" / "+mc.total;
+  grid.innerHTML="";
+  DGSpirit.MEMORIES.forEach(m=>{
+    const c=document.createElement("button");
+    c.type="button";
+    dgFillMemCard(c,ci,m,dgMemState(ci,m.key,pr),pr);
+    grid.appendChild(c);
+  });
+  document.getElementById("psPlay").disabled=!dgChapterUnlocked(ci);
+}
+function dgFillMemCard(c,ci,m,st,pr){
+  const person=DGSpirit.person(ci), ch=dgChapters[ci];
+  c.className="mem"+(st===2?" got":st===1?" fresh":" lock");
+  c.innerHTML='<span class="ic"></span><div class="art"></div><b></b><small></small>';
+  c.querySelector(".ic").innerHTML=dgIcon(st?m.icon:"lock");
+  dgPortrait(c.querySelector(".art"),person.kind,dgDateSex(),st?m.state:null);
+  c.onclick=null;
+  if(st===2){
+    c.querySelector("b").textContent=tr(m.title);
+    c.querySelector("small").textContent=dgMemText(m,person);
+  }else if(st===1){
+    c.querySelector("b").textContent=tr("Nouveau souvenir");
+    c.querySelector("small").textContent=tr("Touche pour le découvrir");
+    c.onclick=()=>dgRevealMemory(ci,m,c);
+  }else{
+    c.querySelector("b").textContent="???";
+    c.querySelector("small").textContent=m.clean
+      ?tr("{k} / {n} niveaux sans indice",{k:Math.min(dgCleanCount(ch,pr),dgMemNeed(m,ch)),n:dgMemNeed(m,ch)})
+      :tr("Palier {r}",{r:tr(DGSpirit.RANKS[m.rank-1].label)});
+  }
+}
+// le joueur retourne un souvenir gagné : il le lit et reçoit son cadeau
+// Seule la carte retournée est redessinée, le reste de la fiche ne change pas.
+function dgRevealMemory(ci,m,el){
+  userAudioGesture();
+  const ch=dgChapters[ci], pr=loadProgress();
+  if(!ch||!pr.mem||!pr.mem[ch.id]||pr.mem[ch.id][m.key]!==1)return;
+  pr.mem[ch.id][m.key]=2;
+  saveProgress(pr);
+  dgAddHints(m.gift);
+  if(sfxReady())DGAudio.sfx.winChord(.05);
+  const flip=()=>{
+    dgFillMemCard(el,ci,m,2,pr);
+    el.classList.add("just");
+    const gift=document.createElement("span");
+    gift.className="gift";
+    gift.innerHTML="+"+m.gift+" "+dgIcon("bulb");
+    el.appendChild(gift);
+  };
+  if(el.animate&&!dgReducedMotion())el.animate([{transform:"none"},{transform:"perspective(40rem) rotateY(90deg)"}],{duration:160,easing:"ease-in"}).finished.then(flip);
+  else flip();
+}
+function dgShowPerson(ci){
+  setPaused(false);
+  dgRenderPerson(ci);
+  ["chapterScreen","profileScreen","collection","chapterList"].forEach(dgHideScreen);
+  dgShowScreen("personScreen");
+}
+function dgCollectionBadge(){
+  const btn=document.getElementById("dgOpenCollection");
+  if(!btn)return;
+  const n=dgFreshTotal();
+  btn.dataset.n=n?String(n):"";
+  btn.classList.toggle("fresh",n>0);
 }
 
 document.getElementById("dgListBack").onclick=()=>dgLeaveTo("index.html");
 document.getElementById("dgOpenCollection").onclick=()=>dgRubans(()=>dgShowCollection());
 document.getElementById("colBack").onclick=()=>dgRubans(()=>dgShowChapterList());
+document.getElementById("psBack").onclick=()=>dgRubans(()=>dgShowCollection());
+document.getElementById("psPlay").onclick=()=>{userAudioGesture();dgRubans(()=>{dgHideScreen("personScreen");dgShowChapterScreen(dgPersonIndex);});};
 document.getElementById("dgBackMenu").onclick=()=>dgRubans(()=>dgShowChapterList());
 document.getElementById("pfBack").onclick=()=>dgRubans(()=>dgShowChapterScreen(dgChapterIndexOfLevel(currentLevel||0)));
 document.getElementById("pfGo").onclick=()=>{
