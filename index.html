@@ -99,6 +99,25 @@ button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:poin
 .langs button{padding:.8rem .2rem;border-radius:1rem;background:var(--navy3);box-shadow:inset 0 0 0 .2rem var(--line);font:800 1.05rem/1 Rubik,Arial,sans-serif;white-space:nowrap}
 .langs button.on{background:var(--grad);box-shadow:none;color:var(--navy)}
 #atelier{display:flex;flex-direction:column;gap:.9rem}
+/* mon perso : tête et couleur, débloquées en jouant */
+.ico{display:inline-block;width:1.2em;height:1.2em;vertical-align:-.22em;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
+#meChoice.fresh::after{content:"";position:absolute;top:.5rem;right:.5rem;width:1.1rem;height:1.1rem;border-radius:50%;background:#ff4f8b;box-shadow:0 0 .8rem #ff4f8b}
+.lookTop{display:flex;align-items:center;gap:1rem;margin:0 1.8rem}
+.lookPrev{flex:none;width:8.6rem;height:8.6rem;animation:bob 2.4s ease-in-out infinite}
+.lookPrev svg{display:block;width:100%;height:100%;overflow:visible}
+.lookTx{flex:1;min-width:0}
+.lookTx .langs{grid-template-columns:1fr 1fr;margin:0}
+.lookTx p{margin:.7rem 0 0;font-size:1.05rem;line-height:1.45;color:var(--muted)}
+.lookTx p b{color:var(--ink)}
+.looks{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:.6rem;margin:0 1.8rem}
+.looks button{position:relative;padding:.4rem .2rem .5rem;border-radius:1.2rem;background:var(--navy3);box-shadow:inset 0 0 0 .2rem var(--line);text-align:center}
+.looks button .mini{display:block;width:100%;aspect-ratio:1}
+.looks button .mini svg{display:block;width:100%;height:100%;overflow:visible}
+.looks button .lab{display:block;margin-top:.2rem;font:800 .85rem/1.1 Rubik,Arial,sans-serif;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.looks button.on{box-shadow:inset 0 0 0 .25rem var(--c2),0 0 1.2rem color-mix(in srgb,var(--c2) 45%,transparent)}
+.looks button.lock .mini{filter:brightness(0) invert(.25);opacity:.8}
+.looks button.lock .lab{color:var(--muted)}
+.looks button.new::after{content:"";position:absolute;top:.35rem;right:.35rem;width:.9rem;height:.9rem;border-radius:50%;background:#ff4f8b;box-shadow:0 0 .6rem #ff4f8b}
 .lbl{margin:.4rem 2rem 0;font:800 1rem/1 Rubik,Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
 
 /* écran d'ouverture : le studio MusclorDuck, en linogravure rouge (maquette J14).
@@ -144,7 +163,7 @@ html.tx-in .logoBig span{animation:none}
   <p class="tagline">Tourne le monde. Tombe juste. Fais des rencontres.</p>
 
   <section class="pair" aria-label="Choix des personnages">
-    <button class="frame f1" id="meChoice" type="button" aria-label="Changer mon personnage">
+    <button class="frame f1" id="meChoice" type="button" aria-label="Personnaliser mon personnage">
       <span class="pic" id="mePic"></span>
       <span class="cap">Moi<i id="meCap">lui · changer ↻</i></span>
     </button>
@@ -163,6 +182,23 @@ html.tx-in .logoBig span{animation:none}
 
   <div id="splash" aria-hidden="true" data-no-i18n><div class="spBlock"></div><svg viewBox="-74 -44 468 400" aria-hidden="true"><defs><filter id="spWob1" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency=".03" numOctaves="2" seed="2" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="9"/></filter><filter id="spWob2" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency=".03" numOctaves="2" seed="11" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="9"/></filter><filter id="spWob3" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency=".03" numOctaves="2" seed="23" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="9"/></filter></defs><g id="spArt" filter="url(#spWob1)" stroke="#f0e6cf" stroke-linecap="round" stroke-linejoin="round"><path class="spFloor" d="M-40 246H360" fill="none" stroke-width="4"/><g transform="translate(192 246) scale(.95) translate(-150 -286)"><g class="spBig" fill="#d8232f" stroke-width="6"><path d="M128 232V274M128 274L110 284M128 274L128 288M128 274L144 284M176 232V274M176 274L158 284M176 274L176 288M176 274L192 284" fill="none"/><path d="M214 120Q250 126 268 104Q250 88 256 64Q262 40 286 46Q306 54 300 82Q312 120 282 146Q250 168 212 150Z"/><path d="M266 100Q276 92 288 98" fill="none"/><g transform="translate(300 0) scale(-1 1)"><path d="M214 120Q250 126 268 104Q250 88 256 64Q262 40 286 46Q306 54 300 82Q312 120 282 146Q250 168 212 150Z"/><path d="M266 100Q276 92 288 98" fill="none"/></g><path d="M150 34Q184 34 190 66Q232 70 232 122Q232 200 196 228Q150 246 104 228Q68 200 68 122Q68 70 110 66Q116 34 150 34Z"/><path d="M100 150Q124 168 147 150M153 150Q176 168 200 150M150 170V214M134 184H166M136 202H164" fill="none"/><circle cx="134" cy="70" r="4.5" fill="#f0e6cf"/><circle cx="166" cy="70" r="4.5" fill="#f0e6cf"/><path d="M126 60L140 63M174 60L160 63" fill="none"/><path d="M141 74Q150 68 159 74Q150 86 141 74Z"/></g></g><path class="spTrail" d="M58 290L150 246L246 246L112 296Z" fill="#17130f" stroke="none"/><g transform="translate(79 290) scale(.3) translate(-150 -286)"><g class="spSmall" fill="#17130f" stroke-width="15"><path d="M128 232V274M128 274L110 284M128 274L128 288M128 274L144 284M176 232V274M176 274L158 284M176 274L176 288M176 274L192 284" fill="none"/><path d="M220 128Q252 116 254 86Q246 74 236 84Q238 102 212 110Z"/><g transform="translate(300 0) scale(-1 1)"><path d="M220 128Q252 116 254 86Q246 74 236 84Q238 102 212 110Z"/></g><path d="M150 34Q184 34 190 66Q232 70 232 122Q232 200 196 228Q150 246 104 228Q68 200 68 122Q68 70 110 66Q116 34 150 34Z"/><circle cx="134" cy="70" r="4.5" fill="#f0e6cf"/><circle cx="166" cy="70" r="4.5" fill="#f0e6cf"/><path d="M126 60L140 63M174 60L160 63" fill="none"/><path d="M141 74Q150 68 159 74Q150 86 141 74Z"/></g></g></g></svg><div class="spName">Musclor<br>Duck</div><div class="spTag">games</div></div>
   <div id="txLayer" aria-hidden="true"><div class="band boot" style="background:#f6ff3d"></div><div class="band boot" style="background:#19e3ff"></div><div class="band boot" style="background:#0d1230"></div></div>
+  <div class="overlay hidden" id="lookOverlay" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="lookTitle">
+      <h3 id="lookTitle">Mon perso</h3>
+      <div class="lookTop">
+        <div class="lookPrev" id="lookPrev"></div>
+        <div class="lookTx">
+          <div class="langs"><button type="button" id="lookBoy">Lui</button><button type="button" id="lookGirl">Elle</button></div>
+          <p id="lookStats"></p>
+        </div>
+      </div>
+      <div class="lbl">Têtes</div>
+      <div class="looks" id="lookHeads"></div>
+      <div class="lbl">Couleurs</div>
+      <div class="looks" id="lookSkins"></div>
+      <button class="btn" id="closeLook" type="button">C’est moi !</button>
+    </div>
+  </div>
   <div class="overlay hidden" id="optionsOverlay" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="optionsTitle">
       <h3 id="optionsTitle">Options</h3>
@@ -381,17 +417,75 @@ let dateGender=getStoredGender("dcg_date_gender","girl");
 let chapterIndex=0;
 function updateMenuCharacters(){
   const person=DGSpirit.person(chapterIndex);
-  document.getElementById("mePic").innerHTML=DGSpirit.portrait("flamme",meGender==="girl"?"f":"m");
+  document.getElementById("mePic").innerHTML=DGSpirit.portrait(DGSpirit.me(),meGender==="girl"?"f":"m");
   document.getElementById("datePic").innerHTML=DGSpirit.portrait(person.kind,dateGender==="boy"?"m":"f");
-  document.getElementById("meCap").textContent=tr(meGender==="girl"?"elle · changer ↻":"lui · changer ↻");
+  document.getElementById("meCap").textContent=tr(meGender==="girl"?"elle · personnaliser":"lui · personnaliser");
+  document.getElementById("meChoice").classList.toggle("fresh",lookFresh().length>0);
   document.getElementById("dateName").textContent=person.name;
   document.getElementById("dateCap").textContent=tr(dateGender==="boy"?"lui · changer ↻":"elle · changer ↻");
 }
-document.getElementById("meChoice").addEventListener("click",()=>{
-  meGender=meGender==="boy"?"girl":"boy";
+/* --- mon perso : lui ou elle, une tête (avec les cœurs) et une couleur (avec les souvenirs de l'album) */
+const lookOverlay=document.getElementById("lookOverlay");
+const LOOK_SEEN_KEY="dg_look_seen"; // ce que le joueur a déjà vu débloqué : le reste porte un point « nouveau »
+function lookProgress(){try{return JSON.parse(localStorage.getItem(PROGRESS_KEY)||"{}")||{};}catch(e){return {};}}
+function lookSeen(){try{return JSON.parse(localStorage.getItem(LOOK_SEEN_KEY)||"[]")||[];}catch(e){return [];}}
+function lookFresh(){
+  const e=DGSpirit.earned(lookProgress()), seen=lookSeen();
+  return [...DGSpirit.HEADS,...DGSpirit.SKINS].filter(it=>(it.hearts||it.mem)&&DGSpirit.lookOpen(it,e)&&!seen.includes(it.key));
+}
+let lookNew=[];
+function renderLook(){
+  const look=DGSpirit.readLook(), sex=meGender==="girl"?"f":"m", e=DGSpirit.earned(lookProgress());
+  document.getElementById("lookPrev").innerHTML=DGSpirit.portrait(DGSpirit.me(look),sex,{eye:"happy",mouth:"grin"});
+  document.getElementById("lookBoy").classList.toggle("on",sex==="m");
+  document.getElementById("lookGirl").classList.toggle("on",sex==="f");
+  document.getElementById("lookStats").innerHTML=DGSpirit.icon("heart")+" <b>"+e.hearts+"</b> "+tr("cœurs")+"<br>"+DGSpirit.icon("photo")+" <b>"+e.mem+"</b> "+tr("souvenirs découverts");
+  const fill=(host,list,isHead)=>{
+    host.innerHTML="";
+    list.forEach(it=>{
+      const open=DGSpirit.lookOpen(it,e), on=(isHead?look.head:look.skin)===it.key;
+      const shown=isHead?{head:it.key,skin:look.skin}:{head:look.head,skin:it.key};
+      const b=document.createElement("button");
+      b.type="button";
+      b.className=(on?"on":"")+(open?"":" lock")+(lookNew.includes(it.key)?" new":"");
+      b.innerHTML='<span class="mini"></span><span class="lab"></span>';
+      b.querySelector(".mini").innerHTML=DGSpirit.portrait(DGSpirit.me(shown),sex);
+      const lab=b.querySelector(".lab");
+      if(open)lab.textContent=tr(it.name);
+      else lab.innerHTML=DGSpirit.icon(isHead?"heart":"photo")+" "+(isHead?it.hearts:it.mem);
+      b.setAttribute("aria-label",tr(it.name)+(open?"":" · "+tr("verrouillé")));
+      b.onclick=()=>{
+        if(!open){playCloseSound();return;}
+        playButtonSound();
+        DGSpirit.saveLook(shown);
+        renderLook();updateMenuCharacters();
+      };
+      host.appendChild(b);
+    });
+  };
+  fill(document.getElementById("lookHeads"),DGSpirit.HEADS,true);
+  fill(document.getElementById("lookSkins"),DGSpirit.SKINS,false);
+}
+function openLook(){
+  lookNew=lookFresh().map(it=>it.key);
+  try{localStorage.setItem(LOOK_SEEN_KEY,JSON.stringify([...new Set([...lookSeen(),...lookNew])]));}catch(e){}
+  renderLook();
+  playOpenSound();
+  lookOverlay.classList.remove("hidden");lookOverlay.setAttribute("aria-hidden","false");
+  updateMenuCharacters();
+}
+function closeLook(){playCloseSound();lookOverlay.classList.add("hidden");lookOverlay.setAttribute("aria-hidden","true");}
+function setMeGender(g){
+  meGender=g;
   try{localStorage.setItem("dcg_me_gender",meGender);}catch(e){}
-  playOpenSound();updateMenuCharacters();
-});
+  playButtonSound();renderLook();updateMenuCharacters();
+}
+document.getElementById("meChoice").addEventListener("click",openLook);
+document.getElementById("lookBoy").addEventListener("click",()=>setMeGender("boy"));
+document.getElementById("lookGirl").addEventListener("click",()=>setMeGender("girl"));
+document.getElementById("closeLook").addEventListener("click",closeLook);
+lookOverlay.addEventListener("click",e=>{if(e.target===lookOverlay)closeLook();});
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!lookOverlay.classList.contains("hidden"))closeLook();});
 document.getElementById("dateChoice").addEventListener("click",()=>{
   dateGender=dateGender==="boy"?"girl":"boy";
   try{localStorage.setItem("dcg_date_gender",dateGender);}catch(e){}

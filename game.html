@@ -275,6 +275,8 @@ body.btnCtl #swipeHint{display:none}
 #personScreen .cta{margin-top:.6rem}
 .rel.news{cursor:pointer;box-shadow:inset 0 0 0 .25rem var(--yellow),0 0 1.4rem color-mix(in srgb,var(--yellow) 40%,transparent)}
 .relNews{display:block;margin-top:.25rem;font-style:normal;font-weight:800;font-size:1.05rem;color:var(--yellow)}
+.relHead{display:block;margin-top:.2rem;color:var(--c2)}
+.mem .gift small{display:block;margin-top:.2rem;font-size:.9rem;color:var(--navy)}
 
 /* ---------- fenêtres posées sur le jeu (victoire, pause, défaite, indice, infos) */
 .overlay{position:absolute!important;inset:0;z-index:30!important;display:flex;align-items:flex-end;background:rgba(7,9,26,.72);animation:ovIn .18s ease both}
@@ -542,6 +544,8 @@ html:not(.editor-enabled) #toggleEdit,html:not(.editor-enabled) #compactEdit{dis
 <script src="ambiance.js"></script>
 <script>
 const tr=DGi18n.t; // traduction : tr("texte français", {variables})
+const dgMeKind=DGSpirit.me(); // la tête et la couleur choisies dans le menu
+let dgYouAt=-1e9;     // début du niveau en cours : la flèche « toi » s'affiche quelques secondes
 DGi18n.apply();
 const BOARD=520; let W=11,H=11,T=BOARD/W,HALF=T/2;
 
@@ -765,6 +769,7 @@ function resetPlay(){
     if(b[y][x]=="A"){p={x,y};start={x,y};b[y][x]="."}
     if(b[y][x]=="B")exit={x,y}
   }
+  dgYouAt=edit?-1e9:performance.now();
   draw(); updateStats();
   if(!edit){if(musicOn)startElevatorMusic();busy=true;const token=fallToken;setTimeout(()=>{if(token===fallToken)fall();},getFallDelayMs());scheduleCompanion(false)}
 }
@@ -1364,6 +1369,22 @@ function dgDrawSpirit(parent,kind,sex,X,Y,o){
   el.innerHTML=DGSpirit.svg(kind,sex,o.state);
   parent.appendChild(el);
 }
+/* « toi » : une flèche au-dessus du joueur au début de chaque niveau, pour se retrouver d'un coup d'œil.
+   Elle s'efface au premier coup ou au bout de quelques secondes. */
+const DG_YOU_MS=4200;
+function dgYouOn(now){return now-dgYouAt<DG_YOU_MS&&!gameOver&&!moves;}
+function dgDrawYou(g,X,Y,now){
+  const t=now-dgYouAt, fade=Math.min(1,t/250,(DG_YOU_MS-t)/600);
+  const bob=Math.abs(Math.sin(t/260))*T*.1, cx=X+HALF;
+  // posée au-dessus de la crête ; sur la rangée du haut, elle passe sous les pieds en pointant vers le haut
+  const up=p.y<=0, tip=up?Y+T*1.04+bob:Y-T*.06-bob, w=T*.27, h=T*.26*(up?-1:1);
+  const gr=E("g",{opacity:fade.toFixed(3)});
+  gr.appendChild(E("path",{d:"M"+cx+" "+tip+"l"+(-w)+" "+(-h)+"h"+(w*.55)+"v"+(-h*.7)+"h"+(w*.9)+"v"+(h*.7)+"h"+(w*.55)+"Z",fill:dgC1,stroke:"#0d1230","stroke-width":T*.045,"stroke-linejoin":"round"}));
+  const lb=E("text",{x:cx,y:up?tip+T*.62:tip-h*1.7-T*.12,fill:"#ffffff","font-size":T*.34,"font-weight":900,"font-family":"Rubik,Arial,sans-serif","text-anchor":"middle",stroke:"#0d1230","stroke-width":T*.07,"paint-order":"stroke","letter-spacing":T*.02});
+  lb.textContent=tr("TOI");
+  gr.appendChild(lb);
+  g.appendChild(gr);
+}
 function drawPlayerSpeedTrail(){
   if(edit||deadPlayer||!playerTrail.length)return;
   const now=Date.now();
@@ -1386,7 +1407,7 @@ function draw(){
     const c=cell(x,y);
     if(c==="."||c==="#")continue;
     if(c==="B"){dateCell={x,y};continue;}
-    if(c==="A"){if(edit)dgDrawSpirit(g,"flamme",dgMeSex(),x*T,y*T);continue;}
+    if(c==="A"){if(edit)dgDrawSpirit(g,dgMeKind,dgMeSex(),x*T,y*T);continue;}
     let name=null;
     if(c==="S")name=buttonIsPressed(x,y)?"button_on":"button_off";
     else if(c==="R")name="rotator_right";
@@ -1474,7 +1495,8 @@ function draw(){
       }
       if(!busy)o.dy=Math.sin(now/420)*T*.012;
     }
-    dgDrawSpirit(g,"flamme",dgMeSex(),X,Y,o);
+    dgDrawSpirit(g,dgMeKind,dgMeSex(),X,Y,o);
+    if(dgYouOn(now))dgDrawYou(g,X,Y,now);
     // l'écho de la chute : une onde lumineuse part du point d'impact et court dans les murs
     if(dgImpact&&dgImpact.flash&&idt<520&&dgTubeD){
       const k=idt/520,ex=dgImpact.x*T+HALF,ey=((dgImpact.y+1)%H)*T,R=T*(.3+k*(2.2+3.2*imp));
@@ -2339,7 +2361,7 @@ function saveCurrentProgress(){
 }
 function saveWinProgress(){
   const ci=dgChapterIndexOfLevel(currentLevel), before=dgRelation(ci).rank;
-  const pr=loadProgress();
+  const pr=loadProgress(), heartsBefore=DGSpirit.earned(pr).hearts;
   const stars=starScore();
   const key=levelKey(currentLevel);
   const old=pr.best[key];
@@ -2350,7 +2372,9 @@ function saveWinProgress(){
   pr.current=levelKey(Math.min(currentLevel+1,levels.length-1));
   saveProgress(pr);
   const rel=dgRelation(ci);
-  dgWinNews={ci,rankUp:rel.rank>before&&before>0?rel:null,fresh:dgSyncMemories()};
+  const heartsAfter=DGSpirit.earned(loadProgress()).hearts;
+  dgWinNews={ci,rankUp:rel.rank>before&&before>0?rel:null,fresh:dgSyncMemories(),
+    heads:DGSpirit.HEADS.filter(h=>h.hearts>heartsBefore&&h.hearts<=heartsAfter)};
 }
 function savedStartLevel(){
   const idx=levelIndexFromKey(loadProgress().current);
@@ -2734,7 +2758,7 @@ function ingameAnimationLoop(ts){
       dgFlush();
       // au repos, seuls les yeux, le halo et le petit cœur bougent : une image sur deux suffit,
       // et le téléphone chauffe moins (il ralentit quand il chauffe)
-      const calm=!busy&&!dgRot&&!dgFallAnim&&!gameOver&&!(dgImpact&&ts-dgImpact.t<700)&&!playerTrail.length;
+      const calm=!busy&&!dgRot&&!dgFallAnim&&!gameOver&&!(dgImpact&&ts-dgImpact.t<700)&&!playerTrail.length&&!dgYouOn(ts);
       dgCalmFrame=!dgCalmFrame;
       // pendant le défilement vers le niveau suivant, le plateau ne bouge pas : le redessiner obligerait le
       // téléphone à repeindre tout le plateau en mouvement à chaque image (c'était l'attente sur Android)
@@ -3095,19 +3119,7 @@ function dgRelation(ci){
    pr.clean[niveau] : niveau gagné au moins une fois sans indice.
    Le cadeau (des indices) n'est donné qu'à la découverte : c'est l'album qui le remet. */
 let dgWinNews=null;   // ce que la dernière victoire a changé : {ci, rankUp, fresh}
-/* Pictogrammes au trait de l'album, dessinés dans la couleur du texte (grille 24 x 24). */
-const DG_ICONS={
-  eye:"M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12ZM15 12a3 3 0 1 1-6 0a3 3 0 1 1 6 0Z",
-  rings:"M14 12a5 5 0 1 1-10 0a5 5 0 1 1 10 0ZM20 12a5 5 0 1 1-10 0a5 5 0 1 1 10 0Z",
-  pulse:"M12 20.5S3 15 3 8.8a4.6 4.6 0 0 1 9-2a4.6 4.6 0 0 1 9 2c0 6.2-9 11.7-9 11.7ZM6.5 11.5h3l1.3-2.4 2 4.8 1.4-2.4h3.3",
-  chute:"M3 11a9 7.5 0 0 1 18 0ZM3 11l9 8.5 9-8.5M9 11l3 8.5 3-8.5",
-  spark:"M10.5 20.5S3 16 3 10.6a4 4 0 0 1 7.5-1.8a4 4 0 0 1 7.5 1.8c0 5.4-7.5 9.9-7.5 9.9ZM19 2.5v5M16.5 5h5",
-  ring:"M9 7.5L7.5 5 9.5 2.5h5L16.5 5 15 7.5ZM18 15a6 6 0 1 1-12 0a6 6 0 1 1 12 0Z",
-  lock:"M6 11h12v9.5H6ZM8.5 11V8a3.5 3.5 0 0 1 7 0v3",
-  photo:"M3.5 5.5h17v13h-17ZM3.5 15l5-5 4 4 2.5-2.5 5.5 5.5M16 8.5h.01",
-  bulb:"M9.5 18h5M10.5 21h3M12 3a6 6 0 0 0-3.4 10.9c.5.4.9 1 .9 1.7V16h5v-.4c0-.7.4-1.3.9-1.7A6 6 0 0 0 12 3Z"
-};
-function dgIcon(name){return '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="'+(DG_ICONS[name]||"")+'"/></svg>';}
+const dgIcon=DGSpirit.icon;
 function dgCleanCount(ch,pr){
   pr=pr||loadProgress();
   return ((ch&&ch.levelIds)||[]).filter(id=>pr.clean&&pr.clean[levelKey(id)]).length;
@@ -3399,7 +3411,7 @@ function dgShowWin(kind,finalText){
   }
   // nouveau palier ou nouveau souvenir : on le dit tout de suite, l'album le remettra
   const news=dgWinNews&&dgWinNews.ci===info.ci?dgWinNews:null;
-  if(news&&(news.rankUp||news.fresh.length)){
+  if(news&&(news.rankUp||news.fresh.length||news.heads.length)){
     const person=DGSpirit.person(info.ci);
     if(!relEl.innerHTML){
       relEl.innerHTML='<div class="art">'+DGSpirit.portrait(person.kind,dgDateSex(),{eye:"happy",mouth:"grin"})+'</div><div><b></b><span></span></div>';
@@ -3414,6 +3426,13 @@ function dgShowWin(kind,finalText){
       line.insertAdjacentHTML("beforeend",dgIcon("photo")+" ");
       line.append(tr(news.fresh.length>1?"{n} souvenirs à découvrir":"Souvenir à découvrir",{n:news.fresh.length}));
     }
+    // une tête débloquée se choisit dans le menu, sur « Moi »
+    news.heads.forEach(h=>{
+      const hl=document.createElement("span");
+      hl.className="relHead";
+      hl.textContent=tr("Nouvelle tête : {h}",{h:tr(h.name)});
+      line.appendChild(hl);
+    });
     relEl.querySelector("div:last-child").appendChild(line);
     relEl.classList.add("news");
     relEl.onclick=()=>dgRubans(()=>{hideBanner();dgShowPerson(info.ci);});
@@ -3543,7 +3562,7 @@ function dgRenderChapterScreen(chapterIndex=dgSelectedChapter){
     const ic=btn.querySelector(".ic");
     if(locked)ic.textContent=boss?"👑":"🔒";
     else if(done)dgPortrait(ic,person.kind,dgDateSex(),{eye:"happy",mouth:"grin"});
-    else dgPortrait(ic,"flamme",dgMeSex());
+    else dgPortrait(ic,dgMeKind,dgMeSex());
     const st=dgProgress().best?.[levelKey(id)];
     btn.querySelector(".stars").textContent=st?"♥".repeat(Math.max(0,Math.min(3,Number(st.stars)||0))):"";
     btn.onclick=()=>{
@@ -3671,7 +3690,9 @@ function dgRevealMemory(ci,m,el){
   userAudioGesture();
   const ch=dgChapters[ci], pr=loadProgress();
   if(!ch||!pr.mem||!pr.mem[ch.id]||pr.mem[ch.id][m.key]!==1)return;
+  const memBefore=DGSpirit.earned(pr).mem;
   pr.mem[ch.id][m.key]=2;
+  const skins=DGSpirit.SKINS.filter(k=>k.mem>memBefore&&k.mem<=memBefore+1);
   saveProgress(pr);
   dgAddHints(m.gift);
   if(sfxReady())DGAudio.sfx.winChord(.05);
@@ -3681,6 +3702,7 @@ function dgRevealMemory(ci,m,el){
     const gift=document.createElement("span");
     gift.className="gift";
     gift.innerHTML="+"+m.gift+" "+dgIcon("bulb");
+    skins.forEach(k=>{const n=document.createElement("small");n.textContent=tr("Nouvelle couleur : {c}",{c:tr(k.name)});gift.appendChild(n);});
     el.appendChild(gift);
   };
   if(el.animate&&!dgReducedMotion())el.animate([{transform:"none"},{transform:"perspective(40rem) rotateY(90deg)"}],{duration:160,easing:"ease-in"}).finished.then(flip);

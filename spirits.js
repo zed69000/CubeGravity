@@ -26,7 +26,7 @@
 
   function svg(kind,sex,o){
     o=o||{};
-    const P=KINDS[kind]||KINDS.flamme,fem=sex==="f";
+    const P=(kind&&typeof kind==="object")?kind:(KINDS[kind]||KINDS.flamme),fem=sex==="f";
     const st=' stroke="'+P.line+'" stroke-width="2" stroke-linejoin="round"';
     const t=o.t||0,flick=1+Math.sin(t/90+(P.body.charCodeAt(2)%7))*.05;
     const cs=(1+(o.stretch||0)*1.1)*flick;
@@ -108,7 +108,69 @@
     {key:"love",icon:"spark",title:"Grand amour",line:"{name} ne regarde plus que toi.",rank:4,gift:3,state:{eye:"happy",mouth:"grin"}},
     {key:"soul",icon:"ring",title:"Âme sœur",rank:5,gift:5,state:{eye:"happy",mouth:"grin"}}
   ];
+  /* Pictogrammes au trait (grille 24 x 24), dessinés dans la couleur du texte. */
+  const ICONS={
+    eye:"M2 12s3.6-6.5 10-6.5S22 12 22 12s-3.6 6.5-10 6.5S2 12 2 12ZM15 12a3 3 0 1 1-6 0a3 3 0 1 1 6 0Z",
+    rings:"M14 12a5 5 0 1 1-10 0a5 5 0 1 1 10 0ZM20 12a5 5 0 1 1-10 0a5 5 0 1 1 10 0Z",
+    pulse:"M12 20.5S3 15 3 8.8a4.6 4.6 0 0 1 9-2a4.6 4.6 0 0 1 9 2c0 6.2-9 11.7-9 11.7ZM6.5 11.5h3l1.3-2.4 2 4.8 1.4-2.4h3.3",
+    chute:"M3 11a9 7.5 0 0 1 18 0ZM3 11l9 8.5 9-8.5M9 11l3 8.5 3-8.5",
+    spark:"M10.5 20.5S3 16 3 10.6a4 4 0 0 1 7.5-1.8a4 4 0 0 1 7.5 1.8c0 5.4-7.5 9.9-7.5 9.9ZM19 2.5v5M16.5 5h5",
+    ring:"M9 7.5L7.5 5 9.5 2.5h5L16.5 5 15 7.5ZM18 15a6 6 0 1 1-12 0a6 6 0 1 1 12 0Z",
+    lock:"M6 11h12v9.5H6ZM8.5 11V8a3.5 3.5 0 0 1 7 0v3",
+    photo:"M3.5 5.5h17v13h-17ZM3.5 15l5-5 4 4 2.5-2.5 5.5 5.5M16 8.5h.01",
+    heart:"M12 20.5S3 15 3 8.8a4.6 4.6 0 0 1 9-2a4.6 4.6 0 0 1 9 2c0 6.2-9 11.7-9 11.7Z",
+    bulb:"M9.5 18h5M10.5 21h3M12 3a6 6 0 0 0-3.4 10.9c.5.4.9 1 .9 1.7V16h5v-.4c0-.7.4-1.3.9-1.7A6 6 0 0 0 12 3Z"
+  };
+  function icon(name){return '<svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="'+(ICONS[name]||"")+'"/></svg>';}
+
+  /* --- le look du joueur : une tête (la crête) et une couleur, à débloquer.
+     Ces têtes n'appartiennent qu'au joueur, pour qu'on ne le confonde jamais avec une rencontre.
+     Têtes : avec les cœurs gagnés (hearts). Couleurs : avec les souvenirs découverts dans l'album (mem). */
+  const HEADS=[
+    {key:"flamme",name:"Flamme",hearts:0,d:KINDS.flamme.d},
+    {key:"meche",name:"Mèche",hearts:10,d:"M7 17Q3 5 15 4Q28 3 36 -5Q36 7 27 9Q34 11 33 17Z"},
+    {key:"chat",name:"Chat",hearts:25,d:"M6 17L7 -1L16 9H24L33 -1L34 17Z"},
+    {key:"bonnet",name:"Bonnet",hearts:45,d:"M6 17Q5 4 20 4Q35 4 34 17ZM15.5 3.5a4.5 4.5 0 1 0 9 0a4.5 4.5 0 1 0 -9 0Z"},
+    {key:"lapin",name:"Lapin",hearts:70,d:"M8 17Q8 10 13 9Q8 4 6 -3Q15 1 16 9H24Q25 1 34 -3Q32 4 27 9Q32 10 32 17Z"},
+    {key:"punk",name:"Crête punk",hearts:100,d:"M8 17L10 7L14 11L16 -3L20 9L24 -7L26 9L30 -1L31 11L33 17Z"},
+    {key:"antenne",name:"Antennes",hearts:140,d:"M9 17Q10 9 20 9Q30 9 31 17ZM13 10L9 2.5L11.2 1.5L15.5 9.5ZM27 10L31 2.5L28.8 1.5L24.5 9.5ZM6.8 1a3 3 0 1 0 6 0a3 3 0 1 0 -6 0ZM27.2 1a3 3 0 1 0 6 0a3 3 0 1 0 -6 0Z"},
+    {key:"couronne",name:"Couronne",hearts:200,d:"M7 17L7.5 2L13.5 9.5L20 -1L26.5 9.5L32.5 2L33 17Z"}
+  ];
+  const SKINS=[
+    {key:"braise",name:"Braise",mem:0,body:"#ff9a2e",crest:"#ffd23f",scarf:"#ff4f6a",line:"#3a1205"},
+    {key:"menthe",name:"Menthe",mem:2,body:"#5fe3b0",crest:"#e9fff3",scarf:"#ff5fa2",line:"#0d3b2c"},
+    {key:"ocean",name:"Océan",mem:5,body:"#3fa9ff",crest:"#bff0ff",scarf:"#ffd23f",line:"#0a2a55"},
+    {key:"corail",name:"Corail",mem:9,body:"#ff6f7d",crest:"#ffd0a8",scarf:"#ffe14a",line:"#4a0d1a"},
+    {key:"lavande",name:"Lavande",mem:14,body:"#b18cff",crest:"#ffe0fb",scarf:"#19e3ff",line:"#2a1670"},
+    {key:"neon",name:"Néon",mem:20,body:"#7dff6a",crest:"#f6ff3d",scarf:"#ff4fd8",line:"#0f3d0a"},
+    {key:"nuit",name:"Nuit",mem:28,body:"#3a3f7a",crest:"#19e3ff",scarf:"#f6ff3d",line:"#0a0d24"},
+    {key:"or",name:"Or",mem:38,body:"#ffd23f",crest:"#fff7c2",scarf:"#ff4fd8",line:"#4a3300"}
+  ];
+  const LOOK_KEY="dg_me_look";
+  function readLook(){
+    let l=null;
+    try{l=JSON.parse(localStorage.getItem(LOOK_KEY)||"null");}catch(e){}
+    l=l||{};
+    return {head:HEADS.some(h=>h.key===l.head)?l.head:"flamme",skin:SKINS.some(k=>k.key===l.skin)?l.skin:"braise"};
+  }
+  function saveLook(l){try{localStorage.setItem(LOOK_KEY,JSON.stringify({head:l.head,skin:l.skin}));}catch(e){}}
+  // le joueur prêt à dessiner : à passer à svg() / portrait() à la place d'un nom d'esprit
+  function me(l){
+    l=l||readLook();
+    const h=HEADS.find(x=>x.key===l.head)||HEADS[0], k=SKINS.find(x=>x.key===l.skin)||SKINS[0];
+    return {body:k.body,crest:k.crest,scarf:k.scarf,line:k.line,d:h.d};
+  }
+  // ce que la sauvegarde a gagné : cœurs de tous les niveaux, souvenirs découverts
+  function earned(pr){
+    pr=pr||{};
+    const hearts=Object.values(pr.best||{}).reduce((n,b)=>n+(Number(b&&b.stars)||0),0);
+    let mem=0;
+    Object.values(pr.mem||{}).forEach(box=>Object.values(box||{}).forEach(v=>{if(v===2)mem++;}));
+    return {hearts,mem};
+  }
+  function lookOpen(item,e){return item.hearts!=null?e.hearts>=item.hearts:e.mem>=item.mem;}
+
   /* Les deux couleurs de chaque chapitre : tubes du plateau, boutons, halos. */
   const WORLDS=[["#f6ff3d","#19e3ff"],["#19e3ff","#b06cff"],["#ff9a3d","#ff4fd8"],["#7dff6a","#19b8ff"],["#ff4fd8","#7a5cff"],["#ffe14a","#ff7a3d"],["#ff5fa2","#ffd23f"],["#a8f4fa","#ff4f8b"]];
-  window.DGSpirit={KINDS,PEOPLE,WORLDS,RANKS,MEMORIES,svg,portrait,status,nextRank,person:i=>PEOPLE[((i%PEOPLE.length)+PEOPLE.length)%PEOPLE.length]};
+  window.DGSpirit={KINDS,PEOPLE,WORLDS,RANKS,MEMORIES,HEADS,SKINS,icon,readLook,saveLook,me,earned,lookOpen,svg,portrait,status,nextRank,person:i=>PEOPLE[((i%PEOPLE.length)+PEOPLE.length)%PEOPLE.length]};
 })();
