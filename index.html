@@ -28,13 +28,16 @@ try{if(sessionStorage.getItem("dg_tx")==="1"){sessionStorage.removeItem("dg_tx")
   --c1:#f6ff3d;--c2:#19e3ff;--pink:#ff4f8b;--yellow:#ffe14a;
   --grad:linear-gradient(90deg,var(--c1),var(--c2));
 }
-html{font-size:min(calc(100vw / 25.4),calc(100dvh / 54.4),20.5px)}
+/* barre d'état et encoche : l'application s'affiche dessous (Android 15+, iPhone). Capacitor fournit
+   --safe-area-inset-top là où env() ne marche pas encore dans la WebView. */
+:root{--sat:var(--safe-area-inset-top,env(safe-area-inset-top,0px))}
+html{font-size:min(calc(100vw / 25.4),calc((100dvh - var(--sat)) / 54.4),20.5px)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none;background:#07091a}
 body{position:fixed;inset:0;display:flex;justify-content:center;color:var(--ink);font:500 1.3rem/1.4 Rubik,Arial,sans-serif;user-select:none;-webkit-user-select:none;touch-action:manipulation}
 button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:pointer}
 .hidden{display:none!important}
-.menu{position:relative;width:25.4rem;height:100dvh;display:flex;flex-direction:column;overflow:hidden;overflow:clip;background:var(--navy)}
+.menu{position:relative;box-sizing:border-box;width:25.4rem;height:100dvh;padding-top:var(--sat);display:flex;flex-direction:column;overflow:hidden;overflow:clip;background:var(--navy)}
 .menu>*{position:relative;z-index:1}
 
 /* décor : halos, circuit discret, poussière qui tombe */
@@ -90,7 +93,7 @@ button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:poin
 .two .btn{flex:1;width:auto;margin:0;white-space:nowrap}
 .btn em{font-style:normal;color:var(--c1);margin-left:.3rem}
 
-.overlay{position:absolute!important;inset:0;z-index:30!important;display:flex;align-items:flex-end;background:rgba(7,9,26,.72);animation:ovIn .18s ease both}
+.overlay{position:absolute!important;inset:0;z-index:30!important;box-sizing:border-box;padding-top:var(--sat);display:flex;align-items:flex-end;background:rgba(7,9,26,.72);animation:ovIn .18s ease both}
 @keyframes ovIn{from{opacity:0}to{opacity:1}}
 .modal{width:100%;max-height:100%;overflow-y:auto;padding:1.6rem .4rem calc(1.8rem + env(safe-area-inset-bottom));border-radius:2.6rem 2.6rem 0 0;background:var(--navy2);box-shadow:inset 0 .25rem 0 var(--c2),0 -1rem 3rem rgba(0,0,0,.4);display:flex;flex-direction:column;gap:.9rem;animation:mdIn .28s cubic-bezier(.2,1.3,.3,1) both}
 @keyframes mdIn{from{transform:translateY(30%)}to{transform:none}}
@@ -99,6 +102,11 @@ button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:poin
 .langs button{padding:.8rem .2rem;border-radius:1rem;background:var(--navy3);box-shadow:inset 0 0 0 .2rem var(--line);font:800 1.05rem/1 Rubik,Arial,sans-serif;white-space:nowrap}
 .langs button.on{background:var(--grad);box-shadow:none;color:var(--navy)}
 #atelier{display:flex;flex-direction:column;gap:.9rem}
+/* petite fenêtre d'information, à la place des alertes du système */
+#noticeOverlay{z-index:40!important;align-items:center}
+#noticeOverlay .modal{margin:0 1.4rem;border-radius:2.6rem;box-shadow:inset 0 0 0 .25rem var(--c2),0 0 2.6rem color-mix(in srgb,var(--c2) 40%,transparent)}
+#noticeOverlay h3{font-size:1.9rem}
+#noticeText{margin:0 2rem;text-align:center;font-size:1.25rem;line-height:1.35;color:var(--muted)}
 /* mon perso : tête et couleur, débloquées en jouant */
 .ico{display:inline-block;width:1.2em;height:1.2em;vertical-align:-.22em;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round;stroke-linejoin:round}
 #meChoice.fresh::after{content:"";position:absolute;top:.5rem;right:.5rem;width:1.1rem;height:1.1rem;border-radius:50%;background:#ff4f8b;box-shadow:0 0 .8rem #ff4f8b}
@@ -182,6 +190,13 @@ html.tx-in .logoBig span{animation:none}
 
   <div id="splash" aria-hidden="true" data-no-i18n><div class="spBlock"></div><svg viewBox="-74 -44 468 400" aria-hidden="true"><defs><filter id="spWob1" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency=".03" numOctaves="2" seed="2" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="9"/></filter><filter id="spWob2" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency=".03" numOctaves="2" seed="11" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="9"/></filter><filter id="spWob3" x="-10%" y="-10%" width="120%" height="120%"><feTurbulence type="fractalNoise" baseFrequency=".03" numOctaves="2" seed="23" result="n"/><feDisplacementMap in="SourceGraphic" in2="n" scale="9"/></filter></defs><g id="spArt" filter="url(#spWob1)" stroke="#f0e6cf" stroke-linecap="round" stroke-linejoin="round"><path class="spFloor" d="M-40 246H360" fill="none" stroke-width="4"/><g transform="translate(192 246) scale(.95) translate(-150 -286)"><g class="spBig" fill="#d8232f" stroke-width="6"><path d="M128 232V274M128 274L110 284M128 274L128 288M128 274L144 284M176 232V274M176 274L158 284M176 274L176 288M176 274L192 284" fill="none"/><path d="M214 120Q250 126 268 104Q250 88 256 64Q262 40 286 46Q306 54 300 82Q312 120 282 146Q250 168 212 150Z"/><path d="M266 100Q276 92 288 98" fill="none"/><g transform="translate(300 0) scale(-1 1)"><path d="M214 120Q250 126 268 104Q250 88 256 64Q262 40 286 46Q306 54 300 82Q312 120 282 146Q250 168 212 150Z"/><path d="M266 100Q276 92 288 98" fill="none"/></g><path d="M150 34Q184 34 190 66Q232 70 232 122Q232 200 196 228Q150 246 104 228Q68 200 68 122Q68 70 110 66Q116 34 150 34Z"/><path d="M100 150Q124 168 147 150M153 150Q176 168 200 150M150 170V214M134 184H166M136 202H164" fill="none"/><circle cx="134" cy="70" r="4.5" fill="#f0e6cf"/><circle cx="166" cy="70" r="4.5" fill="#f0e6cf"/><path d="M126 60L140 63M174 60L160 63" fill="none"/><path d="M141 74Q150 68 159 74Q150 86 141 74Z"/></g></g><path class="spTrail" d="M58 290L150 246L246 246L112 296Z" fill="#17130f" stroke="none"/><g transform="translate(79 290) scale(.3) translate(-150 -286)"><g class="spSmall" fill="#17130f" stroke-width="15"><path d="M128 232V274M128 274L110 284M128 274L128 288M128 274L144 284M176 232V274M176 274L158 284M176 274L176 288M176 274L192 284" fill="none"/><path d="M220 128Q252 116 254 86Q246 74 236 84Q238 102 212 110Z"/><g transform="translate(300 0) scale(-1 1)"><path d="M220 128Q252 116 254 86Q246 74 236 84Q238 102 212 110Z"/></g><path d="M150 34Q184 34 190 66Q232 70 232 122Q232 200 196 228Q150 246 104 228Q68 200 68 122Q68 70 110 66Q116 34 150 34Z"/><circle cx="134" cy="70" r="4.5" fill="#f0e6cf"/><circle cx="166" cy="70" r="4.5" fill="#f0e6cf"/><path d="M126 60L140 63M174 60L160 63" fill="none"/><path d="M141 74Q150 68 159 74Q150 86 141 74Z"/></g></g></g></svg><div class="spName">Musclor<br>Duck</div><div class="spTag">games</div></div>
   <div id="txLayer" aria-hidden="true"><div class="band boot" style="background:#f6ff3d"></div><div class="band boot" style="background:#19e3ff"></div><div class="band boot" style="background:#0d1230"></div></div>
+  <div class="overlay mid hidden" id="noticeOverlay" aria-hidden="true">
+    <div class="modal" role="alertdialog" aria-modal="true" aria-labelledby="noticeTitle">
+      <h3 id="noticeTitle"></h3>
+      <p id="noticeText"></p>
+      <button class="btn" id="noticeOk" type="button">OK</button>
+    </div>
+  </div>
   <div class="overlay hidden" id="lookOverlay" aria-hidden="true">
     <div class="modal" role="dialog" aria-modal="true" aria-labelledby="lookTitle">
       <h3 id="lookTitle">Mon perso</h3>
@@ -222,6 +237,7 @@ html.tx-in .logoBig span{animation:none}
 </main>
 
 <script src="version.js"></script>
+<script src="save.js"></script>
 <script src="i18n.js"></script>
 <script src="premium.js"></script>
 <script src="spirits.js"></script>
@@ -246,7 +262,7 @@ async function requestMenuFullscreen(showHelp=false){
     if(target.requestFullscreen){await target.requestFullscreen({navigationUI:"hide"});return true;}
     if(target.webkitRequestFullscreen){target.webkitRequestFullscreen();return true;}
   }catch(e){console.warn("[MENU FULLSCREEN]",e);}
-  if(showHelp&&isIOS())alert(tr("Sur iPhone, pour le vrai plein écran : Partager → Sur l’écran d’accueil, puis lance Date Gravity depuis son icône."));
+  if(showHelp&&isIOS())showNotice(tr("Plein écran"),tr("Sur iPhone, pour le vrai plein écran : Partager → Sur l’écran d’accueil, puis lance Date Gravity depuis son icône."));
   return false;
 }
 document.getElementById("fullscreenBtn").addEventListener("click",()=>requestMenuFullscreen(true));
@@ -354,12 +370,12 @@ function showPremium(){
 premiumBtn.addEventListener("click",async()=>{
   if(DGPremium.isOn())return;
   playButtonSound();
-  if(await DGPremium.buy())alert(tr("Premium activé. Merci !"));
+  if(await DGPremium.buy())showNotice(tr("Premium"),tr("Premium activé. Merci !"));
   showPremium();
 });
 document.getElementById("restoreBtn").addEventListener("click",async()=>{
   playButtonSound();
-  alert(tr(await DGPremium.restore()?"Premium activé. Merci !":"Aucun achat à restaurer."));
+  showNotice(tr("Premium"),tr(await DGPremium.restore()?"Premium activé. Merci !":"Aucun achat à restaurer."));
   showPremium();
 });
 showPremium();
@@ -374,6 +390,17 @@ showPremium();
     if(window.DG_TEST_BUILD||localStorage.getItem("dg_atelier")==="1")document.getElementById("atelier").classList.remove("hidden");
   }catch(e){}
 })();
+
+/* --- fenêtre d'information */
+const noticeOverlay=document.getElementById("noticeOverlay");
+function showNotice(title,text){
+  document.getElementById("noticeTitle").textContent=title;
+  document.getElementById("noticeText").textContent=text;
+  noticeOverlay.classList.remove("hidden");noticeOverlay.setAttribute("aria-hidden","false");
+}
+function closeNotice(){playCloseSound();noticeOverlay.classList.add("hidden");noticeOverlay.setAttribute("aria-hidden","true");}
+document.getElementById("noticeOk").addEventListener("click",closeNotice);
+noticeOverlay.addEventListener("click",e=>{if(e.target===noticeOverlay)closeNotice();});
 
 /* --- options */
 function openOptions(){playOpenSound();overlay.classList.remove("hidden");overlay.setAttribute("aria-hidden","false");}
@@ -405,7 +432,7 @@ document.getElementById("unlockAllBtn").addEventListener("click",async()=>{
     data.chapters.forEach(c=>{pr.met[c.id]=true;});
     localStorage.setItem(PROGRESS_KEY,JSON.stringify(pr));
     location.reload();
-  }catch(e){alert("levels.json introuvable");}
+  }catch(e){showNotice("Atelier","levels.json introuvable");}
 });
 
 /* --- les personnages : moi (la flamme) et la personne du chapitre en cours, chacun en lui ou en elle */
@@ -486,6 +513,19 @@ document.getElementById("lookGirl").addEventListener("click",()=>setMeGender("gi
 document.getElementById("closeLook").addEventListener("click",closeLook);
 lookOverlay.addEventListener("click",e=>{if(e.target===lookOverlay)closeLook();});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!lookOverlay.classList.contains("hidden"))closeLook();});
+
+/* bouton retour d'Android : ferme la fenêtre ouverte ; sur le menu lui-même, l'application passe en arrière-plan */
+(function(){
+  const cap=window.Capacitor, App=cap&&cap.isNativePlatform&&cap.isNativePlatform()&&cap.Plugins?cap.Plugins.App:null;
+  if(!App)return;
+  App.addListener("backButton",()=>{
+    const notice=document.getElementById("noticeOverlay");
+    if(notice&&!notice.classList.contains("hidden")){closeNotice();return;}
+    if(!lookOverlay.classList.contains("hidden")){closeLook();return;}
+    if(!overlay.classList.contains("hidden")){closeOptions();return;}
+    App.minimizeApp();
+  });
+})();
 document.getElementById("dateChoice").addEventListener("click",()=>{
   dateGender=dateGender==="boy"?"girl":"boy";
   try{localStorage.setItem("dcg_date_gender",dateGender);}catch(e){}

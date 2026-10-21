@@ -2,5 +2,10 @@
   "appId": "com.dategravity.app",
   "appName": "Date Gravity",
   "webDir": "www",
-  "backgroundColor": "#0d1230"
+  "backgroundColor": "#0d1230",
+  "plugins": {
+    "SystemBars": {
+      "style": "DARK"
+    }
+  }
 }

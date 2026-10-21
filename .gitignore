@@ -16,3 +16,8 @@ node_modules/
 www/
 ios/
 android/
+
+### Signature de release : la clé d'envoi reste hors du dépôt
+keystore.properties
+*.jks
+*.keystore

@@ -296,7 +296,7 @@ DGi18n.add("ja", {
   "Chat": "ネコ",
   "Bonnet": "ニット帽",
   "Lapin": "ウサギ",
-  "Crête punk": "モヒカン",
+  "Punk": "パンク",
   "Antennes": "アンテナ",
   "Couronne": "王冠",
   "Braise": "おき火",

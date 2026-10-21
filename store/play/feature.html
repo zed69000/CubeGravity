@@ -1,0 +1,56 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<!-- Bannière Google Play (1024 x 500). Rendu : node tools/store/render.mjs -->
+<link href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;800;900&display=swap" rel="stylesheet">
+<style>
+:root{--navy:#0d1230;--navy2:#131a45;--c1:#f6ff3d;--c2:#19e3ff;--pink:#ff4f8b;--grad:linear-gradient(90deg,#f6ff3d,#19e3ff)}
+html,body{margin:0;width:1024px;height:500px;overflow:hidden;background:var(--navy)}
+.bg{position:absolute;inset:0;background:
+  radial-gradient(circle 340px at 78% 30%,rgba(176,108,255,.32),transparent 70%),
+  radial-gradient(circle 300px at 12% 90%,rgba(25,227,255,.18),transparent 70%),var(--navy)}
+/* circuit discret, comme le menu */
+.bg svg{position:absolute;inset:0;opacity:.16}
+.title{position:absolute;left:58px;top:92px;font:900 100px/.86 Rubik,Arial,sans-serif;text-transform:uppercase;letter-spacing:-.01em;filter:drop-shadow(0 0 26px rgba(25,227,255,.55))}
+.title span{display:block;background:var(--grad);-webkit-background-clip:text;background-clip:text;color:transparent}
+.tag{position:absolute;left:62px;top:300px;width:470px;font:800 26px/1.25 Rubik,Arial,sans-serif;color:#eaf0ff}
+.tag b{color:var(--c1);font-weight:900}
+.chip{position:absolute;left:62px;top:404px;display:flex;gap:12px}
+.chip i{font:800 17px/1 Rubik,Arial,sans-serif;font-style:normal;color:#8fa0d8;padding:9px 15px;border-radius:99px;box-shadow:inset 0 0 0 2px #2b3a8c;background:#131a45}
+/* le plateau : un tube néon, le joueur à gauche, la rencontre à droite */
+.board{position:absolute;right:30px;top:58px;width:420px;height:384px;transform:rotate(-7deg)}
+.board svg.tube{position:absolute;inset:0;overflow:visible}
+.who{position:absolute;width:150px;height:150px}
+.who svg{width:100%;height:100%;overflow:visible}
+.me{left:38px;top:168px;transform:rotate(7deg)}
+.date{right:30px;top:168px;transform:rotate(7deg)}
+.heart{position:absolute;left:196px;top:118px;font:900 70px/1 Rubik,Arial,sans-serif;color:var(--pink);text-shadow:0 0 26px var(--pink);transform:rotate(7deg)}
+.you{position:absolute;left:80px;top:96px;transform:rotate(7deg);text-align:center;font:900 22px/1 Rubik,Arial,sans-serif;color:#fff;-webkit-text-stroke:5px var(--navy);paint-order:stroke}
+.you svg{display:block;margin:4px auto 0}
+</style>
+</head>
+<body>
+<div class="bg"><svg viewBox="0 0 1024 500" fill="none" stroke="#19e3ff" stroke-width="2"><path d="M0 60H140V160H260M380 0V90H520M600 500V400H760V330M1024 120H900V40M0 300H90V420H220M700 0V70H820"/></svg></div>
+<div class="title"><span>Date</span><span>Gravity</span></div>
+<div class="tag">Tourne le monde, tombe juste, <b>trouve la bonne personne.</b></div>
+<div class="chip"><i>96 niveaux</i><i>8 rencontres</i><i>sans chrono</i></div>
+<div class="board">
+  <svg class="tube" viewBox="0 0 420 384">
+    <defs><linearGradient id="t" x1="0" x2="1"><stop offset="0" stop-color="#f6ff3d"/><stop offset="1" stop-color="#19e3ff"/></linearGradient></defs>
+    <path d="M40 120V330H380V120" stroke="url(#t)" stroke-width="40" stroke-linecap="round" stroke-linejoin="round" opacity=".18" fill="none"/>
+    <path d="M40 120V330H380V120" stroke="url(#t)" stroke-width="16" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+    <path d="M40 120V330H380V120" stroke="#0d1230" stroke-width="6" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+  </svg>
+  <div class="you">TOI<svg width="34" height="30" viewBox="0 0 34 30"><path d="M17 28L2 12h9V2h12v10h9Z" fill="#f6ff3d" stroke="#0d1230" stroke-width="3" stroke-linejoin="round"/></svg></div>
+  <div class="who me" id="me"></div>
+  <div class="heart">♥</div>
+  <div class="who date" id="date"></div>
+</div>
+<script src="../../spirits.js"></script>
+<script>
+document.getElementById("me").innerHTML=DGSpirit.portrait(DGSpirit.me({head:"flamme",skin:"braise"}),"m",{eye:"happy",mouth:"grin"});
+document.getElementById("date").innerHTML=DGSpirit.portrait("vague","f",{eye:"happy",mouth:"smile"});
+</script>
+</body>
+</html>

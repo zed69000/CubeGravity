@@ -296,7 +296,7 @@ DGi18n.add("es", {
   "Chat": "Gato",
   "Bonnet": "Gorro",
   "Lapin": "Conejo",
-  "Crête punk": "Cresta punk",
+  "Punk": "Punk",
   "Antennes": "Antenas",
   "Couronne": "Corona",
   "Braise": "Brasa",

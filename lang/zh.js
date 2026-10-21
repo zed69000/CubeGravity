@@ -296,7 +296,7 @@ DGi18n.add("zh", {
   "Chat": "猫耳",
   "Bonnet": "毛线帽",
   "Lapin": "兔耳",
-  "Crête punk": "朋克鸡冠",
+  "Punk": "朋克",
   "Antennes": "触角",
   "Couronne": "王冠",
   "Braise": "余烬",

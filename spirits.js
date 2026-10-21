@@ -132,7 +132,7 @@
     {key:"chat",name:"Chat",hearts:25,d:"M6 17L7 -1L16 9H24L33 -1L34 17Z"},
     {key:"bonnet",name:"Bonnet",hearts:45,d:"M6 17Q5 4 20 4Q35 4 34 17ZM15.5 3.5a4.5 4.5 0 1 0 9 0a4.5 4.5 0 1 0 -9 0Z"},
     {key:"lapin",name:"Lapin",hearts:70,d:"M8 17Q8 10 13 9Q8 4 6 -3Q15 1 16 9H24Q25 1 34 -3Q32 4 27 9Q32 10 32 17Z"},
-    {key:"punk",name:"Crête punk",hearts:100,d:"M8 17L10 7L14 11L16 -3L20 9L24 -7L26 9L30 -1L31 11L33 17Z"},
+    {key:"punk",name:"Punk",hearts:100,d:"M8 17L10 7L14 11L16 -3L20 9L24 -7L26 9L30 -1L31 11L33 17Z"},
     {key:"antenne",name:"Antennes",hearts:140,d:"M9 17Q10 9 20 9Q30 9 31 17ZM13 10L9 2.5L11.2 1.5L15.5 9.5ZM27 10L31 2.5L28.8 1.5L24.5 9.5ZM6.8 1a3 3 0 1 0 6 0a3 3 0 1 0 -6 0ZM27.2 1a3 3 0 1 0 6 0a3 3 0 1 0 -6 0Z"},
     {key:"couronne",name:"Couronne",hearts:200,d:"M7 17L7.5 2L13.5 9.5L20 -1L26.5 9.5L32.5 2L33 17Z"}
   ];

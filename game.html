@@ -32,13 +32,16 @@ try{if(sessionStorage.getItem("dg_tx")==="1"){sessionStorage.removeItem("dg_tx")
   --grad:linear-gradient(90deg,var(--c1),var(--c2));
   --fTitle:900 2.2rem/1.05 Rubik,Arial,sans-serif;
 }
-html{font-size:min(calc(100vw / 25.4),calc(100dvh / 54.4),20.5px)}
+/* barre d'état et encoche : l'application s'affiche dessous (Android 15+, iPhone). Capacitor fournit
+   --safe-area-inset-top là où env() ne marche pas encore dans la WebView. */
+:root{--sat:var(--safe-area-inset-top,env(safe-area-inset-top,0px))}
+html{font-size:min(calc(100vw / 25.4),calc((100dvh - var(--sat)) / 54.4),20.5px)}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none;background:#07091a}
 body{position:fixed;inset:0;display:flex;justify-content:center;color:var(--ink);font:500 1.3rem/1.4 Rubik,Arial,sans-serif;user-select:none;-webkit-user-select:none;touch-action:manipulation}
 button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:pointer;touch-action:manipulation}
 .hidden{display:none!important}
-#app{position:relative;width:25.4rem;height:100dvh;display:flex;flex-direction:column;overflow:hidden;overflow:clip;background:var(--bg,var(--navy));transition:background .5s}
+#app{position:relative;box-sizing:border-box;width:25.4rem;height:100dvh;padding-top:var(--sat);display:flex;flex-direction:column;overflow:hidden;overflow:clip;background:var(--bg,var(--navy));transition:background .5s}
 #app>*{position:relative;z-index:1}
 
 /* ---------- briques communes */
@@ -171,7 +174,7 @@ body.btnCtl .boardWrap{width:min(100%,calc(100dvh - 25.6rem))}
 body.btnCtl #swipeHint{display:none}
 
 /* ---------- écrans pleins (chapitres, niveaux, rencontre, collection) */
-.screen{position:absolute!important;inset:0;z-index:20!important;display:none;flex-direction:column;background:var(--navy);animation:scrIn .22s ease both}
+.screen{position:absolute!important;inset:0;z-index:20!important;box-sizing:border-box;padding-top:var(--sat);display:none;flex-direction:column;background:var(--navy);animation:scrIn .22s ease both}
 .screen::before{content:"";position:absolute;inset:0;pointer-events:none;
   background:radial-gradient(circle 17rem at 84% 6%,color-mix(in srgb,var(--c2) 12%,transparent),transparent 70%),radial-gradient(circle 19rem at 6% 96%,color-mix(in srgb,var(--c1) 9%,transparent),transparent 70%)}
 .screen>*{position:relative}
@@ -279,7 +282,7 @@ body.btnCtl #swipeHint{display:none}
 .mem .gift small{display:block;margin-top:.2rem;font-size:.9rem;color:var(--navy)}
 
 /* ---------- fenêtres posées sur le jeu (victoire, pause, défaite, indice, infos) */
-.overlay{position:absolute!important;inset:0;z-index:30!important;display:flex;align-items:flex-end;background:rgba(7,9,26,.72);animation:ovIn .18s ease both}
+.overlay{position:absolute!important;inset:0;z-index:30!important;box-sizing:border-box;padding-top:var(--sat);display:flex;align-items:flex-end;background:rgba(7,9,26,.72);animation:ovIn .18s ease both}
 .overlay.mid{align-items:center}
 .overlay.sheet{background:linear-gradient(transparent 58%,rgba(7,9,26,.9) 78%)}
 /* victoire : un bandeau bas et compact, le plateau et les deux personnages restent visibles */
@@ -460,7 +463,7 @@ html:not(.editor-enabled) #toggleEdit,html:not(.editor-enabled) #compactEdit{dis
   </section>
 
   <section id="personScreen" class="screen" aria-hidden="true" aria-label="Souvenirs">
-    <div class="hd"><button class="round" id="psBack" aria-label="Retour aux rencontres">←</button><h2 class="ttl">Souvenirs</h2><span class="chip" id="psWhere"></span></div>
+    <div class="hd"><button class="round" id="psBack" aria-label="Retour aux rencontres">←</button><h2 class="ttl">Souvenirs</h2></div>
     <div class="psBody">
       <div class="psTop">
         <div class="art" id="psArt"></div>
@@ -536,6 +539,7 @@ html:not(.editor-enabled) #toggleEdit,html:not(.editor-enabled) #compactEdit{dis
 </div>
 
 <script src="version.js"></script>
+<script src="save.js"></script>
 <script src="i18n.js"></script>
 <script src="premium.js"></script>
 <script src="ads.js"></script>
@@ -850,6 +854,7 @@ function updatePauseButtons(){
   if(m)m.textContent=musicOn?"Music ON":"Music OFF";
   if(e)e.textContent=(soundOn&&sfxOn&&musicOn)?"🔊 Son":"🔈 Son";
 }
+let dgBannerBack=null; // ce que fait le bouton retour d'Android quand la fenêtre #banner est ouverte
 function setPaused(v){
   gamePaused=!!v;
   const menu=document.getElementById("pauseMenu");
@@ -908,7 +913,7 @@ function showBanner(title,msg,stars,kind){
     alt.textContent=tr("💡 Réessayer avec un indice");
     alt.onclick=()=>{resetPlay();dgHelpOffer();};
     banner.classList.add("lose");
-    banner.classList.remove("hidden");
+    dgBannerBack=()=>resetPlay();banner.classList.remove("hidden");
   },true);
 }
 function starScore(){
@@ -2611,7 +2616,7 @@ function showInfoBanner(title,html){
   bannerAction.onclick=()=>banner.classList.add("hidden");
   document.getElementById("bannerAlt").textContent="";
   banner.classList.remove("lose");
-  banner.classList.remove("hidden");
+  dgBannerBack=bannerAction.onclick;banner.classList.remove("hidden");
 }
 
 function solverPopup(title,html,ok){
@@ -2685,7 +2690,7 @@ function showLevelsJsonError(err){
   starsEl.textContent="";
   bannerAction.textContent="Fermer";
   bannerAction.onclick=()=>banner.classList.add("hidden");
-  banner.classList.remove("hidden");
+  dgBannerBack=bannerAction.onclick;banner.classList.remove("hidden");
 
   setTimeout(()=>{
     const btn=document.getElementById("manualLevelsImport");
@@ -3042,7 +3047,7 @@ function dgHintShop(){
   alt.textContent=tr("Fermer");
   alt.onclick=()=>{dgHelp.snooze=true;banner.classList.add("hidden");};
   banner.classList.remove("lose");
-  banner.classList.remove("hidden");
+  dgBannerBack=alt.onclick;banner.classList.remove("hidden");
 }
 /* la fenêtre d'indice : toute la solution, les coups révélés en clair, les autres en « ? » */
 function dgHelpOffer(){
@@ -3071,7 +3076,7 @@ function dgHelpOffer(){
     alt.onclick=close;
   }
   banner.classList.remove("lose");
-  banner.classList.remove("hidden");
+  dgBannerBack=close;banner.classList.remove("hidden");
 }
 /* Commandes : glisser (par défaut) ou deux boutons de rotation. Le choix se fait dans les options du menu
    ou dans la pause ; il est gardé dans le téléphone. Le geste reste actif même avec les boutons. */
@@ -3481,7 +3486,7 @@ function dgPremiumOffer(){
     alt.textContent=tr("Plus tard");
     alt.onclick=close;
     banner.classList.remove("lose");
-    banner.classList.remove("hidden");
+    dgBannerBack=close;banner.classList.remove("hidden");
   });
 }
 
@@ -3611,7 +3616,7 @@ function dgRenderCollection(){
     card.querySelector("em").textContent=tr(rel.label);
     card.querySelector(".bar i").style.width=(rel.total?Math.round(rel.stars/(rel.total*3)*100):0)+"%";
     card.querySelector("small").textContent=rel.rank?(rel.stars+" / "+(rel.total*3)+" ♥"):tr("chapitre {c}",{c:i+1});
-    if(rel.rank)card.querySelector(".memc").innerHTML=dgIcon("photo")+" "+mc.got+" / "+mc.total+(mc.fresh?" · "+tr("nouveau !"):"");
+    if(rel.rank)card.querySelector(".memc").innerHTML=dgIcon("photo")+" "+mc.got+" / "+mc.total;
     card.onclick=()=>{
       userAudioGesture();
       if(rel.rank)dgRubans(()=>dgShowPerson(i));
@@ -3634,7 +3639,6 @@ function dgRenderPerson(ci){
   const person=DGSpirit.person(ci), rel=dgRelation(ci), w=DG_WORLDS[ci%DG_WORLDS.length], ch=dgChapters[ci];
   const scr=document.getElementById("personScreen");
   scr.style.setProperty("--pc1",w[0]);scr.style.setProperty("--pc2",w[1]);
-  document.getElementById("psWhere").textContent=tr("chapitre {c}",{c:ci+1});
   dgPortrait("psArt",person.kind,dgDateSex(),rel.rank>=3?{eye:"happy",mouth:"grin"}:null);
   document.getElementById("psName").textContent=person.name;
   document.getElementById("psRel").textContent=tr(rel.label)+" · "+rel.stars+" / "+(rel.total*3)+" ♥";
@@ -3740,6 +3744,23 @@ document.getElementById("pfGo").onclick=()=>{
     resetPlay(); // on rejoue la chute d'entrée, maintenant que le plateau est visible
   });
 };
+/* bouton retour d'Android : ferme ce qui est ouvert, sinon remonte d'un écran, sinon met en pause.
+   Les écrans pleins ont déjà leur bouton « ← » : on le réutilise, pour que les deux fassent la même chose. */
+function dgBack(){
+  if(dgTx.busy)return;
+  if(!banner.classList.contains("hidden")){if(dgBannerBack)dgBannerBack();else banner.classList.add("hidden");return;}
+  if(!document.getElementById("winScreen").classList.contains("hidden")){dgRubans(()=>{hideBanner();dgShowChapterList();});return;}
+  if(gamePaused){setPaused(false);return;}
+  const backs={personScreen:"psBack",profileScreen:"pfBack",collection:"colBack",chapterScreen:"dgBackMenu",chapterList:"dgListBack"};
+  for(const id in backs){
+    if(document.getElementById(id).classList.contains("show")){document.getElementById(backs[id]).click();return;}
+  }
+  if(!edit)setPaused(true);
+}
+(function(){
+  const cap=window.Capacitor, App=cap&&cap.isNativePlatform&&cap.isNativePlatform()&&cap.Plugins?cap.Plugins.App:null;
+  if(App)App.addListener("backButton",dgBack);
+})();
 document.getElementById("pauseChapters").onclick=()=>{setPaused(false);dgRubans(()=>dgShowChapterList());};
 document.getElementById("pauseFullscreen").onclick=async()=>{
   const target=document.documentElement;
@@ -3809,7 +3830,7 @@ loadVectorAssets()
       starsEl.textContent="";
       bannerAction.textContent="OK";
       bannerAction.onclick=()=>banner.classList.add("hidden");
-      banner.classList.remove("hidden");
+      dgBannerBack=bannerAction.onclick;banner.classList.remove("hidden");
     }
   });
 

@@ -9,6 +9,7 @@ const out = join(root, "www");
 const FILES = [
   "index.html",
   "version.js",
+  "save.js",
   "game.html",
   "ads.js",
   "i18n.js",

@@ -296,7 +296,7 @@ DGi18n.add("ko", {
   "Chat": "고양이",
   "Bonnet": "비니",
   "Lapin": "토끼",
-  "Crête punk": "펑크 머리",
+  "Punk": "펑크",
   "Antennes": "더듬이",
   "Couronne": "왕관",
   "Braise": "잉걸불",

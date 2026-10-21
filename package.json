@@ -1,20 +1,23 @@
 {
   "name": "date-gravity",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "private": true,
   "description": "Date Gravity : le jeu web, emballé en application iOS / Android avec Capacitor.",
   "scripts": {
     "build:web": "node tools/app/copy-web.mjs",
     "native:ios": "node tools/app/configure-native.mjs ios",
-    "native:android": "node tools/app/configure-native.mjs android"
+    "native:android": "node tools/app/configure-native.mjs android",
+    "release:android": "node tools/app/release-android.mjs"
   },
   "dependencies": {
-    "@capacitor-community/admob": "^7.0.0",
-    "@capacitor/android": "^7.0.0",
-    "@capacitor/core": "^7.0.0",
-    "@capacitor/ios": "^7.0.0"
+    "@capacitor-community/admob": "^8.2.1",
+    "@capacitor/android": "^8.5.3",
+    "@capacitor/app": "^8.1.2",
+    "@capacitor/core": "^8.5.3",
+    "@capacitor/ios": "^8.5.3",
+    "@capacitor/preferences": "^8.0.1"
   },
   "devDependencies": {
-    "@capacitor/cli": "^7.0.0"
+    "@capacitor/cli": "^8.5.3"
   }
 }
