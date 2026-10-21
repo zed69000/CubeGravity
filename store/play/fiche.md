@@ -72,7 +72,7 @@ The game is free. Ads show up between some levels, never during the first chapte
 **Catégorie** : Jeu › Puzzle (Réflexion). Tags : puzzle, casual, mignon.
 
 **Politique de confidentialité** : URL de `privacy.html` une fois le site en ligne
-(ex. `https://<ton-site>/privacy.html`). Remplacer d'abord l'adresse de contact dans la page.
+(ex. `https://<ton-site>/privacy.html`). Contact : musclorzed@gmail.com (aussi l'adresse e-mail de la fiche Play).
 
 **Annonces** : Oui, l'application contient des annonces (AdMob).
 
