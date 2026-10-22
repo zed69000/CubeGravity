@@ -1,0 +1,28 @@
+# Envoie Date Gravity sur Google Play (tests internes) par la chaîne commune zed69000/game-pipeline.
+# Se lance tout seul quand version.js change (nouvelle version), ou à la main : Actions > « Android · Google Play » > Run workflow.
+# Secrets du dépôt : voir game-pipeline/README.md (clé d'envoi + compte de service).
+# Le numéro de version Play (versionCode) vient de DG_VERSION dans version.js : 1.2.0 -> 10200.
+name: Android · Google Play
+
+on:
+  push:
+    branches: [main]
+    paths: [version.js]
+  workflow_dispatch:
+
+jobs:
+  play:
+    uses: zed69000/game-pipeline/.github/workflows/android-play.yml@main
+    with:
+      package-name: com.dategravity.app
+      aab-path: android/app/build/outputs/bundle/release/app-release.aab
+      # l'appli n'est pas encore publiée en production : la release arrive en brouillon, il reste à cliquer « Déployer »
+      release-status: draft
+      build-command: |
+        npm install --no-audit --no-fund
+        npm run build:web
+        npx cap add android
+        npm run native:android
+        npx cap sync android
+        cd android && ./gradlew bundleRelease
+    secrets: inherit
