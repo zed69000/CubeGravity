@@ -306,5 +306,6 @@ DGi18n.add("ko", {
   "Lavande": "라벤더",
   "Néon": "네온",
   "Nuit": "밤",
-  "Or": "황금"
+  "Or": "황금",
+  "Confidentialité": "개인정보 보호"
 });

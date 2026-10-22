@@ -306,5 +306,6 @@ DGi18n.add("ja", {
   "Lavande": "ラベンダー",
   "Néon": "ネオン",
   "Nuit": "ナイト",
-  "Or": "ゴールド"
+  "Or": "ゴールド",
+  "Confidentialité": "プライバシー"
 });

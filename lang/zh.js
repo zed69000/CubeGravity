@@ -306,5 +306,6 @@ DGi18n.add("zh", {
   "Lavande": "薰衣草",
   "Néon": "霓虹",
   "Nuit": "夜色",
-  "Or": "金色"
+  "Or": "金色",
+  "Confidentialité": "隐私"
 });

@@ -306,5 +306,6 @@ DGi18n.add("es", {
   "Lavande": "Lavanda",
   "Néon": "Neón",
   "Nuit": "Noche",
-  "Or": "Oro"
+  "Or": "Oro",
+  "Confidentialité": "Privacidad"
 });

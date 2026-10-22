@@ -21,3 +21,7 @@ android/
 keystore.properties
 *.jks
 *.keystore
+
+### Dossier temporaire des builds Gradle (chemin court, voir release-android)
+.t/
+*.aab
