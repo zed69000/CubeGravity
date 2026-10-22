@@ -31,14 +31,21 @@ try{if(sessionStorage.getItem("dg_tx")==="1"){sessionStorage.removeItem("dg_tx")
 /* barre d'état et encoche : l'application s'affiche dessous (Android 15+, iPhone). Capacitor fournit
    --safe-area-inset-top là où env() ne marche pas encore dans la WebView. */
 :root{--sat:var(--safe-area-inset-top,env(safe-area-inset-top,0px))}
-html{font-size:min(calc(100vw / 25.4),calc((100dvh - var(--sat)) / 54.4),20.5px)}
+/* Taille de tout le jeu : la colonne fait 25,4 rem de large et 54,4 rem de haut, comme un téléphone.
+   Sur tablette, elle grandit avec l'écran (plafond à 30 px, pour les grands écrans d'ordinateur) et s'élargit un peu.
+   En paysage (grandes tablettes : Android 16 y ignore le verrouillage en portrait), elle se règle sur la hauteur. */
+html{font-size:min(calc(100vw / 25.4),calc((100dvh - var(--sat)) / 54.4),30px)}
+@media (orientation:landscape){html{font-size:min(calc(100vw / 25.4),calc((100dvh - var(--sat)) / 48),30px)}}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 html,body{margin:0;height:100%;overflow:hidden;overscroll-behavior:none;background:#07091a}
+/* de part et d'autre de la colonne (tablettes, ordinateur) : le même ciel que le jeu, pas un noir uni */
+body{background:radial-gradient(ellipse 60% 70% at 15% 20%,rgba(176,108,255,.16),transparent 70%),radial-gradient(ellipse 60% 70% at 85% 85%,rgba(25,227,255,.12),transparent 70%),#0a0e26}
 body{position:fixed;inset:0;display:flex;justify-content:center;color:var(--ink);font:500 1.3rem/1.4 Rubik,Arial,sans-serif;user-select:none;-webkit-user-select:none;touch-action:manipulation}
 button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:pointer}
 .hidden{display:none!important}
-.menu{position:relative;box-sizing:border-box;width:25.4rem;height:100dvh;padding-top:var(--sat);display:flex;flex-direction:column;overflow:hidden;overflow:clip;background:var(--navy)}
+.menu{position:relative;box-sizing:border-box;width:min(100vw,34rem);box-shadow:0 0 4rem rgba(0,0,0,.55);height:100dvh;padding-top:var(--sat);display:flex;flex-direction:column;overflow:hidden;overflow:clip;background:var(--navy)}
 .menu>*{position:relative;z-index:1}
+@media (orientation:landscape){.menu{width:min(100vw,32rem)}}
 
 /* décor : halos, circuit discret, poussière qui tombe */
 .fx{position:absolute!important;inset:0;z-index:0!important;pointer-events:none;overflow:hidden;
