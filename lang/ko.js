@@ -307,5 +307,9 @@ DGi18n.add("ko", {
   "Néon": "네온",
   "Nuit": "밤",
   "Or": "황금",
-  "Confidentialité": "개인정보 보호"
+  "Confidentialité": "개인정보 보호",
+  // vidéos récompensées : solution, indices doublés
+  "Voir toute la solution": "전체 해답 보기",
+  "Doubler : +{n} indices": "두 배로: 힌트 +{n}",
+  "Indices doublés": "힌트 두 배 완료"
 });

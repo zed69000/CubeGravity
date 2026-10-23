@@ -284,6 +284,8 @@ body.btnCtl #swipeHint{display:none}
 @keyframes giftUp{0%{transform:translate(-50%,0) scale(.6);opacity:0}15%{transform:translate(-50%,-.5rem) scale(1.1);opacity:1}70%{opacity:1}100%{transform:translate(-50%,-4rem) scale(1);opacity:0}}
 #personScreen .cta{margin-top:.6rem}
 .rel.news{cursor:pointer;box-shadow:inset 0 0 0 .25rem var(--yellow),0 0 1.4rem color-mix(in srgb,var(--yellow) 40%,transparent)}
+.relVideo{display:block;margin-top:.45rem;padding:.4rem .9rem;border-radius:99rem;background:var(--navy3);box-shadow:inset 0 0 0 .15rem var(--yellow);color:var(--yellow);font:800 1rem/1.2 Rubik,Arial,sans-serif}
+.relVideo:disabled{box-shadow:inset 0 0 0 .15rem var(--line);color:var(--muted)}
 .relNews{display:block;margin-top:.25rem;font-style:normal;font-weight:800;font-size:1.05rem;color:var(--yellow)}
 .relHead{display:block;margin-top:.2rem;color:var(--c2)}
 .mem .gift small{display:block;margin-top:.2rem;font-size:.9rem;color:var(--navy)}
@@ -532,6 +534,7 @@ html:not(.editor-enabled) #toggleEdit,html:not(.editor-enabled) #compactEdit{dis
       <div id="stars"></div>
       <button class="btn" id="bannerAction" type="button" style="margin-top:.6rem">OK</button>
       <button class="btn ghost sm" id="bannerAlt" type="button"></button>
+      <button class="btn ghost sm hidden" id="bannerVideo" type="button"></button>
     </div>
   </div>
 
@@ -861,6 +864,8 @@ function updatePauseButtons(){
   if(m)m.textContent=musicOn?"Music ON":"Music OFF";
   if(e)e.textContent=(soundOn&&sfxOn&&musicOn)?"🔊 Son":"🔈 Son";
 }
+// le bouton vidéo de la défaite ne sert que là : il disparaît dès que la fenêtre se ferme
+new MutationObserver(()=>{if(banner.classList.contains("hidden"))document.getElementById("bannerVideo").classList.add("hidden");}).observe(banner,{attributes:true,attributeFilter:["class"]});
 let dgBannerBack=null; // ce que fait le bouton retour d'Android quand la fenêtre #banner est ouverte
 function setPaused(v){
   gamePaused=!!v;
@@ -919,6 +924,22 @@ function showBanner(title,msg,stars,kind){
     const alt=document.getElementById("bannerAlt");
     alt.textContent=tr("💡 Réessayer avec un indice");
     alt.onclick=()=>{resetPlay();dgHelpOffer();};
+    // la solution entière contre une vidéo (sans pub en Premium) : c'est le moment où le joueur en a vraiment besoin
+    const video=document.getElementById("bannerVideo");
+    if(dgSolution()){
+      video.innerHTML=(dgPremium()?"":"▶ ")+tr("Voir toute la solution")+'<span class="adtag">'+tr("PUB")+'</span>';
+      video.onclick=async()=>{
+        banner.classList.add("hidden");
+        const level=currentLevel;
+        const ok=dgPremium()||await (window.DGAds?DGAds.showRewarded("solution"):Promise.resolve(true));
+        if(!ok||level!==currentLevel)return;
+        resetPlay();
+        dgReveal={level:currentLevel,n:dgSolution().length};
+        dgHelp.snooze=true;
+        dgHintStrip();
+      };
+      video.classList.remove("hidden");
+    }
     banner.classList.add("lose");
     dgBannerBack=()=>resetPlay();banner.classList.remove("hidden");
   },true);
@@ -3420,6 +3441,21 @@ function dgShowWin(kind,finalText){
       gift=" · "+tr("+{n} indices 💡",{n:DG_HINTS_PER_CHAPTER});
     }
     relEl.querySelector("span").textContent=rel.stars+" / "+(rel.total*3)+" ♥"+(gift||(rel.rank<5?" · "+tr("rejoue pour aller plus loin"):""));
+    // indices du chapitre doublés contre une vidéo, au choix du joueur (inutile en Premium : indices illimités)
+    if(gift&&!dgPremium()){
+      const more=document.createElement("button");
+      more.type="button";
+      more.className="relVideo";
+      more.innerHTML="▶ "+tr("Doubler : +{n} indices",{n:DG_HINTS_PER_CHAPTER})+'<span class="adtag">'+tr("PUB")+'</span>';
+      more.onclick=async e=>{
+        e.stopPropagation();
+        more.disabled=true;
+        const ok=await (window.DGAds?DGAds.showRewarded("chapter"):Promise.resolve(true));
+        if(ok){dgAddHints(DG_HINTS_PER_CHAPTER);more.textContent=tr("Indices doublés");}
+        else more.disabled=false;
+      };
+      relEl.querySelector("div:last-child").appendChild(more);
+    }
   }
   // nouveau palier ou nouveau souvenir : on le dit tout de suite, l'album le remettra
   const news=dgWinNews&&dgWinNews.ci===info.ci?dgWinNews:null;
@@ -3705,14 +3741,15 @@ function dgRevealMemory(ci,m,el){
   pr.mem[ch.id][m.key]=2;
   const skins=DGSpirit.SKINS.filter(k=>k.mem>memBefore&&k.mem<=memBefore+1);
   saveProgress(pr);
-  dgAddHints(m.gift);
+  if(m.gift)dgAddHints(m.gift);
   if(sfxReady())DGAudio.sfx.winChord(.05);
   const flip=()=>{
     dgFillMemCard(el,ci,m,2,pr);
     el.classList.add("just");
+    if(!m.gift&&!skins.length)return;
     const gift=document.createElement("span");
     gift.className="gift";
-    gift.innerHTML="+"+m.gift+" "+dgIcon("bulb");
+    if(m.gift)gift.innerHTML="+"+m.gift+" "+dgIcon("bulb");
     skins.forEach(k=>{const n=document.createElement("small");n.textContent=tr("Nouvelle couleur : {c}",{c:tr(k.name)});gift.appendChild(n);});
     el.appendChild(gift);
   };

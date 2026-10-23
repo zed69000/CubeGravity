@@ -307,5 +307,9 @@ DGi18n.add("ja", {
   "Néon": "ネオン",
   "Nuit": "ナイト",
   "Or": "ゴールド",
-  "Confidentialité": "プライバシー"
+  "Confidentialité": "プライバシー",
+  // vidéos récompensées : solution, indices doublés
+  "Voir toute la solution": "答えをすべて見る",
+  "Doubler : +{n} indices": "2倍に：ヒント+{n}",
+  "Indices doublés": "ヒントが2倍に"
 });

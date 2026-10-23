@@ -307,5 +307,9 @@ DGi18n.add("de", {
   "Néon": "Neon",
   "Nuit": "Nacht",
   "Or": "Gold",
-  "Confidentialité": "Datenschutz"
+  "Confidentialité": "Datenschutz",
+  // vidéos récompensées : solution, indices doublés
+  "Voir toute la solution": "Ganze Lösung ansehen",
+  "Doubler : +{n} indices": "Verdoppeln: +{n} Tipps",
+  "Indices doublés": "Tipps verdoppelt"
 });

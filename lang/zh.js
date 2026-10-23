@@ -307,5 +307,9 @@ DGi18n.add("zh", {
   "Néon": "霓虹",
   "Nuit": "夜色",
   "Or": "金色",
-  "Confidentialité": "隐私"
+  "Confidentialité": "隐私",
+  // vidéos récompensées : solution, indices doublés
+  "Voir toute la solution": "查看完整解法",
+  "Doubler : +{n} indices": "翻倍：+{n} 个提示",
+  "Indices doublés": "提示已翻倍"
 });

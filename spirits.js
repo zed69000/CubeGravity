@@ -98,15 +98,16 @@
   /* Les souvenirs d'une rencontre, à collectionner dans l'album : un par palier, plus un gagné sans aide.
      rank  : palier de relation à atteindre ; clean : niveaux du chapitre gagnés sans indice.
      icon  : pictogramme dessiné par game.html (DG_ICONS).
-     gift  : indices offerts quand le joueur découvre le souvenir.
+     gift  : indices offerts quand le joueur découvre le souvenir. Volontairement rares (2 par rencontre) :
+             les indices restent précieux, et la vidéo qui en donne garde un intérêt.
      line  : {name} est le prénom ; sans line, c'est la phrase secrète de la personne (vow). */
   const MEMORIES=[
-    {key:"meet",icon:"eye",title:"Premier regard",line:"{name} t'a remarqué·e dès le premier saut.",rank:1,gift:1,state:{eye:"dot",mouth:"o"}},
-    {key:"friend",icon:"rings",title:"Ça accroche",line:"Vous riez des mêmes chutes.",rank:2,gift:1,state:{eye:"happy",mouth:"smile"}},
-    {key:"crush",icon:"pulse",title:"Le cœur s'emballe",line:"{name} rougit quand tu fais tourner le monde.",rank:3,gift:2,state:{eye:"blink",mouth:"grin"}},
-    {key:"clean",icon:"chute",title:"Sans filet",line:"Des rendez-vous réussis sans le moindre indice.",clean:6,gift:2,state:{eye:"dot",mouth:"grin"}},
-    {key:"love",icon:"spark",title:"Grand amour",line:"{name} ne regarde plus que toi.",rank:4,gift:3,state:{eye:"happy",mouth:"grin"}},
-    {key:"soul",icon:"ring",title:"Âme sœur",rank:5,gift:5,state:{eye:"happy",mouth:"grin"}}
+    {key:"meet",icon:"eye",title:"Premier regard",line:"{name} t'a remarqué·e dès le premier saut.",rank:1,gift:0,state:{eye:"dot",mouth:"o"}},
+    {key:"friend",icon:"rings",title:"Ça accroche",line:"Vous riez des mêmes chutes.",rank:2,gift:0,state:{eye:"happy",mouth:"smile"}},
+    {key:"crush",icon:"pulse",title:"Le cœur s'emballe",line:"{name} rougit quand tu fais tourner le monde.",rank:3,gift:0,state:{eye:"blink",mouth:"grin"}},
+    {key:"clean",icon:"chute",title:"Sans filet",line:"Des rendez-vous réussis sans le moindre indice.",clean:6,gift:1,state:{eye:"dot",mouth:"grin"}},
+    {key:"love",icon:"spark",title:"Grand amour",line:"{name} ne regarde plus que toi.",rank:4,gift:0,state:{eye:"happy",mouth:"grin"}},
+    {key:"soul",icon:"ring",title:"Âme sœur",rank:5,gift:1,state:{eye:"happy",mouth:"grin"}}
   ];
   /* Pictogrammes au trait (grille 24 x 24), dessinés dans la couleur du texte. */
   const ICONS={
