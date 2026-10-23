@@ -78,7 +78,9 @@
       try{ok=!!(await store.restore());}catch(e){console.warn("[PREMIUM] restauration",e);}
       if(ok)setOn(true);
       return ok||isOn();
-    }
+    },
+    // retire le Premium de ce téléphone ; un vrai achat revient avec « Restaurer mes achats »
+    reset(){setOn(false);}
   };
   window.DGPremium=DGPremium;
   if(document.body)apply();else document.addEventListener("DOMContentLoaded",apply);

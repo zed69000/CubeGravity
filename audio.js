@@ -70,6 +70,17 @@
     if(ctx.state==="suspended")ctx.resume().catch(()=>{});
     return ctx;
   }
+  // Android peut créer le contexte suspendu (pas encore de geste, son pris par une autre appli) ou le suspendre
+  // en arrière-plan ; rien ne le relançait, d'où un jeu muet jusqu'au redémarrage. On le coupe quand l'appli
+  // passe derrière et on le relance au retour et à chaque geste qui l'autorise.
+  function wake(){if(ctx&&ctx.state!=="running"&&ctx.state!=="closed")ctx.resume().catch(()=>{});}
+  ["pointerup","touchend","click","keydown"].forEach(e=>window.addEventListener(e,wake,{capture:true,passive:true}));
+  document.addEventListener("visibilitychange",()=>{
+    if(!ctx)return;
+    if(document.hidden){if(ctx.state==="running")ctx.suspend().catch(()=>{});}
+    else wake();
+  });
+  window.addEventListener("pageshow",wake);
   function applyVolumes(){
     if(!ctx)return;
     const t=ctx.currentTime;

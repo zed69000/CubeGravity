@@ -93,6 +93,7 @@ button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:poin
 .btn:active{transform:scale(.96)}
 .btn.ghost{background:var(--navy3);color:var(--ink);box-shadow:inset 0 0 0 .2rem var(--line)}
 .btn.sm{padding:1rem .4rem;font-size:1.15rem;letter-spacing:.03em}
+.btn.danger{background:#3a1022;color:#ff8fae;box-shadow:inset 0 0 0 .2rem #ff3b6b}
 .btn.play{padding:1.2rem 1rem 1.1rem;font-size:2.3rem;animation:glow 1.8s ease-in-out infinite}
 .btn.play small{display:block;margin-top:.5rem;font:800 1rem/1 Rubik,Arial,sans-serif;letter-spacing:.02em;text-transform:none;opacity:.75}
 @keyframes glow{50%{box-shadow:0 0 3.4rem color-mix(in srgb,var(--c2) 85%,transparent)}}
@@ -231,7 +232,7 @@ html.tx-in .logoBig span{animation:none}
       <div class="langs" id="langGrid" data-no-i18n></div>
       <button class="btn ghost sm" id="controlsToggle" type="button">Commandes : glisser</button>
       <button class="btn ghost sm" id="fullscreenBtn" type="button">Plein écran</button>
-      <button class="btn ghost sm" id="resetBtn" type="button">Recommencer depuis le début</button>
+      <button class="btn ghost sm danger" id="resetBtn" type="button">Recommencer depuis le début</button>
       <div id="atelier" class="hidden" data-no-i18n>
         <div class="lbl">Atelier</div>
         <div class="two"><a class="btn ghost sm" href="editor.html">Niveaux</a><a class="btn ghost sm" href="asset_svg_editor.html">Assets</a></div>
@@ -418,8 +419,9 @@ document.getElementById("closeOptions").addEventListener("click",closeOptions);
 overlay.addEventListener("click",e=>{if(e.target===overlay)closeOptions();});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!overlay.classList.contains("hidden"))closeOptions();});
 /* Recommencer : efface la progression (niveaux, rencontres, indices, tutoriels vus).
-   Les réglages restent : langue, commandes, musique, Premium. */
-document.getElementById("resetBtn").addEventListener("click",()=>{
+   Le Premium part aussi (un vrai achat revient avec « Restaurer mes achats »).
+   Les réglages restent : langue, commandes, musique. */
+document.getElementById("resetBtn").addEventListener("click",async()=>{
   playButtonSound();
   if(!confirm(tr("Effacer toute ta progression et recommencer depuis le premier niveau ?")))return;
   try{
@@ -427,6 +429,9 @@ document.getElementById("resetBtn").addEventListener("click",()=>{
       if(k===PROGRESS_KEY||k.startsWith("gravity_cube_companion_")||k==="dg_swipe_count")localStorage.removeItem(k);
     });
   }catch(e){}
+  if(window.DGPremium&&DGPremium.reset)DGPremium.reset();
+  // dans l'appli, la sauvegarde native doit être à jour avant de recharger, sinon elle remet l'ancienne partie
+  if(window.DGSave)await DGSave.flush();
   location.reload();
 });
 /* Atelier : tout débloquer, pour tester n'importe quel niveau (chaque niveau est marqué réussi en sans-faute) */
