@@ -1720,7 +1720,7 @@ function toggleDoors(){
 }
 function turn(d,fromAngle=0){
   if(edit||gameOver||gamePaused||dgUiOpen())return;
-  if(busy){if(dgQueue.length<2)dgQueue.push(d);return;} // le plateau bouge encore : le coup attend son tour
+  if(busy){if(dgQueue.length<3)dgQueue.push(d);return;} // le plateau bouge encore : le coup attend son tour (un tour complet au plus)
   dgHistory+=d>0?"R":"L";
   hideCompanion(false);clearTimeout(companionTimer);clearTimeout(companionIdleTimer);
   busy=true;moves++;rotatorCooldown=false;userAudioGesture();soundRotate(d);updateStats();
@@ -3899,11 +3899,16 @@ loadVectorAssets()
 
 
 /* ===== V46 SWIPE ROTATION =====
-   Glisser vers la droite = rotation horaire (comme l'ancien bouton ⟳), vers la gauche = anti-horaire.
-   Pendant le geste le plateau suit le doigt de quelques degrés ; au-delà du seuil, lâcher valide le coup,
-   en dessous le plateau revient à plat et aucun coup n'est compté. Les flèches du clavier marchent toujours. */
+   Le plateau se prend comme un volant : il suit l'angle du doigt autour de son centre, sans butée.
+   Chaque fois que le doigt dépasse un demi quart de tour, un coup part ; en continuant à tourner on en enchaîne
+   d'autres (ils attendent leur tour pendant les chutes), jusqu'au tour complet. Lâcher avant le premier coup :
+   au-delà d'un petit angle le coup part quand même, sinon le plateau revient à plat. Près du centre, l'angle
+   n'a pas de sens : le geste se lit alors comme un glissé (horizontal en haut / en bas, vertical sur les côtés).
+   Les flèches du clavier marchent toujours. */
 (function(){
-  const MAX_TILT=24;
+  const MAX_TILT=40;          // le plateau penche au plus de tant, le reste se fait en vrais coups
+  const COMMIT=55;            // degrés de doigt pour déclencher un coup pendant le geste (demi quart + marge)
+  const RELEASE=18;           // au lâcher, sans coup encore joué : angle suffisant pour en jouer un
   const SWIPE_KEY="dg_swipe_count";
   const hint=document.getElementById("swipeHint");
   let sw=null;
@@ -3931,14 +3936,17 @@ loadVectorAssets()
       if(k<1)requestAnimationFrame(step);
     })(t0);
   }
+  function angleOf(e,c){return Math.atan2(e.clientY-c.y,e.clientX-c.x)*180/Math.PI;}
 
   document.addEventListener("pointerdown",e=>{
     if(e.pointerType==="mouse"&&e.button!==0)return;
     if(sw||blocked(e.target)||!canSwipe())return;
-    const br=svg.getBoundingClientRect();
-    // le plateau se prend comme un volant : glisser à l'horizontale en haut ou en bas, ou à la verticale sur un côté
-    sw={id:e.pointerId,x:e.clientX,y:e.clientY,tilt:0,active:false,axis:"x",dir:e.clientY>br.top+br.height/2?-1:1,
-      dirV:e.clientX>br.left+br.width/2?1:-1};
+    const br=svg.getBoundingClientRect(),c={x:br.left+br.width/2,y:br.top+br.height/2};
+    sw={id:e.pointerId,x:e.clientX,y:e.clientY,c,minR:br.width*.14,tilt:0,active:false,
+      wheel:Math.hypot(e.clientX-c.x,e.clientY-c.y)>=br.width*.14,
+      last:angleOf(e,c),acc:0,   // angle parcouru par le doigt, positif = sens horaire
+      done:0,lastDir:0,          // coups déjà joués pendant ce geste (signé) et sens du dernier
+      axis:"x",dir:e.clientY>c.y?-1:1,dirV:e.clientX>c.x?1:-1};
   },{passive:true});
 
   document.addEventListener("pointermove",e=>{
@@ -3951,14 +3959,36 @@ loadVectorAssets()
       sw.active=true;
       stage.classList.add("swiping");
     }
-    const amt=swipeAmount(sw,dx,dy);
-    sw.tilt=Math.max(-MAX_TILT,Math.min(MAX_TILT,amt/threshold()*14));
-    if(busy)sw.tilt=0;else setTilt(sw.tilt);
-    syncHint(sw.axis==="x"&&Math.abs(dx)>=threshold()?Math.sign(dx):0);
+    if(sw.wheel){
+      const a=angleOf(e,sw.c);
+      if(Math.hypot(e.clientX-sw.c.x,e.clientY-sw.c.y)>=sw.minR*.6){
+        let d=a-sw.last;
+        if(d>180)d-=360;else if(d<-180)d+=360;
+        sw.acc+=d;
+      }
+      sw.last=a;
+    }else{
+      // près du centre : un glissé d'un seuil vaut un demi quart de tour, et on peut continuer
+      sw.acc=(sw.axis==="y"?dy*sw.dirV:dx*sw.dir)/threshold()*45;
+    }
+    // un coup part à chaque demi quart de tour dépassé, dans un sens comme dans l'autre
+    while(sw.acc-sw.done*90>=COMMIT)play(1);
+    while(sw.acc-sw.done*90<=-COMMIT)play(-1);
+    let rel=sw.acc-sw.done*90;
+    // juste après un coup le doigt est en retard sur le plateau : il reste à plat tant que le doigt n'a pas rattrapé
+    if(sw.lastDir&&rel*sw.lastDir<0)rel=0;else sw.lastDir=0;
+    sw.tilt=Math.max(-MAX_TILT,Math.min(MAX_TILT,rel));
+    if(!busy)setTilt(sw.tilt);
+    syncHint(!sw.wheel&&sw.axis==="x"&&Math.abs(dx)>=threshold()?Math.sign(dx):0);
   },{passive:true});
 
-  // déplacement signé dans le sens de la rotation (positif = sens horaire)
-  function swipeAmount(s,dx,dy){return s.axis==="y"?dy*s.dirV:dx*s.dir;}
+  function play(d){
+    const from=sw.done===0&&!busy?sw.tilt:0;
+    sw.done+=d;sw.lastDir=d;
+    learned++;
+    try{localStorage.setItem(SWIPE_KEY,String(learned));}catch(err){}
+    turn(d,from);
+  }
   function end(e,cancelled){
     if(!sw||e.pointerId!==sw.id)return;
     const s=sw;
@@ -3966,14 +3996,10 @@ loadVectorAssets()
     stage.classList.remove("swiping");
     syncHint(0);
     if(!s.active)return;
-    const amt=swipeAmount(s,e.clientX-s.x,e.clientY-s.y);
-    if(!cancelled&&Math.abs(amt)>=threshold()&&canSwipe()){
-      learned++;
-      try{localStorage.setItem(SWIPE_KEY,String(learned));}catch(err){}
-      syncHint(0);
-      turn(amt>0?1:-1,s.tilt);
-    }else{
-      springBack(s.tilt);
+    if(!cancelled&&s.done===0&&Math.abs(s.acc)>=(s.wheel?RELEASE:45)&&canSwipe()){
+      sw=s;play(s.acc>0?1:-1);sw=null;
+    }else if(!busy){
+      springBack(s.done?0:s.tilt);
     }
   }
   document.addEventListener("pointerup",e=>end(e,false),{passive:true});
