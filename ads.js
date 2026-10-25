@@ -166,7 +166,17 @@
   }
   // L'interstitiel est chargé à l'avance : le charger au moment du clic sur « Suivant » faisait attendre
   // le joueur plusieurs secondes devant un écran figé. S'il n'est pas prêt à temps, on n'en montre pas.
-  let interReady=null;
+  let interReady=null,rewardReady=null;
+  // voile posé dès le clic, jusqu'à ce que la vidéo couvre l'écran
+  function loadingCover(){
+    injectStyle();
+    const ov=document.createElement("div");
+    ov.id="dgAdOverlay";
+    ov.setAttribute("role","status");
+    ov.innerHTML='<div class="dgAdInfo">'+(window.DGi18n?DGi18n.t("Chargement de la vidéo…"):"Chargement de la vidéo…")+'</div>';
+    document.body.appendChild(ov);
+    return ov;
+  }
   const admob={
     preload(){
       if(!interReady)interReady=(async()=>{
@@ -186,14 +196,25 @@
       admob.preload(); // la suivante se charge pendant qu'on joue
       return {completed:true};
     },
-    async rewarded(){
-      try{
+    // La vidéo se charge aussi à l'avance : chargée au moment du clic, le jeu réapparaissait
+    // une seconde avant qu'elle ne parte, ce qui semblait être un bug.
+    preloadRewarded(){
+      if(!rewardReady)rewardReady=(async()=>{
         await admobInit();
         await AdMob.prepareRewardVideoAd({adId:admobUnits().rewarded,isTesting:config.admobTesting});
-      }catch(e){
-        console.warn("[ADS] aucune vidéo disponible, récompense offerte",e);
+        return true;
+      })().catch(e=>{console.warn("[ADS] vidéo non chargée",e);rewardReady=null;return false;});
+      return rewardReady;
+    },
+    async rewarded(){
+      const cover=loadingCover();
+      const ready=await Promise.race([admob.preloadRewarded(),new Promise(r=>setTimeout(()=>r(false),8000))]);
+      if(!ready){
+        cover.remove();
+        console.warn("[ADS] aucune vidéo disponible, récompense offerte");
         return {completed:true};
       }
+      rewardReady=null;
       let earned=false;
       const closed=admobOnce(["onRewardedVideoAdDismissed","onRewardedVideoAdFailedToShow"]);
       const reward=AdMob.addListener("onRewardedVideoAdReward",()=>{earned=true;});
@@ -201,6 +222,8 @@
       await closed;
       await new Promise(r=>setTimeout(r,150)); // la récompense peut arriver juste après la fermeture
       Promise.resolve(reward).then(h=>{try{h&&h.remove&&h.remove();}catch(e){}});
+      cover.remove();
+      admob.preloadRewarded(); // la suivante se charge pendant qu'on joue
       return {completed:earned};
     }
   };
@@ -256,6 +279,12 @@
       }
       const r=await run("interstitial");
       return !r.notShown;
+    },
+
+    /* Le jeu l'appelle quand le joueur risque de vouloir une vidéo (bloqué, plus d'indice, défaite). */
+    prepareRewarded(){
+      if(!config.enabled||config.provider!=="admob"||(window.DGPremium&&DGPremium.isOn()))return;
+      admob.preloadRewarded();
     },
 
     /* Pub choisie par le joueur. Sans pub disponible, la récompense est offerte. */

@@ -134,6 +134,8 @@ button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:poin
 .looks button.lock .mini{filter:brightness(0) invert(.25);opacity:.8}
 .looks button.lock .lab{color:var(--muted)}
 .looks button.new::after{content:"";position:absolute;top:.35rem;right:.35rem;width:.9rem;height:.9rem;border-radius:50%;background:#ff4f8b;box-shadow:0 0 .6rem #ff4f8b}
+/* le plein écran ne concerne que le site : l'application est déjà en plein écran */
+html.native .webOnly{display:none}
 .lbl{margin:.4rem 2rem 0;font:800 1rem/1 Rubik,Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
 
 /* écran d'ouverture : le studio MusclorDuck, en linogravure rouge (maquette J14).
@@ -231,7 +233,7 @@ html.tx-in .logoBig span{animation:none}
       <div class="lbl">Langue</div>
       <div class="langs" id="langGrid" data-no-i18n></div>
       <button class="btn ghost sm" id="controlsToggle" type="button">Commandes : glisser</button>
-      <button class="btn ghost sm" id="fullscreenBtn" type="button">Plein écran</button>
+      <button class="btn ghost sm webOnly" id="fullscreenBtn" type="button">Plein écran</button>
       <button class="btn ghost sm danger" id="resetBtn" type="button">Recommencer depuis le début</button>
       <div id="atelier" class="hidden" data-no-i18n>
         <div class="lbl">Atelier</div>

@@ -15,6 +15,8 @@
 */
 (function(){
   const cap=window.Capacitor;
+  // les pages masquent ce qui ne sert que sur le site (html.native .webOnly)
+  if(cap&&cap.isNativePlatform&&cap.isNativePlatform())document.documentElement.classList.add("native");
   const Prefs=cap&&cap.isNativePlatform&&cap.isNativePlatform()&&cap.Plugins?cap.Plugins.Preferences:null;
   const BLOB="dg_save_v1";
   const PROGRESS="gravity_cube_player_progress_v2";

@@ -75,6 +75,8 @@ button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:poin
 .bar i{display:block;height:100%;border-radius:99rem;background:var(--grad)}
 .hd{display:flex;align-items:center;justify-content:space-between;gap:.8rem;height:5.2rem;padding:.8rem 1.2rem 0}
 .hd .chip{min-width:0;overflow:hidden;text-overflow:ellipsis}
+#restartBtn svg{width:1.6rem;height:1.6rem;fill:none;stroke:var(--ink);stroke-width:2.6;stroke-linecap:round;stroke-linejoin:round}
+body.editing #restartBtn{display:none}
 body.premium .adtag{display:none!important}
 .adtag{display:inline-block;margin-left:.5rem;padding:.2rem .6rem;border-radius:.5rem;background:var(--yellow);color:var(--navy);font:800 .95rem/1.2 Rubik,Arial,sans-serif;vertical-align:middle}
 .art svg,.mini svg,.ic svg,.av svg{display:block;width:100%;height:100%;overflow:visible}
@@ -317,6 +319,10 @@ body.btnCtl #swipeHint{display:none}
 .seq{display:flex;flex-wrap:wrap;justify-content:center;gap:.6rem;margin:.4rem 1.6rem}
 .seq b{width:3.6rem;height:3.6rem;border-radius:1rem;display:grid;place-items:center;font-size:1.9rem;background:var(--navy);box-shadow:inset 0 0 0 .2rem var(--c1);color:var(--c1)}
 .seq b.r{box-shadow:inset 0 0 0 .2rem var(--c2);color:var(--c2)}
+.lbl{margin:.5rem 2rem 0;font:800 1rem/1 Rubik,Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+.btn .ico{width:1.3em;height:1.3em;margin:-.3em .35em -.25em 0;vertical-align:middle;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round;stroke-linejoin:round}
+/* le plein écran ne concerne que le site : l'application est déjà en plein écran */
+html.native .webOnly{display:none}
 .sl{display:flex;align-items:center;gap:1rem;margin:0 2rem;font-weight:800;font-size:1.15rem}
 .sl span{width:5.8rem}
 .sl input[type=range]{flex:1;height:2.4rem;margin:0;accent-color:var(--c2);background:none}
@@ -405,6 +411,7 @@ html:not(.editor-enabled) #toggleEdit,html:not(.editor-enabled) #compactEdit{dis
   <header id="top">
     <div id="hud" class="hd">
       <button id="pauseBtn" class="round" aria-label="Pause" title="Pause">II</button>
+      <button id="restartBtn" class="round" aria-label="Recommencer le niveau" title="Recommencer le niveau"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M19 12a7 7 0 1 1-2.05-4.95"/><path d="M17.6 3.2l.1 4.6-4.6.1"/></svg></button>
       <div id="title"></div>
       <div id="playStats" aria-label="Coups joués"></div>
     </div>
@@ -516,12 +523,15 @@ html:not(.editor-enabled) #toggleEdit,html:not(.editor-enabled) #compactEdit{dis
     <div class="modal">
       <h3>Pause</h3>
       <button class="btn" id="pauseResume" type="button">Reprendre</button>
-      <div class="two"><button class="btn ghost sm" id="pauseRestart" type="button">Recommencer</button><button class="btn ghost sm" id="pauseChapters" type="button">Chapitres</button></div>
+      <div class="two"><button class="btn ghost sm" id="pauseSolution" type="button"><svg class="ico" viewBox="0 0 24 24" aria-hidden="true"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-3.6 10.8c.6.5 1 1.2 1 2V16h5.2v-.2c0-.8.4-1.5 1-2A6 6 0 0 0 12 3z"/></svg>Indice · <span id="pauseHintCount" data-no-i18n>3</span></button><button class="btn ghost sm" id="pauseRestart" type="button">Recommencer</button></div>
+      <div class="lbl">Son</div>
       <label class="sl" for="musicVolumeSlider"><span>Musique</span><input id="musicVolumeSlider" type="range" min="0" max="100" step="1" value="15"><em id="musicVolumeLabel" class="hidden"></em></label>
       <label class="sl" for="sfxVolumeSlider"><span>Sons</span><input id="sfxVolumeSlider" type="range" min="0" max="100" step="1" value="30"><em id="sfxVolumeLabel" class="hidden"></em></label>
-      <div class="two"><button class="btn ghost sm" id="pauseSolution" type="button">💡 Indice · <span id="pauseHintCount" data-no-i18n></span></button><button class="btn ghost sm" id="pauseMainMenu" type="button">Menu</button></div>
-      <button class="btn ghost sm" id="pauseControls" type="button"></button>
-      <button class="link" id="pauseFullscreen" type="button">Plein écran</button>
+      <div class="lbl">Réglages</div>
+      <button class="btn ghost sm" id="pauseControls" type="button">Commandes : glisser</button>
+      <button class="link webOnly" id="pauseFullscreen" type="button">Plein écran</button>
+      <div class="lbl">Quitter le niveau</div>
+      <div class="two"><button class="btn ghost sm" id="pauseChapters" type="button">Chapitres</button><button class="btn ghost sm" id="pauseMainMenu" type="button">Menu</button></div>
       <div class="ver" id="pauseVersion" data-no-i18n></div>
     </div>
   </div>
@@ -939,6 +949,7 @@ function showBanner(title,msg,stars,kind){
         dgHintStrip();
       };
       video.classList.remove("hidden");
+      if(window.DGAds&&DGAds.prepareRewarded)DGAds.prepareRewarded();
     }
     banner.classList.add("lose");
     dgBannerBack=()=>resetPlay();banner.classList.remove("hidden");
@@ -1476,7 +1487,12 @@ function draw(){
         const dx=p.x-dateCell.x,dy=p.y-dateCell.y,n=Math.hypot(dx,dy)||1;
         o.state.ex=dx/n*1.5;o.state.ey=dy/n*1.2;
         if((now+900)%3700<130)o.state.eye="blink";
-        if(idt<300&&imp>.25){o.dy=-imp*T*.16*Math.sin(Math.PI*idt/300);o.state.mouth="o";}
+        // grande chute : la secousse fait décoller la personne, deux petits rebonds qui s'amortissent
+        if(idt<640&&imp>.25){
+          const k=idt/640,h=Math.abs(Math.sin(2*Math.PI*k))*Math.exp(-2.6*k);
+          o.dy=-h*imp*T*.24;
+          if(idt<320)o.state.mouth="o";
+        }
       }
       dgDrawSpirit(g,person.kind,dgDateSex(),X,Y,o);
       if(!gameOver){
@@ -2547,6 +2563,8 @@ document.getElementById("companionHelp").onclick=()=>{
   dgHelpOffer();
 };
 document.getElementById("pauseBtn")?.addEventListener("click",()=>{userAudioGesture();setPaused(!gamePaused);});
+// recommencer sans passer par la pause ; ignoré pendant une rotation ou une fin de niveau
+document.getElementById("restartBtn")?.addEventListener("click",()=>{userAudioGesture();if(gamePaused||dgRot||(gameOver&&!banner.classList.contains("hidden")))return;resetPlay();});
 document.getElementById("pauseResume")?.addEventListener("click",()=>setPaused(false));
 document.getElementById("pauseSfxToggle")?.addEventListener("click",()=>{
   sfxOn=!sfxOn;
@@ -2996,6 +3014,7 @@ function dgHelpUpdate(){
   const on=stuck&&!dgHelp.snooze&&!gameOver&&!edit&&!!(l&&l.solution);
   if(on===dgHelp.on)return;
   dgHelp.on=on;
+  if(on&&window.DGAds&&DGAds.prepareRewarded)DGAds.prepareRewarded();
   document.getElementById("companionDock").classList.toggle("help",on);
   if(!dgTutoActive)dgSetReact(dgReactLine(),false);
 }
@@ -3003,9 +3022,9 @@ function dgHelpUpdate(){
    Un indice révèle les TROIS coups suivants de la solution du niveau ; les coups pas encore révélés restent en « ? ».
    La solution part du début du niveau : les coups révélés s'affichent en bande sous le plateau, ceux déjà joués
    s'effacent et le prochain pulse. Si le joueur s'en écarte, la bande se grise et propose de recommencer.
-   Les indices sont des crédits : quelques-uns au départ, d'autres à chaque chapitre terminé, un contre une vidéo.
+   Les indices sont des crédits : quelques-uns au départ, d'autres à chaque chapitre terminé, trois contre une vidéo.
    En Premium ils sont illimités. */
-const DG_HINTS_START=3,DG_HINTS_PER_CHAPTER=3,DG_HINT_STEP=3;
+const DG_HINTS_START=3,DG_HINTS_PER_CHAPTER=3,DG_HINT_STEP=3,DG_HINTS_PER_VIDEO=3;
 let dgReveal={level:-1,n:0};   // nombre de coups de la solution déjà révélés pour le niveau en cours
 let dgHistory="";              // les coups joués depuis le début de l'essai, "R" ou "L"
 function dgPremium(){return !!(window.DGPremium&&DGPremium.isOn());}
@@ -3056,21 +3075,21 @@ function dgRevealMore(){
   dgHintStrip();
   dgHelpOffer();
 }
-/* plus de crédit : une vidéo en donne un, utilisé aussitôt */
+/* plus de crédit : une vidéo en donne trois, dont un utilisé aussitôt */
 function dgHintShop(){
   const alt=document.getElementById("bannerAlt");
   dgPortrait("bannerArt",dgCurPerson().kind,dgDateSex(),{eye:"happy"});
   bannerTitle.textContent=tr("Plus d'indice");
-  bannerText.textContent=tr("Regarde une vidéo pour gagner un indice.");
+  bannerText.textContent=tr("Regarde une vidéo pour gagner 3 indices.");
   starsEl.textContent="";
-  bannerAction.innerHTML=tr("▶ +1 indice")+'<span class="adtag">'+tr("PUB")+'</span>';
+  bannerAction.innerHTML=tr("▶ +3 indices")+'<span class="adtag">'+tr("PUB")+'</span>';
   bannerAction.onclick=async()=>{
     banner.classList.add("hidden");
     const level=currentLevel;
     const ok=await (window.DGAds?DGAds.showRewarded("hint"):Promise.resolve(true));
     if(!ok||level!==currentLevel)return;
-    dgAddHints(1);
-    dgRevealMore();
+    dgAddHints(DG_HINTS_PER_VIDEO);
+    dgRevealMore(); // le premier sert tout de suite : le joueur en demandait un
   };
   alt.textContent=tr("Fermer");
   alt.onclick=()=>{dgHelp.snooze=true;banner.classList.add("hidden");};
@@ -3917,7 +3936,9 @@ loadVectorAssets()
     if(e.pointerType==="mouse"&&e.button!==0)return;
     if(sw||blocked(e.target)||!canSwipe())return;
     const br=svg.getBoundingClientRect();
-    sw={id:e.pointerId,x:e.clientX,y:e.clientY,tilt:0,active:false,dir:e.clientY>br.top+br.height/2?-1:1};
+    // le plateau se prend comme un volant : glisser à l'horizontale en haut ou en bas, ou à la verticale sur un côté
+    sw={id:e.pointerId,x:e.clientX,y:e.clientY,tilt:0,active:false,axis:"x",dir:e.clientY>br.top+br.height/2?-1:1,
+      dirV:e.clientX>br.left+br.width/2?1:-1};
   },{passive:true});
 
   document.addEventListener("pointermove",e=>{
@@ -3925,16 +3946,19 @@ loadVectorAssets()
     if(!canSwipe()){sw=null;stage.classList.remove("swiping");syncHint(0);return;}
     const dx=e.clientX-sw.x,dy=e.clientY-sw.y;
     if(!sw.active){
-      if(Math.abs(dx)<8)return;
-      if(Math.abs(dy)>Math.abs(dx)*1.2){sw=null;return;} // geste vertical : pas un swipe
+      if(Math.max(Math.abs(dx),Math.abs(dy))<8)return;
+      sw.axis=Math.abs(dy)>Math.abs(dx)*1.2?"y":"x";
       sw.active=true;
       stage.classList.add("swiping");
     }
-    sw.tilt=Math.max(-MAX_TILT,Math.min(MAX_TILT,dx/threshold()*14))*sw.dir;
+    const amt=swipeAmount(sw,dx,dy);
+    sw.tilt=Math.max(-MAX_TILT,Math.min(MAX_TILT,amt/threshold()*14));
     if(busy)sw.tilt=0;else setTilt(sw.tilt);
-    syncHint(Math.abs(dx)>=threshold()?Math.sign(dx):0);
+    syncHint(sw.axis==="x"&&Math.abs(dx)>=threshold()?Math.sign(dx):0);
   },{passive:true});
 
+  // déplacement signé dans le sens de la rotation (positif = sens horaire)
+  function swipeAmount(s,dx,dy){return s.axis==="y"?dy*s.dirV:dx*s.dir;}
   function end(e,cancelled){
     if(!sw||e.pointerId!==sw.id)return;
     const s=sw;
@@ -3942,12 +3966,12 @@ loadVectorAssets()
     stage.classList.remove("swiping");
     syncHint(0);
     if(!s.active)return;
-    const dx=e.clientX-s.x;
-    if(!cancelled&&Math.abs(dx)>=threshold()&&canSwipe()){
+    const amt=swipeAmount(s,e.clientX-s.x,e.clientY-s.y);
+    if(!cancelled&&Math.abs(amt)>=threshold()&&canSwipe()){
       learned++;
       try{localStorage.setItem(SWIPE_KEY,String(learned));}catch(err){}
       syncHint(0);
-      turn((dx>0?1:-1)*s.dir,s.tilt);
+      turn(amt>0?1:-1,s.tilt);
     }else{
       springBack(s.tilt);
     }
