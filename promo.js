@@ -1,32 +1,78 @@
-/* ===== DATE GRAVITY : mes autres jeux (pub maison) =====
-   Une pub gratuite pour les autres jeux du même studio : elle prend la place d'une partie des pubs entre
-   deux niveaux (ads.js) et a sa carte dans les options du menu. Aucun annonceur, aucun paiement.
-   Ajouter un jeu = une entrée dans GAMES ; avec une vidéo (9:16, légère : 540x960, environ 2 Mo), elle passe
-   à la place de l'image, avec son son. Un jeu n'est montré que là où il est téléchargeable
-   (android : identifiant Google Play ; ios : identifiant App Store, à ajouter quand il y sera).
+/* ===== DATE GRAVITY : other games from the same studio (house ad) =====
+   Free promotion for the studio's other games: it replaces part of the between-level ads (ads.js)
+   and has its own card in the menu options. No advertiser, no payment.
+   The list lives online (games-catalog repo), so a game is added or changed without a new app release.
+   The last copy is kept on the device; nothing here ever waits on the network before the game starts.
+   A game is only shown where it can be installed (store id for the current platform).
 
-     DGPromo.available()  -> les jeux à montrer sur cette plateforme
-     DGPromo.show()       -> Promise, résolue quand le joueur ferme la pub maison
-     DGPromo.open(game)   -> ouvre la fiche du jeu sur la boutique
-     DGPromo.SHARE        -> part des pubs entre deux niveaux remplacées par la pub maison
+     DGPromo.available()  -> games to show on this platform
+     DGPromo.show()       -> Promise, resolved when the player closes the house ad
+     DGPromo.open(game)   -> opens the game's store page
+     DGPromo.onChange     -> called when a fresher catalog arrives
+     DGPromo.SHARE        -> share of between-level ads replaced by the house ad
 */
 (function(){
-  const GAMES=[
-    {name:"La Bataille Galactique",android:"com.musclorduck.battlecards",
-      pitch:"Pose, bluffe, renverse ! Un jeu de cartes spatial avec des alliés à combiner.",
-      art:"promo/bataille.webp",icon:"promo/bataille-icon.webp",video:"promo/bataille.mp4"}
-  ];
+  const CATALOG_URL="https://games-catalog.sebastienalzamora.workers.dev/catalog.json";
+  const SELF={id:"date-gravity",android:"com.dategravity.app"};
+  const CACHE_KEY="dg_promo_catalog";
+  const TIMEOUT_MS=4000;
   const SHARE=1/3;
   const cap=window.Capacitor;
   const platform=cap&&cap.getPlatform?cap.getPlatform():"web";
   const tr=(s,v)=>window.DGi18n?DGi18n.t(s,v):s;
+  const lang=window.DGi18n?DGi18n.lang:"fr";
 
-  // sur le site, la fiche Google Play reste le meilleur lien (c'est là que le jeu s'installe)
+  // catalog texts are either a plain string or one string per language
+  function local(v){
+    if(!v||typeof v==="string")return v||"";
+    return v[lang]||v.en||v.fr||Object.values(v)[0]||"";
+  }
+  function media(path,base){
+    if(!path)return null;
+    try{const u=new URL(path,base);return u.protocol==="https:"?u.href:null;}catch(e){return null;}
+  }
+  function parse(cat,base){
+    const out=[];
+    for(const g of (cat&&cat.games)||[]){
+      if(!g||!g.id||g.id===SELF.id)continue;
+      const store=g.store||{};
+      if(store.android===SELF.android)continue;
+      const name=local(g.name);
+      if(!name)continue;
+      out.push({id:g.id,name,pitch:local(g.pitch),android:store.android||null,ios:store.ios||null,
+        icon:media(g.icon,base),art:media(g.poster,base),video:media(g.video,base)});
+    }
+    return out;
+  }
+
+  let games=[];
+  try{
+    const saved=JSON.parse(localStorage.getItem(CACHE_KEY)||"null");
+    if(saved&&saved.data)games=parse(saved.data,CATALOG_URL);
+  }catch(e){}
+
+  const api={SHARE,available,show,open,storeUrl,onChange:null};
+  (function refresh(){
+    if(!window.fetch)return;
+    const ctl=window.AbortController?new AbortController():null;
+    const timer=setTimeout(()=>ctl&&ctl.abort(),TIMEOUT_MS);
+    fetch(CATALOG_URL,{signal:ctl&&ctl.signal,cache:"no-cache"})
+      .then(r=>{if(!r.ok)throw new Error("HTTP "+r.status);return r.json();})
+      .then(data=>{
+        games=parse(data,CATALOG_URL);
+        try{localStorage.setItem(CACHE_KEY,JSON.stringify({at:Date.now(),data}));}catch(e){}
+        try{api.onChange&&api.onChange();}catch(e){}
+      })
+      .catch(()=>{}) // offline or catalog down: the saved copy stays in use
+      .finally(()=>clearTimeout(timer));
+  })();
+
+  // on the website, the Google Play page is still the best link (that is where the game installs)
   function storeUrl(g){
     if(platform==="ios")return g.ios?"https://apps.apple.com/app/id"+g.ios:null;
     return g.android?"https://play.google.com/store/apps/details?id="+g.android+"&referrer=utm_source%3Ddategravity":null;
   }
-  function available(){return GAMES.filter(storeUrl);}
+  function available(){return games.filter(storeUrl);}
   function open(g){const u=storeUrl(g);if(u)window.open(u,"_blank");}
 
   function injectStyle(){
@@ -51,10 +97,12 @@
     document.head.appendChild(st);
   }
 
-  // la pub maison : on peut la fermer tout de suite, elle ne retient jamais le joueur
+  // the house ad can be closed at once, it never holds the player back
   function show(g){
-    g=g||available()[Math.floor(Math.random()*available().length)];
-    if(!g)return Promise.resolve({completed:false,notShown:true});
+    const list=available();
+    g=g||list[Math.floor(Math.random()*list.length)];
+    // media are streamed from the catalog site: without a network there is nothing worth showing
+    if(!g||navigator.onLine===false||!g.art)return Promise.resolve({completed:false,notShown:true});
     injectStyle();
     return new Promise(resolve=>{
       const ov=document.createElement("div");
@@ -64,28 +112,40 @@
       ov.innerHTML='<div class="card"><div class="top"></div><img class="art" alt=""><div class="body"><h4></h4><p></p>'+
         '<button type="button" class="go"></button><button type="button" class="later"></button></div></div>';
       ov.querySelector(".top").textContent=tr("Un autre jeu du même studio");
-      ov.querySelector("img").src=g.art;
-      let vid=null;
+      const img=ov.querySelector("img");
+      img.src=g.art;
+      let vid=null,stall=0;
+      // back to the still image when the video cannot play (no codec, slow or broken link)
+      const toImage=()=>{
+        clearTimeout(stall);
+        if(!vid)return;
+        vid.pause();vid.removeAttribute("src");vid.load();
+        vid.replaceWith(img);ov.classList.remove("vid");
+        vid=null;
+      };
       if(g.video){
-        // la vidéo du jeu, avec son son ; si le navigateur refuse le son sans geste, elle passe en muet
+        // the game's video, with its sound; if sound is refused without a gesture it plays muted
         vid=document.createElement("video");
         vid.src=g.video;vid.poster=g.art;vid.playsInline=true;vid.setAttribute("playsinline","");vid.preload="auto";
-        ov.querySelector("img").replaceWith(vid);
+        img.replaceWith(vid);
         ov.classList.add("vid");
-        vid.play().catch(()=>{vid.muted=true;vid.play().catch(()=>{});});
+        vid.addEventListener("error",toImage);
+        vid.addEventListener("playing",()=>clearTimeout(stall));
+        stall=setTimeout(toImage,6000);
+        vid.play().catch(()=>{if(!vid)return;vid.muted=true;vid.play().catch(toImage);});
       }
       ov.querySelector("h4").textContent=g.name;
-      ov.querySelector("p").textContent=tr(g.pitch);
+      ov.querySelector("p").textContent=g.pitch;
       ov.querySelector(".go").textContent=tr("Découvrir le jeu");
       ov.querySelector(".later").textContent=tr("Plus tard");
       const swallow=e=>{e.stopPropagation();if(e.key!=="Tab")e.preventDefault();};
       window.addEventListener("keydown",swallow,true);
-      const done=r=>{window.removeEventListener("keydown",swallow,true);if(vid){vid.pause();vid.removeAttribute("src");vid.load();}ov.remove();resolve(r);};
+      const done=r=>{window.removeEventListener("keydown",swallow,true);clearTimeout(stall);if(vid){vid.pause();vid.removeAttribute("src");vid.load();}ov.remove();resolve(r);};
       ov.querySelector(".go").onclick=()=>{open(g);done({completed:true});};
       ov.querySelector(".later").onclick=()=>done({completed:true});
       document.body.appendChild(ov);
     });
   }
 
-  window.DGPromo={SHARE,available,show,open,storeUrl};
+  window.DGPromo=api;
 })();

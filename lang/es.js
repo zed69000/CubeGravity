@@ -235,7 +235,6 @@ DGi18n.add("es", {
   "Mes autres jeux": "Mis otros juegos",
   "Un autre jeu du même studio": "Otro juego del mismo estudio",
   "Découvrir le jeu": "Descubrir el juego",
-  "Pose, bluffe, renverse ! Un jeu de cartes spatial avec des alliés à combiner.": "¡Juega, farolea, dale la vuelta! Un juego de cartas espacial con aliados que combinar.",
   "Recommencer le niveau": "Reiniciar el nivel",
   "💡 Réessayer avec un indice": "💡 Reintentar con pista",
   "+{n} indices 💡": "+{n} pistas 💡",

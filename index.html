@@ -401,18 +401,25 @@ DGPremium.onChange=showPremium; // le prix local arrive du magasin après le lan
 /* --- mes autres jeux : une carte par jeu, vers sa fiche sur la boutique (promo.js) */
 (function(){
   const box=document.getElementById("otherGames");
-  const games=window.DGPromo?DGPromo.available():[];
-  games.forEach(g=>{
-    const b=document.createElement("button");
-    b.type="button";b.className="promoCard";
-    b.innerHTML='<img alt=""><span><b></b><small></small></span>';
-    b.querySelector("img").src=g.icon;
-    b.querySelector("b").textContent=g.name;
-    b.querySelector("small").textContent=tr(g.pitch);
-    b.addEventListener("click",()=>{playButtonSound();DGPromo.open(g);});
-    box.appendChild(b);
-  });
-  box.classList.toggle("hidden",!games.length);
+  function render(){
+    box.querySelectorAll(".promoCard").forEach(b=>b.remove());
+    const games=window.DGPromo?DGPromo.available():[];
+    games.forEach(g=>{
+      const b=document.createElement("button");
+      b.type="button";b.className="promoCard";
+      b.innerHTML='<img alt=""><span><b></b><small></small></span>';
+      const img=b.querySelector("img");
+      img.onerror=()=>img.remove(); // the icon comes from the online catalog: dropped when offline
+      if(g.icon)img.src=g.icon;else img.remove();
+      b.querySelector("b").textContent=g.name;
+      b.querySelector("small").textContent=g.pitch;
+      b.addEventListener("click",()=>{playButtonSound();DGPromo.open(g);});
+      box.appendChild(b);
+    });
+    box.classList.toggle("hidden",!games.length);
+  }
+  render();
+  if(window.DGPromo)DGPromo.onChange=render; // the online list may arrive after the menu is drawn
 })();
 
 /* --- atelier (éditeurs de niveaux et d'assets) : outil de l'équipe, invisible pour les joueurs.

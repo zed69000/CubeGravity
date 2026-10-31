@@ -235,7 +235,6 @@ DGi18n.add("zh", {
   "Mes autres jeux": "我的其他游戏",
   "Un autre jeu du même studio": "同一工作室的另一款游戏",
   "Découvrir le jeu": "了解这款游戏",
-  "Pose, bluffe, renverse ! Un jeu de cartes spatial avec des alliés à combiner.": "出牌、虚张声势、逆转局面！一款可组合盟友的太空卡牌游戏。",
   "Recommencer le niveau": "重新开始本关",
   "💡 Réessayer avec un indice": "💡 带提示重试",
   "+{n} indices 💡": "+{n} 提示 💡",

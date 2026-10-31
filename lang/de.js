@@ -235,7 +235,6 @@ DGi18n.add("de", {
   "Mes autres jeux": "Meine anderen Spiele",
   "Un autre jeu du même studio": "Ein weiteres Spiel vom selben Studio",
   "Découvrir le jeu": "Spiel entdecken",
-  "Pose, bluffe, renverse ! Un jeu de cartes spatial avec des alliés à combiner.": "Legen, bluffen, umdrehen! Ein Weltraum-Kartenspiel mit Verbündeten zum Kombinieren.",
   "Recommencer le niveau": "Level neu starten",
   "💡 Réessayer avec un indice": "💡 Nochmal mit Tipp",
   "+{n} indices 💡": "+{n} Tipps 💡",
