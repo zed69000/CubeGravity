@@ -221,6 +221,7 @@ DGi18n.add("zh", {
   "Premium activé ✓": "高级版已开通 ✓",
   "Premium sans pub · {price}": "高级版无广告 · {price}",
   "Premium activé. Merci !": "高级版已开通,谢谢!",
+  "Le Premium s'achète dans l'application Date Gravity.": "高级版需在 Date Gravity 应用中购买。",
   "Aucun achat à restaurer.": "没有可恢复的购买。",
   "💡 Indice ·": "💡 提示 ·",
   "Plus d'indice": "提示用完了",

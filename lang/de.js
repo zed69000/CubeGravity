@@ -221,6 +221,7 @@ DGi18n.add("de", {
   "Premium activé ✓": "Premium aktiv ✓",
   "Premium sans pub · {price}": "Premium ohne Werbung · {price}",
   "Premium activé. Merci !": "Premium ist aktiv. Danke!",
+  "Le Premium s'achète dans l'application Date Gravity.": "Premium kaufst du in der Date-Gravity-App.",
   "Aucun achat à restaurer.": "Kein Kauf zum Wiederherstellen.",
   "💡 Indice ·": "💡 Tipp ·",
   "Plus d'indice": "Keine Tipps mehr",

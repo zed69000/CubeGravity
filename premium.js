@@ -8,16 +8,22 @@
      DGPremium.restore()  -> Promise<boolean>, true si un achat a été retrouvé (bouton exigé par Apple)
      DGPremium.onChange   -> rappel quand l'état change
 
-   Pour l'instant le seul « magasin » est un achat de TEST : une fenêtre qui simule le paiement, pour juger
-   le parcours. Aucun argent ne circule. Avant publication :
-     1. créer le produit non consommable PRODUCT_ID dans App Store Connect et Google Play ;
-     2. brancher un vrai magasin dans `store` (mêmes trois méthodes), qui donnera aussi le prix local ;
-     3. passer TEST_PURCHASES à false, sinon n'importe qui obtient le Premium gratuitement.
+   Deux magasins :
+     - dans l'application : le vrai achat Google Play / App Store (plugin @capgo/native-purchases).
+       Le produit PRODUCT_ID doit exister en « produit intégré » (non consommable) dans la Play Console
+       et dans App Store Connect. Le prix affiché est celui du magasin, dans la monnaie du joueur.
+     - sur le site : aucun paiement possible. En version de test (DG_TEST_BUILD) une fenêtre simule
+       l'achat pour juger le parcours ; sinon le bouton invite à passer par l'application.
+   L'achat n'est jamais retiré tout seul : « Restaurer mes achats » le retrouve après une réinstallation
+   ou un « Recommencer depuis le début ».
 */
 (function(){
   const PRODUCT_ID="com.dategravity.app.premium";
-  const TEST_PURCHASES=true;
-  const PRICE_EUR=2.99;
+  const PRICE_EUR=2.99;          // prix affiché tant que le magasin n'a pas répondu
+  const PRICE_KEY="dg_premium_price";
+  const cap=window.Capacitor;
+  const IAP=cap&&cap.isNativePlatform&&cap.isNativePlatform()&&cap.Plugins?cap.Plugins.NativePurchases:null;
+  const TEST_PURCHASES=!IAP&&!!window.DG_TEST_BUILD;
   const KEY="dg_premium";
 
   function isOn(){try{return localStorage.getItem(KEY)==="1";}catch(e){return false;}}
@@ -50,15 +56,44 @@
     });
   }
 
-  // Le magasin. À remplacer par le vrai (App Store / Google Play) : mêmes méthodes, mêmes retours.
-  const store={
-    price(){
-      try{return new Intl.NumberFormat((window.DGi18n&&DGi18n.lang)||"fr",{style:"currency",currency:"EUR"}).format(PRICE_EUR);}
-      catch(e){return PRICE_EUR.toFixed(2).replace(".",",")+" €";}
+  function eurPrice(){
+    try{return new Intl.NumberFormat((window.DGi18n&&DGi18n.lang)||"fr",{style:"currency",currency:"EUR"}).format(PRICE_EUR);}
+    catch(e){return PRICE_EUR.toFixed(2).replace(".",",")+" €";}
+  }
+  // Google Play renvoie purchaseState "1" pour un achat payé ("2" = paiement en attente) ; l'App Store ne le renseigne pas.
+  const paid=t=>!!t&&t.productIdentifier===PRODUCT_ID&&(t.purchaseState==null||String(t.purchaseState)==="1");
+
+  const nativeStore={
+    price(){try{return localStorage.getItem(PRICE_KEY)||eurPrice();}catch(e){return eurPrice();}},
+    // le prix local est demandé au magasin une fois au lancement, puis gardé pour l'affichage suivant
+    async loadPrice(){
+      const r=await IAP.getProducts({productIdentifiers:[PRODUCT_ID],productType:"inapp"});
+      const p=r&&r.products&&r.products[0];
+      if(p&&p.priceString){
+        try{localStorage.setItem(PRICE_KEY,p.priceString);}catch(e){}
+        try{DGPremium.onChange&&DGPremium.onChange(isOn());}catch(e){}
+      }
     },
+    async buy(){
+      try{
+        return paid(await IAP.purchaseProduct({productIdentifier:PRODUCT_ID,productType:"inapp"}));
+      }catch(e){
+        // achat annulé, ou déjà possédé (Google répond « item already owned ») : on vérifie ce que le magasin connaît
+        console.warn("[PREMIUM] achat",e);
+        return nativeStore.restore();
+      }
+    },
+    async restore(){
+      const r=await IAP.getPurchases({productType:"inapp"});
+      return !!(r&&r.purchases&&r.purchases.some(paid));
+    }
+  };
+  const webStore={
+    price:eurPrice,
     buy(){return TEST_PURCHASES?fakeCheckout():Promise.resolve(false);},
     restore(){return Promise.resolve(false);} // un achat de test ne laisse aucune trace à retrouver
   };
+  const store=IAP?nativeStore:webStore;
   function price(){return store.price();}
 
   const DGPremium={
@@ -66,6 +101,7 @@
     onChange:null,
     isOn,
     price,
+    canBuy:!!IAP||TEST_PURCHASES,  // false sur le site public : le Premium s'achète dans l'application
     async buy(){
       if(isOn())return true;
       let ok=false;
@@ -83,5 +119,6 @@
     reset(){setOn(false);}
   };
   window.DGPremium=DGPremium;
+  if(IAP)nativeStore.loadPrice().catch(e=>console.warn("[PREMIUM] prix",e));
   if(document.body)apply();else document.addEventListener("DOMContentLoaded",apply);
 })();

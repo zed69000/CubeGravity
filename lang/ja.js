@@ -221,6 +221,7 @@ DGi18n.add("ja", {
   "Premium activé ✓": "プレミアム有効 ✓",
   "Premium sans pub · {price}": "広告なしプレミアム · {price}",
   "Premium activé. Merci !": "プレミアムが有効になりました。ありがとう!",
+  "Le Premium s'achète dans l'application Date Gravity.": "プレミアムはDate Gravityアプリで購入できます。",
   "Aucun achat à restaurer.": "復元できる購入はありません。",
   "💡 Indice ·": "💡 ヒント ·",
   "Plus d'indice": "ヒント切れ",

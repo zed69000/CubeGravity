@@ -1,6 +1,6 @@
 {
   "name": "date-gravity",
-  "version": "1.2.6",
+  "version": "1.2.7",
   "private": true,
   "description": "Date Gravity : le jeu web, emballé en application iOS / Android avec Capacitor.",
   "scripts": {
@@ -15,7 +15,8 @@
     "@capacitor/app": "^8.1.2",
     "@capacitor/core": "^8.5.3",
     "@capacitor/ios": "^8.5.3",
-    "@capacitor/preferences": "^8.0.1"
+    "@capacitor/preferences": "^8.0.1",
+    "@capgo/native-purchases": "^8.9.6"
   },
   "devDependencies": {
     "@capacitor/cli": "^8.5.3"

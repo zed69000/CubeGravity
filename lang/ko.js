@@ -221,6 +221,7 @@ DGi18n.add("ko", {
   "Premium activé ✓": "프리미엄 사용 중 ✓",
   "Premium sans pub · {price}": "광고 없는 프리미엄 · {price}",
   "Premium activé. Merci !": "프리미엄이 켜졌어요. 고마워요!",
+  "Le Premium s'achète dans l'application Date Gravity.": "프리미엄은 Date Gravity 앱에서 구매할 수 있어요.",
   "Aucun achat à restaurer.": "복원할 구매가 없어요.",
   "💡 Indice ·": "💡 힌트 ·",
   "Plus d'indice": "힌트가 없어요",

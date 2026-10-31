@@ -14,13 +14,13 @@
 //     du dépôt (jamais commité, voir keystore.properties.example) ou dans les variables d'environnement
 //     DG_STORE_FILE, DG_STORE_PASSWORD, DG_KEY_ALIAS, DG_KEY_PASSWORD (pour un build automatique).
 //
-// ADMOB_APP_ID : identifiants d'application de TEST fournis par Google. À remplacer par ceux du compte
-// AdMob avant toute publication (un par plateforme), en même temps que les blocs d'annonces de ads.js.
+// ADMOB_APP_ID : les applications Date Gravity du compte AdMob (une par plateforme). Les blocs d'annonces
+// sont dans ads.js.
 import { cpSync, readFileSync, writeFileSync } from "node:fs";
 
 const ADMOB_APP_ID = {
-  ios: "ca-app-pub-3940256099942544~1458002511",
-  android: "ca-app-pub-3940256099942544~3347511713",
+  ios: "ca-app-pub-9972694417557701~2668664312",
+  android: "ca-app-pub-9972694417557701~5294827656",
 };
 const TRACKING_TEXT = "Ton accord permet d'afficher des publicités plus pertinentes. Le jeu fonctionne de la même façon si tu refuses.";
 

@@ -381,6 +381,7 @@ function showPremium(){
 premiumBtn.addEventListener("click",async()=>{
   if(DGPremium.isOn())return;
   playButtonSound();
+  if(!DGPremium.canBuy){showNotice(tr("Premium"),tr("Le Premium s'achète dans l'application Date Gravity."));return;}
   if(await DGPremium.buy())showNotice(tr("Premium"),tr("Premium activé. Merci !"));
   showPremium();
 });
@@ -390,6 +391,7 @@ document.getElementById("restoreBtn").addEventListener("click",async()=>{
   showPremium();
 });
 showPremium();
+DGPremium.onChange=showPremium; // le prix local arrive du magasin après le lancement
 
 /* --- atelier (éditeurs de niveaux et d'assets) : outil de l'équipe, invisible pour les joueurs.
    Il n'apparaît qu'après avoir ouvert une fois index.html?atelier=1 sur cet appareil (index.html?atelier=0 le recache). */

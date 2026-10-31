@@ -19,7 +19,9 @@
     enabled:param!=="off",
     debug:param==="debug",
     provider:"fake",              // remplacé par "admob" plus bas quand on tourne dans l'application
-    admobTesting:true,            // true = pubs de test Google. À passer à false seulement avec de vrais identifiants.
+    // pubs de test Google tant que le jeu est en version de test : on ne clique jamais sur ses propres vraies pubs
+    // (AdMob suspend les comptes pour ça). Les vrais blocs ci-dessous servent dès que DG_TEST_BUILD passe à false.
+    admobTesting:!!window.DG_TEST_BUILD,
     firstChapterAdFree:true,      // jamais d'interstitiel pendant le premier chapitre
     interstitialEveryLevels:4,    // au plus un interstitiel tous les N niveaux gagnés
     minSecondsBetweenAds:120,     // et jamais deux pubs à moins de N secondes
@@ -132,21 +134,22 @@
   }
 
   /* --- AdMob (application seulement) ---
-     Les identifiants ci-dessous sont ceux de TEST publiés par Google : ils affichent de fausses pubs
-     et ne rapportent rien. Avant publication, les remplacer par les blocs d'annonces du compte AdMob
-     (et l'identifiant d'application dans tools/app/configure-native.mjs), puis passer admobTesting à false. */
+     Les blocs d'annonces Date Gravity du compte AdMob (l'identifiant d'application est dans
+     tools/app/configure-native.mjs). Tant que admobTesting est vrai, le plugin les remplace par les pubs
+     de test de Google : elles s'affichent pareil mais ne rapportent rien. */
   const cap=window.Capacitor;
   const AdMob=cap&&cap.isNativePlatform&&cap.isNativePlatform()&&cap.Plugins?cap.Plugins.AdMob:null;
   const ADMOB_UNITS={
-    ios:{interstitial:"ca-app-pub-3940256099942544/4411468910",rewarded:"ca-app-pub-3940256099942544/1712485313"},
-    android:{interstitial:"ca-app-pub-3940256099942544/1033173712",rewarded:"ca-app-pub-3940256099942544/5224354917"}
+    ios:{interstitial:"ca-app-pub-9972694417557701/4640221531",rewarded:"ca-app-pub-9972694417557701/6413514382"},
+    android:{interstitial:"ca-app-pub-9972694417557701/7513796889",rewarded:"ca-app-pub-9972694417557701/5961042065"}
   };
   let admobReady=null;
   function admobUnits(){return ADMOB_UNITS[cap.getPlatform()]||ADMOB_UNITS.android;}
   function admobInit(){
     // À la première pub seulement : consentement RGPD, puis autorisation de suivi sur iPhone.
     if(!admobReady)admobReady=(async()=>{
-      await AdMob.initialize({initializeForTesting:config.admobTesting});
+      // pubs « tout public » seulement : le jeu est joué par des ados et des familles (même réglage dans la console AdMob)
+      await AdMob.initialize({initializeForTesting:config.admobTesting,maxAdContentRating:"General"});
       try{
         const info=await AdMob.requestConsentInfo();
         if(info&&info.isConsentFormAvailable&&info.status==="REQUIRED")await AdMob.showConsentForm();
