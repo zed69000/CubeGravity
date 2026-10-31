@@ -7,12 +7,13 @@
 
      DGPromo.available()  -> games to show on this platform
      DGPromo.show()       -> Promise, resolved when the player closes the house ad
-     DGPromo.open(game)   -> opens the game's store page
+     DGPromo.open(game)   -> opens the game's store page (counted as a click from the options card)
      DGPromo.onChange     -> called when a fresher catalog arrives
      DGPromo.SHARE        -> share of between-level ads replaced by the house ad
 */
 (function(){
   const CATALOG_URL="https://games-catalog.sebastienalzamora.workers.dev/catalog.json";
+  const STATS_URL="https://games-catalog.sebastienalzamora.workers.dev/api/stats/event";
   const SELF={id:"date-gravity",android:"com.dategravity.app"};
   const CACHE_KEY="dg_promo_catalog";
   const TIMEOUT_MS=4000;
@@ -73,7 +74,15 @@
     return g.android?"https://play.google.com/store/apps/details?id="+g.android+"&referrer=utm_source%3Ddategravity":null;
   }
   function available(){return games.filter(storeUrl);}
-  function open(g){const u=storeUrl(g);if(u)window.open(u,"_blank");}
+  // anonymous counters for the catalog stats: which game was shown or clicked, and from which game
+  function stat(g,event){
+    try{
+      const body=JSON.stringify({game:g.id,from:SELF.id,event});
+      if(navigator.sendBeacon&&navigator.sendBeacon(STATS_URL,body))return;
+      fetch(STATS_URL,{method:"POST",body,mode:"no-cors",keepalive:true}).catch(()=>{});
+    }catch(e){}
+  }
+  function open(g,event){const u=storeUrl(g);if(!u)return;stat(g,event||"card_click");window.open(u,"_blank");}
 
   function injectStyle(){
     if(document.getElementById("dgPromoStyle"))return;
@@ -141,9 +150,10 @@
       const swallow=e=>{e.stopPropagation();if(e.key!=="Tab")e.preventDefault();};
       window.addEventListener("keydown",swallow,true);
       const done=r=>{window.removeEventListener("keydown",swallow,true);clearTimeout(stall);if(vid){vid.pause();vid.removeAttribute("src");vid.load();}ov.remove();resolve(r);};
-      ov.querySelector(".go").onclick=()=>{open(g);done({completed:true});};
+      ov.querySelector(".go").onclick=()=>{open(g,"click");done({completed:true});};
       ov.querySelector(".later").onclick=()=>done({completed:true});
       document.body.appendChild(ov);
+      stat(g,"impression");
     });
   }
 
