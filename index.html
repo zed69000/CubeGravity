@@ -93,6 +93,10 @@ button{font:inherit;color:inherit;border:0;background:none;padding:0;cursor:poin
 .btn:active{transform:scale(.96)}
 .btn.ghost{background:var(--navy3);color:var(--ink);box-shadow:inset 0 0 0 .2rem var(--line)}
 .btn.sm{padding:1rem .4rem;font-size:1.15rem;letter-spacing:.03em}
+.promoCard{display:flex;align-items:center;gap:1rem;width:calc(100% - 3.6rem);margin:.6rem 1.8rem 0;padding:.8rem;border-radius:1.6rem;background:var(--navy3);box-shadow:inset 0 0 0 .2rem var(--line);text-align:left;color:var(--ink)}
+.promoCard img{flex:none;width:4.4rem;height:4.4rem;border-radius:1rem}
+.promoCard b{display:block;font:900 1.2rem/1.1 Rubik,Arial,sans-serif;text-transform:uppercase}
+.promoCard small{display:block;margin-top:.3rem;font-size:1rem;line-height:1.3;color:var(--muted)}
 .btn.danger{background:#3a1022;color:#ff8fae;box-shadow:inset 0 0 0 .2rem #ff3b6b}
 .btn.play{padding:1.2rem 1rem 1.1rem;font-size:2.3rem;animation:glow 1.8s ease-in-out infinite}
 .btn.play small{display:block;margin-top:.5rem;font:800 1rem/1 Rubik,Arial,sans-serif;letter-spacing:.02em;text-transform:none;opacity:.75}
@@ -240,6 +244,7 @@ html.tx-in .logoBig span{animation:none}
         <div class="two"><a class="btn ghost sm" href="editor.html">Niveaux</a><a class="btn ghost sm" href="asset_svg_editor.html">Assets</a></div>
         <button class="btn ghost sm" id="unlockAllBtn" type="button">Tout débloquer</button>
       </div>
+      <div id="otherGames" class="hidden"><div class="lbl">Mes autres jeux</div></div>
       <a class="link" id="privacyLink" href="https://date-cube-gravity.sebastienalzamora.workers.dev/privacy" target="_blank" rel="noopener">Confidentialité</a>
       <button class="btn" id="closeOptions" type="button">Fermer</button>
       <div class="ver" data-no-i18n></div>
@@ -251,6 +256,7 @@ html.tx-in .logoBig span{animation:none}
 <script src="save.js"></script>
 <script src="i18n.js"></script>
 <script src="premium.js"></script>
+<script src="promo.js"></script>
 <script src="spirits.js"></script>
 <script src="audio.js"></script>
 <script>
@@ -392,6 +398,22 @@ document.getElementById("restoreBtn").addEventListener("click",async()=>{
 });
 showPremium();
 DGPremium.onChange=showPremium; // le prix local arrive du magasin après le lancement
+/* --- mes autres jeux : une carte par jeu, vers sa fiche sur la boutique (promo.js) */
+(function(){
+  const box=document.getElementById("otherGames");
+  const games=window.DGPromo?DGPromo.available():[];
+  games.forEach(g=>{
+    const b=document.createElement("button");
+    b.type="button";b.className="promoCard";
+    b.innerHTML='<img alt=""><span><b></b><small></small></span>';
+    b.querySelector("img").src=g.icon;
+    b.querySelector("b").textContent=g.name;
+    b.querySelector("small").textContent=tr(g.pitch);
+    b.addEventListener("click",()=>{playButtonSound();DGPromo.open(g);});
+    box.appendChild(b);
+  });
+  box.classList.toggle("hidden",!games.length);
+})();
 
 /* --- atelier (éditeurs de niveaux et d'assets) : outil de l'équipe, invisible pour les joueurs.
    Il n'apparaît qu'après avoir ouvert une fois index.html?atelier=1 sur cet appareil (index.html?atelier=0 le recache). */

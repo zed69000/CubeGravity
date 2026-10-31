@@ -234,6 +234,8 @@
 
   const providers={
     admob,
+    // pub maison (promo.js) : nos autres jeux, gratuitement, aux mêmes moments qu'un interstitiel
+    house:{interstitial(){return window.DGPromo?DGPromo.show():Promise.resolve({completed:false,notShown:true});}},
     fake:{
       interstitial(){
         return fakeAd({kind:"Interstitiel",text:"Encart plein écran entre deux niveaux.",
@@ -246,13 +248,13 @@
     }
   };
 
-  async function run(kind,arg){
+  async function run(kind,arg,provider){
     if(showing)return {completed:false};
     showing=true;
     try{DGAds.onStart&&DGAds.onStart(kind);}catch(e){}
     let result={completed:false};
     try{
-      result=await providers[config.provider][kind](arg);
+      result=await providers[provider||config.provider][kind](arg);
     }catch(e){
       console.warn("[ADS] échec",kind,e);
     }
@@ -280,7 +282,9 @@
         if(winsSinceAd<config.interstitialEveryLevels)return false;
         if((now()-readLastAd())/1000<config.minSecondsBetweenAds)return false;
       }
-      const r=await run("interstitial");
+      // une partie de ces pubs fait connaître nos autres jeux plutôt qu'un annonceur
+      const house=!!(window.DGPromo&&DGPromo.available().length&&Math.random()<DGPromo.SHARE);
+      const r=await run("interstitial",null,house?"house":null);
       return !r.notShown;
     },
 

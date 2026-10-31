@@ -12,6 +12,8 @@ const FILES = [
   "save.js",
   "game.html",
   "ads.js",
+  "promo.js",
+  "promo",
   "i18n.js",
   "premium.js",
   "lang",
