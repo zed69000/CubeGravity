@@ -55,4 +55,7 @@
     bool(key,def){const v=values[key];return typeof v==="boolean"?v:def;},
     onChange(fn){listeners.push(fn);},
   };
+
+  // GDD preview only: demo scenes and caption, written while the page parses so they run before the game scripts.
+  if(preview&&document.readyState==="loading")document.write('<script src="gdd-preview.js"><\/script>');
 })();
