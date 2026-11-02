@@ -558,6 +558,7 @@ html:not(.editor-enabled) #toggleEdit,html:not(.editor-enabled) #compactEdit{dis
   </div>
 </div>
 
+<script src="tuning.js"></script>
 <script src="version.js"></script>
 <script src="save.js"></script>
 <script src="i18n.js"></script>
@@ -700,8 +701,8 @@ let door=false,busy=false,edit=!!window.CG_EDITOR_MODE,moves=0,gameOver=false,co
 let playerTrail=[]; // V43.18 : afterimages visuels pendant la chute, sans effet gameplay.
 let eternalFallWraps=0,elevatorMusicStarted=false;
 // Musique et bruitages : audio.js (DGAudio). Les curseurs règlent ses deux volumes.
-const DEFAULT_MUSIC_VOLUME=0.15;
-const DEFAULT_SFX_VOLUME=0.30;
+const DEFAULT_MUSIC_VOLUME=Tuning.num("son.musique",0.15);
+const DEFAULT_SFX_VOLUME=Tuning.num("son.bruitages",0.30);
 let musicVolume=DEFAULT_MUSIC_VOLUME;
 let sfxVolume=DEFAULT_SFX_VOLUME;
 let activeSwitchKey=null;
@@ -730,17 +731,19 @@ function clampNum(v,min,max,fallback){
   if(!Number.isFinite(v))return fallback;
   return Math.max(min,Math.min(max,v));
 }
+// Authored speeds win in the level editor and its test mode, so an export never carries a remote value.
+function dgTunedSpeed(key,v){return window.CG_EDITOR_MODE||window.DG_TEST?v:Tuning.num(key,v);}
 function getFallDelayMs(){
-  return clampNum(gameSettings.fallDelayMs,60,500,135);
+  return clampNum(dgTunedSpeed("chute.delai",gameSettings.fallDelayMs),60,500,135);
 }
 function getRotationDurationMs(){
-  return clampNum(gameSettings.rotationDurationMs,120,1000,320);
+  return clampNum(dgTunedSpeed("plateau.rotation",gameSettings.rotationDurationMs),120,1000,320);
 }
 function syncSpeedInputs(){
   const f=document.getElementById("fallDelayInput");
   const r=document.getElementById("rotationDurationInput");
-  if(f)f.value=getFallDelayMs();
-  if(r)r.value=getRotationDurationMs();
+  if(f)f.value=clampNum(gameSettings.fallDelayMs,60,500,135);
+  if(r)r.value=clampNum(gameSettings.rotationDurationMs,120,1000,320);
 }
 function writeGlobalSettingsFromInputs(){
   const f=document.getElementById("fallDelayInput");
@@ -1417,9 +1420,10 @@ function dgDrawSpirit(parent,kind,sex,X,Y,o){
 /* « toi » : une flèche au-dessus du joueur au début de chaque niveau, pour se retrouver d'un coup d'œil.
    Elle s'efface au premier coup ou au bout de quelques secondes. */
 const DG_YOU_MS=4200;
-function dgYouOn(now){return now-dgYouAt<DG_YOU_MS&&!gameOver&&!moves;}
+function dgYouMs(){return Tuning.num("interface.fleche_toi_ms",DG_YOU_MS);}
+function dgYouOn(now){return now-dgYouAt<dgYouMs()&&!gameOver&&!moves;}
 function dgDrawYou(g,X,Y,now){
-  const t=now-dgYouAt, fade=Math.min(1,t/250,(DG_YOU_MS-t)/600);
+  const t=now-dgYouAt, fade=Math.min(1,t/250,(dgYouMs()-t)/600);
   const bob=Math.abs(Math.sin(t/260))*T*.1, cx=X+HALF;
   // posée au-dessus de la crête ; sur la rangée du haut, elle passe sous les pieds en pointant vers le haut
   const up=p.y<=0, tip=up?Y+T*1.04+bob:Y-T*.06-bob, w=T*.27, h=T*.26*(up?-1:1);
@@ -1721,7 +1725,7 @@ function toggleDoors(){
 }
 function turn(d,fromAngle=0){
   if(edit||gameOver||gamePaused||dgUiOpen())return;
-  if(busy){if(dgQueue.length<3)dgQueue.push(d);return;} // le plateau bouge encore : le coup attend son tour (un tour complet au plus)
+  if(busy){if(dgQueue.length<Tuning.num("commandes.file_attente",3))dgQueue.push(d);return;} // le plateau bouge encore : le coup attend son tour (un tour complet au plus)
   dgHistory+=d>0?"R":"L";
   hideCompanion(false);clearTimeout(companionTimer);clearTimeout(companionIdleTimer);
   busy=true;moves++;rotatorCooldown=false;userAudioGesture();soundRotate(d);updateStats();
@@ -1731,7 +1735,7 @@ function turn(d,fromAngle=0){
 function shake(dist){
   // le choc vient du bas : le plateau s'enfonce puis remonte
   if(dist<=0||!stage.animate)return;
-  const amp=Math.min(9,2+dist*1.1);
+  const amp=Math.min(Tuning.num("effets.secousse_max",9),2+dist*1.1);
   stage.animate([{transform:"translate(0,0)"},{transform:"translate(0,"+amp+"px)"},{transform:"translate(0,"+(-amp*.45)+"px)"},{transform:"translate(0,"+(amp*.2)+"px)"},{transform:"translate(0,0)"}],{duration:190,easing:"ease-out"});
 }
 
@@ -3011,7 +3015,7 @@ function dgHelpFail(){dgHelpTrack();dgHelp.fails++;dgHelp.snooze=false;}
 function dgHelpUpdate(){
   dgHelpTrack();
   const l=levels[currentLevel],max=Number(l&&l.maxMoves)||0;
-  const stuck=dgHelp.fails>=2||(max>0&&max<999&&moves>=max+3)||performance.now()-dgHelp.since>90000;
+  const stuck=dgHelp.fails>=Tuning.num("aide.essais",2)||(max>0&&max<999&&moves>=max+Tuning.num("aide.coups_de_trop",3))||performance.now()-dgHelp.since>Tuning.num("aide.secondes",90)*1000;
   const on=stuck&&!dgHelp.snooze&&!gameOver&&!edit&&!!(l&&l.solution);
   if(on===dgHelp.on)return;
   dgHelp.on=on;
@@ -3026,13 +3030,16 @@ function dgHelpUpdate(){
    Les indices sont des crédits : quelques-uns au départ, d'autres à chaque chapitre terminé, trois contre une vidéo.
    En Premium ils sont illimités. */
 const DG_HINTS_START=3,DG_HINTS_PER_CHAPTER=3,DG_HINT_STEP=3,DG_HINTS_PER_VIDEO=3;
+// Hint counts are saved with the game: remote values are kept to whole numbers.
+function dgHintsStart(){return Math.max(0,Math.round(Tuning.num("economie.indices_depart",DG_HINTS_START)));}
+function dgHintsPerChapter(){return Math.max(0,Math.round(Tuning.num("economie.indices_chapitre",DG_HINTS_PER_CHAPTER)));}
 let dgReveal={level:-1,n:0};   // nombre de coups de la solution déjà révélés pour le niveau en cours
 let dgHistory="";              // les coups joués depuis le début de l'essai, "R" ou "L"
 function dgPremium(){return !!(window.DGPremium&&DGPremium.isOn());}
-function dgHints(){const n=loadProgress().hints;return Number.isFinite(n)?n:DG_HINTS_START;}
+function dgHints(){const n=loadProgress().hints;return Number.isFinite(n)?n:dgHintsStart();}
 function dgAddHints(n){
   const pr=loadProgress();
-  pr.hints=Math.max(0,(Number.isFinite(pr.hints)?pr.hints:DG_HINTS_START)+n);
+  pr.hints=Math.max(0,(Number.isFinite(pr.hints)?pr.hints:dgHintsStart())+n);
   saveProgress(pr);
   dgHintBadge();
 }
@@ -3143,20 +3150,20 @@ document.getElementById("pauseControls").onclick=()=>{
 };
 dgApplyControls();
 /* rappel du swipe : seulement quand le joueur ne fait rien depuis un moment (plus longtemps s'il connaît déjà le geste) */
-let dgIdleAt=performance.now(),dgHintOn=false,dgHintDelay=3500;
+let dgIdleAt=performance.now(),dgHintOn=false,dgHintLearned=false;
 function dgIdle(){
   const el=document.getElementById("swipeHint");
   if(!el)return;
   const now=performance.now();
   if(busy||gameOver||stage.classList.contains("swiping")||dgUiOpen())dgIdleAt=now;
-  const on=now-dgIdleAt>dgHintDelay;
+  const on=now-dgIdleAt>(dgHintLearned?12000:Tuning.num("aide.rappel_geste_ms",3500));
   if(on===dgHintOn)return;
   dgHintOn=on;
   el.classList.toggle("show",on);
   if(!on){
     let n=0;
     try{n=Number(localStorage.getItem("dg_swipe_count"))||0;}catch(e){}
-    dgHintDelay=n>=3?12000:3500;
+    dgHintLearned=n>=3;
   }
 }
 document.addEventListener("pointerdown",()=>{dgIdleAt=performance.now();},{passive:true});
@@ -3268,7 +3275,7 @@ function dgTampon(word,swap,dark){
   return st.animate([{opacity:0,transform:base+"scale(3.4)"},{opacity:1,transform:base+"scale(1)"}],{duration:170,easing:"cubic-bezier(.3,0,.2,1)",fill:"forwards"}).finished.then(()=>{
     dgThump(.8);
     document.getElementById("app").animate([{transform:"translate(0,0)"},{transform:"translate(-.5rem,.3rem)"},{transform:"translate(.4rem,-.3rem)"},{transform:"translate(-.3rem,.2rem)"},{transform:"none"}],{duration:180});
-    return new Promise(r=>setTimeout(r,280));
+    return new Promise(r=>setTimeout(r,Tuning.num("transition.tampon_ms",280)));
   }).then(()=>{
     try{if(swap)swap();}catch(e){console.error("[TX]",e);}
     return st.animate([{opacity:1,transform:base+"scale(1)"},{opacity:0,transform:base+"scale(5)"}],{duration:260,easing:"ease-in",fill:"forwards"}).finished;
@@ -3294,7 +3301,7 @@ function dgAdvance(target){
   dgTx.busy=true;
   goLevel(target); // dessine déjà le niveau suivant, hors champ
   const dist=Math.max(sr.width,sr.height)*1.15;
-  const opt={duration:500,easing:"cubic-bezier(.65,0,.25,1)",fill:"both"};
+  const opt={duration:Tuning.num("transition.defilement_ms",500),easing:"cubic-bezier(.65,0,.25,1)",fill:"both"};
   ghost.animate([{transform:"none"},{transform:"translate("+(dv[0]*dist)+"px,"+(dv[1]*dist)+"px)"}],opt);
   const a=wrap.animate([{transform:"translate("+(-dv[0]*dist)+"px,"+(-dv[1]*dist)+"px)"},{transform:"none"}],opt);
   dgPluck(dgNoteAt(1,target%7),.014);
@@ -3457,8 +3464,8 @@ function dgShowWin(kind,finalText){
     if(chapterDone&&info.ch&&!pr.bonus[info.ch.id]){
       pr.bonus[info.ch.id]=true;
       saveProgress(pr);
-      dgAddHints(DG_HINTS_PER_CHAPTER);
-      gift=" · "+tr("+{n} indices 💡",{n:DG_HINTS_PER_CHAPTER});
+      dgAddHints(dgHintsPerChapter());
+      gift=" · "+tr("+{n} indices 💡",{n:dgHintsPerChapter()});
     }
     relEl.querySelector("span").textContent=rel.stars+" / "+(rel.total*3)+" ♥"+(gift||(rel.rank<5?" · "+tr("rejoue pour aller plus loin"):""));
     // indices du chapitre doublés contre une vidéo, au choix du joueur (inutile en Premium : indices illimités)
@@ -3466,12 +3473,12 @@ function dgShowWin(kind,finalText){
       const more=document.createElement("button");
       more.type="button";
       more.className="relVideo";
-      more.innerHTML="▶ "+tr("Doubler : +{n} indices",{n:DG_HINTS_PER_CHAPTER})+'<span class="adtag">'+tr("PUB")+'</span>';
+      more.innerHTML="▶ "+tr("Doubler : +{n} indices",{n:dgHintsPerChapter()})+'<span class="adtag">'+tr("PUB")+'</span>';
       more.onclick=async e=>{
         e.stopPropagation();
         more.disabled=true;
         const ok=await (window.DGAds?DGAds.showRewarded("chapter"):Promise.resolve(true));
-        if(ok){dgAddHints(DG_HINTS_PER_CHAPTER);more.textContent=tr("Indices doublés");}
+        if(ok){dgAddHints(dgHintsPerChapter());more.textContent=tr("Indices doublés");}
         else more.disabled=false;
       };
       relEl.querySelector("div:last-child").appendChild(more);
@@ -3973,8 +3980,10 @@ loadVectorAssets()
       sw.acc=(sw.axis==="y"?dy*sw.dirV:dx*sw.dir)/threshold()*45;
     }
     // un coup part à chaque demi quart de tour dépassé, dans un sens comme dans l'autre
-    while(sw.acc-sw.done*90>=COMMIT)play(1);
-    while(sw.acc-sw.done*90<=-COMMIT)play(-1);
+    // at 45 degrees or less the two loops would undo each other forever
+    const commit=Math.max(46,Tuning.num("commandes.angle_coup",COMMIT));
+    while(sw.acc-sw.done*90>=commit)play(1);
+    while(sw.acc-sw.done*90<=-commit)play(-1);
     let rel=sw.acc-sw.done*90;
     // juste après un coup le doigt est en retard sur le plateau : il reste à plat tant que le doigt n'a pas rattrapé
     if(sw.lastDir&&rel*sw.lastDir<0)rel=0;else sw.lastDir=0;
@@ -3997,7 +4006,7 @@ loadVectorAssets()
     stage.classList.remove("swiping");
     syncHint(0);
     if(!s.active)return;
-    if(!cancelled&&s.done===0&&Math.abs(s.acc)>=(s.wheel?RELEASE:45)&&canSwipe()){
+    if(!cancelled&&s.done===0&&Math.abs(s.acc)>=(s.wheel?Tuning.num("commandes.angle_lacher",RELEASE):45)&&canSwipe()){
       sw=s;play(s.acc>0?1:-1);sw=null;
     }else if(!busy){
       springBack(s.done?0:s.tilt);

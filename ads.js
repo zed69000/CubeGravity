@@ -275,15 +275,16 @@
       if(!config.enabled || window.CG_EDITOR_MODE)return false;
       if(window.DGPremium&&DGPremium.isOn())return false; // Premium : plus aucune pub
       winsSinceAd++;
+      const every=Tuning.num("pub.intervalle_niveaux",config.interstitialEveryLevels);
       // dans l'application, la prochaine pub se charge pendant les niveaux qui précèdent
-      if(config.provider==="admob"&&(ctx&&ctx.chapterIndex||0)>=1&&winsSinceAd>=config.interstitialEveryLevels-1)admob.preload();
+      if(config.provider==="admob"&&(ctx&&ctx.chapterIndex||0)>=1&&winsSinceAd>=every-1)admob.preload();
       if(!config.debug){
         if(config.firstChapterAdFree && (ctx&&ctx.chapterIndex||0)<1)return false;
-        if(winsSinceAd<config.interstitialEveryLevels)return false;
-        if((now()-readLastAd())/1000<config.minSecondsBetweenAds)return false;
+        if(winsSinceAd<every)return false;
+        if((now()-readLastAd())/1000<Tuning.num("pub.delai_secondes",config.minSecondsBetweenAds))return false;
       }
       // une partie de ces pubs fait connaître nos autres jeux plutôt qu'un annonceur
-      const house=!!(window.DGPromo&&DGPromo.available().length&&Math.random()<DGPromo.SHARE);
+      const house=!!(window.DGPromo&&DGPromo.available().length&&Math.random()<Tuning.num("pub.part_maison",DGPromo.SHARE));
       const r=await run("interstitial",null,house?"house":null);
       return !r.notShown;
     },

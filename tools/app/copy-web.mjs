@@ -8,6 +8,7 @@ const root = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const out = join(root, "www");
 const FILES = [
   "index.html",
+  "tuning.js",
   "version.js",
   "save.js",
   "game.html",
