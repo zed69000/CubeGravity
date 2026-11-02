@@ -76,6 +76,7 @@
   function available(){return games.filter(storeUrl);}
   // anonymous counters for the catalog stats: which game was shown or clicked, and from which game
   function stat(g,event){
+    if(window.Tuning&&Tuning.preview)return;
     try{
       const body=JSON.stringify({game:g.id,from:SELF.id,event});
       if(navigator.sendBeacon&&navigator.sendBeacon(STATS_URL,body))return;
