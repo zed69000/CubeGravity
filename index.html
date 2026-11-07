@@ -613,5 +613,21 @@ async function showResume(){
 updateMenuCharacters();
 showResume().then(bootReveal,bootReveal);
 </script>
+<script src="update.js"></script>
+<script>
+/* testers on an older Google Play build: the menu offers the update once per version */
+GameUpdate.init({
+  id:"date-gravity",
+  version:window.DG_VERSION,
+  android:"com.dategravity.app",
+  lang:DGi18n.lang,
+  isIdle:()=>{
+    const root=document.documentElement;
+    return !root.classList.contains("splash")&&!root.classList.contains("tx-in")&&!document.querySelector(".overlay:not(.hidden)");
+  },
+  save:()=>DGSave.flush(),
+  theme:{bg:"#131a45",fg:"#eaf0ff",muted:"#8fa0d8",accent:"#19e3ff",accentFg:"#0d1230",font:"Rubik,Arial,sans-serif",radius:"18px"},
+});
+</script>
 </body>
 </html>
