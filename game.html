@@ -959,14 +959,22 @@ function showBanner(title,msg,stars,kind){
     dgBannerBack=()=>resetPlay();banner.classList.remove("hidden");
   },true);
 }
+// Help caps the hearts: any hint keeps at most 2, the whole solution at most 1.
+function dgHelpCap(){
+  const shown=dgRevealed(),len=dgSolution().length;
+  if(!shown)return 3;
+  return shown>=len?1:2;
+}
 function starScore(){
   const max=levels[currentLevel].maxMoves||999;
+  let s;
   // niveau avec un cœur à ramasser : 1 cœur pour la victoire, 1 pour le cœur ramassé, 1 pour le sans-faute
-  if(levelHasHeart())return 1+(heartTaken?1:0)+(moves<=max?1:0);
-  if(moves<=max)return 3;
-  if(moves<=max+2)return 2;
-  if(moves<=max+4)return 1;
-  return 0;
+  if(levelHasHeart())s=1+(heartTaken?1:0)+(moves<=max?1:0);
+  else if(moves<=max)s=3;
+  else if(moves<=max+2)s=2;
+  else if(moves<=max+4)s=1;
+  else s=0;
+  return Math.min(s,dgHelpCap());
 }
 
 
@@ -2419,8 +2427,9 @@ function saveWinProgress(){
   const stars=starScore();
   const key=levelKey(currentLevel);
   const old=pr.best[key];
+  // the best moves and the best hearts are kept separately: a helped run never lowers earlier hearts
   if(!old || moves<old.moves || stars>old.stars){
-    pr.best[key]={moves:moves,stars:stars};
+    pr.best[key]={moves:old?Math.min(moves,old.moves):moves,stars:old?Math.max(stars,old.stars||0):stars};
   }
   if(!dgRevealed()){pr.clean=pr.clean||{};pr.clean[key]=1;}
   pr.current=levelKey(Math.min(currentLevel+1,levels.length-1));
@@ -2474,7 +2483,7 @@ function companionMessage(kind="intro"){
   if(stage==="heart"){
     return kind==="hint"
       ? "Indice : le cœur est en option, mais il vaut un cœur de victoire. Trouve le détour qui passe par lui."
-      : "Nouveauté : un cœur à ramasser. Passe dessus avant de me rejoindre, et la victoire sera plus belle.";
+      : "Nouveauté : un cœur à ramasser. Ici, les cœurs se comptent autrement : 1 pour la victoire, 1 pour le cœur ramassé, 1 si tu restes dans l'objectif de coups.";
   }
   if(stage==="wrap"){
     return kind==="hint"
@@ -3114,7 +3123,8 @@ function dgHelpOffer(){
   bannerTitle.textContent=tr("Un coup de pouce ?");
   bannerText.textContent=tr("{name} te souffle le chemin, trois coups à la fois.",{name})+(dgPremium()?"":" "+tr("Il te reste {n} indices.",{n:dgHints()}));
   starsEl.innerHTML='<div class="seq">'+dgHintTiles()+'</div>'+
-    (shown&&!track?'<p>'+tr("La solution part du début du niveau.")+'</p>':(all?'<p>'+tr("Tous les coups sont révélés.")+'</p>':""));
+    (shown&&!track?'<p>'+tr("La solution part du début du niveau.")+'</p>':(all?'<p>'+tr("Tous les coups sont révélés.")+'</p>':""))+
+    '<p>'+tr("Avec un indice, ce niveau rapporte au plus 2 cœurs. Avec toute la solution, 1 cœur.")+'</p>';
   const close=()=>{dgHelp.snooze=true;banner.classList.add("hidden");};
   if(all){
     bannerAction.textContent=tr("Fermer");
@@ -3447,7 +3457,8 @@ function dgShowWin(kind,finalText){
   document.getElementById("winTitle").textContent=big?tr(last?"Fin de l'histoire":"Chapitre terminé"):"";
   document.getElementById("winMelody").classList.toggle("hidden",!big);
   document.getElementById("winHearts").innerHTML="<span>♥</span>".repeat(s)+"<u>"+"♥".repeat(3-s)+"</u>";
-  document.getElementById("winMoves").textContent=(last&&finalText?finalText+" ":"")+tr(moves>1?"{n} coups · objectif {max}":"{n} coup · objectif {max}",{n:moves,max:l.maxMoves||"?"});
+  document.getElementById("winMoves").textContent=(last&&finalText?finalText+" ":"")+tr(moves>1?"{n} coups · objectif {max}":"{n} coup · objectif {max}",{n:moves,max:l.maxMoves||"?"})+
+    (levelHasHeart()?" · "+tr(heartTaken?"cœur ramassé":"cœur manqué"):"");
   // la phrase composée pendant le niveau
   const notes=dgMelody.slice(-14), lo=Math.min(...notes,9999), hi=Math.max(...notes,0);
   document.getElementById("winMelody").innerHTML=notes.map(f=>'<i style="height:'+(30+70*(hi>lo?(f-lo)/(hi-lo):.5))+'%"></i>').join("");
