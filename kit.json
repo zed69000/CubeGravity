@@ -1,0 +1,8 @@
+{
+  "id": "date-gravity",
+  "android": "com.dategravity.app",
+  "tools": [
+    "bugreport",
+    "update"
+  ]
+}

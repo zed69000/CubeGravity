@@ -2,8 +2,8 @@
 <html lang="fr">
 <head>
 <meta charset="utf-8">
-<!-- bug and idea reports of the testers (copy of games-catalog/client/bugreport.js): loaded first to keep the console -->
-<script src="bugreport.js"></script>
+<!-- studio kit (bug reports, new version message): served by the catalog, set up by kit.json -->
+<script src="https://games-catalog.sebastienalzamora.workers.dev/kit/kit.js" async></script>
 <script>/* premier affichage de la session : on montre l'écran du studio avant le menu */
 try{if(!sessionStorage.getItem("dg_splash")&&sessionStorage.getItem("dg_tx")!=="1"){sessionStorage.setItem("dg_splash","1");document.documentElement.classList.add("splash");}}catch(e){}</script>
 <script>/* retour depuis le jeu : les rubans sont déjà fermés, on les ouvrira une fois prêt */
@@ -618,28 +618,16 @@ async function showResume(){
 updateMenuCharacters();
 showResume().then(bootReveal,bootReveal);
 </script>
-<script src="update.js"></script>
 <script>
-/* testers on an older Google Play build: the menu offers the update once per version */
-GameUpdate.init({
-  id:"date-gravity",
-  version:window.DG_VERSION,
-  android:"com.dategravity.app",
-  lang:DGi18n.lang,
+/* hooks of the studio kit: the new version message waits for the menu, the save is written before the store opens */
+window.GameKit={
+  lang:()=>DGi18n.lang,
   isIdle:()=>{
     const root=document.documentElement;
     return !root.classList.contains("splash")&&!root.classList.contains("tx-in")&&!document.querySelector(".overlay:not(.hidden)");
   },
   save:()=>DGSave.flush(),
-  theme:{bg:"#131a45",fg:"#eaf0ff",muted:"#8fa0d8",accent:"#19e3ff",accentFg:"#0d1230",font:"Rubik,Arial,sans-serif",radius:"18px"},
-});
-/* every tester can report a bug or an idea: three-finger tap, F8 or Options; it lands in the catalog's Bugs tab */
-BugReport.init({
-  id:"date-gravity",
-  version:window.DG_VERSION,
-  lang:DGi18n.lang,
-  theme:{bg:"#131a45",fg:"#eaf0ff",muted:"#8fa0d8",accent:"#19e3ff",accentFg:"#0d1230",font:"Rubik,Arial,sans-serif",radius:"18px"},
-});
+};
 </script>
 </body>
 </html>
