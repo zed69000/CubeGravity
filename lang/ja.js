@@ -255,6 +255,7 @@ DGi18n.add("ja", {
   "murs de verre": "ガラスの壁",
   "cœurs à ramasser": "拾えるハート",
   "Recommencer depuis le début": "最初からやり直す",
+  "Signaler un bug ou une idée": "バグやアイデアを報告",
   "Effacer toute ta progression et recommencer depuis le premier niveau ?": "進行状況をすべて消して、最初のレベルからやり直しますか？",
   // album : paliers et souvenirs
   "Souvenirs": "思い出",

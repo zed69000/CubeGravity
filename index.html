@@ -240,6 +240,7 @@ html.tx-in .logoBig span{animation:none}
       <div class="langs" id="langGrid" data-no-i18n></div>
       <button class="btn ghost sm" id="controlsToggle" type="button">Commandes : glisser</button>
       <button class="btn ghost sm webOnly" id="fullscreenBtn" type="button">Plein écran</button>
+      <button class="btn ghost sm" id="bugBtn" type="button">Signaler un bug ou une idée</button>
       <button class="btn ghost sm danger" id="resetBtn" type="button">Recommencer depuis le début</button>
       <div id="atelier" class="hidden" data-no-i18n>
         <div class="lbl">Atelier</div>
@@ -452,6 +453,8 @@ function openOptions(){playOpenSound();overlay.classList.remove("hidden");overla
 function closeOptions(){playCloseSound();overlay.classList.add("hidden");overlay.setAttribute("aria-hidden","true");}
 document.getElementById("gearBtn").addEventListener("click",openOptions);
 document.getElementById("closeOptions").addEventListener("click",closeOptions);
+/* the options close first, so the screenshot shows the game */
+document.getElementById("bugBtn").addEventListener("click",()=>{closeOptions();setTimeout(()=>window.BugReport&&BugReport.open(),250);});
 overlay.addEventListener("click",e=>{if(e.target===overlay)closeOptions();});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!overlay.classList.contains("hidden"))closeOptions();});
 /* Recommencer : efface la progression (niveaux, rencontres, indices, tutoriels vus).
@@ -630,7 +633,7 @@ GameUpdate.init({
   save:()=>DGSave.flush(),
   theme:{bg:"#131a45",fg:"#eaf0ff",muted:"#8fa0d8",accent:"#19e3ff",accentFg:"#0d1230",font:"Rubik,Arial,sans-serif",radius:"18px"},
 });
-/* every tester can report a bug or an idea: the 🐞 button, F8; it lands in the catalog's Bugs tab */
+/* every tester can report a bug or an idea: three-finger tap, F8 or Options; it lands in the catalog's Bugs tab */
 BugReport.init({
   id:"date-gravity",
   version:window.DG_VERSION,
