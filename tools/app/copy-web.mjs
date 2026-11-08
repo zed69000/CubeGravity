@@ -15,6 +15,7 @@ const FILES = [
   "ads.js",
   "promo.js",
   "update.js",
+  "bugreport.js",
   "i18n.js",
   "premium.js",
   "lang",
