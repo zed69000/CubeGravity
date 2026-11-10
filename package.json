@@ -4,6 +4,8 @@
   "private": true,
   "description": "Date Gravity : le jeu web, emballé en application iOS / Android avec Capacitor.",
   "scripts": {
+    "kit": "node -e \"const b=process.env.GAME_KIT_BASE||'https://games-catalog.sebastienalzamora.workers.dev/kit/';fetch(b+'sync.mjs').then(r=>{if(!r.ok)throw new Error('kit: sync.mjs HTTP '+r.status);return r.text()}).then(t=>import('data:text/javascript,'+encodeURIComponent(t))).catch(e=>{console.error(e.message);process.exit(1)})\"",
+    "kit:check": "node -e \"const b=process.env.GAME_KIT_BASE||'https://games-catalog.sebastienalzamora.workers.dev/kit/';fetch(b+'sync.mjs').then(r=>{if(!r.ok)throw new Error('kit: sync.mjs HTTP '+r.status);return r.text()}).then(t=>import('data:text/javascript,'+encodeURIComponent(t))).catch(e=>{console.error(e.message);process.exit(1)})\"",
     "build:web": "node tools/app/copy-web.mjs",
     "native:ios": "node tools/app/configure-native.mjs ios",
     "native:android": "node tools/app/configure-native.mjs android",
