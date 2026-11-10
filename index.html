@@ -255,12 +255,12 @@ html.tx-in .logoBig span{animation:none}
   </div>
 </main>
 
-<script src="tuning.js"></script>
+<script src="vendor/kit/tuning.js"></script>
 <script src="version.js"></script>
 <script src="save.js"></script>
 <script src="i18n.js"></script>
 <script src="premium.js"></script>
-<script src="promo.js"></script>
+<script src="vendor/kit/promo.js"></script>
 <script src="spirits.js"></script>
 <script src="audio.js"></script>
 <script>
@@ -402,12 +402,12 @@ document.getElementById("restoreBtn").addEventListener("click",async()=>{
 });
 showPremium();
 DGPremium.onChange=showPremium; // le prix local arrive du magasin après le lancement
-/* --- mes autres jeux : une carte par jeu, vers sa fiche sur la boutique (promo.js) */
+/* --- mes autres jeux : une carte par jeu, vers sa fiche sur la boutique (promo du kit) */
 (function(){
   const box=document.getElementById("otherGames");
   function render(){
     box.querySelectorAll(".promoCard").forEach(b=>b.remove());
-    const games=window.DGPromo?DGPromo.available():[];
+    const games=window.GamePromo?GamePromo.available():[];
     games.forEach(g=>{
       const b=document.createElement("button");
       b.type="button";b.className="promoCard";
@@ -417,13 +417,13 @@ DGPremium.onChange=showPremium; // le prix local arrive du magasin après le lan
       if(g.icon)img.src=g.icon;else img.remove();
       b.querySelector("b").textContent=g.name;
       b.querySelector("small").textContent=g.pitch;
-      b.addEventListener("click",()=>{playButtonSound();DGPromo.open(g);});
+      b.addEventListener("click",()=>{playButtonSound();GamePromo.open(g);});
       box.appendChild(b);
     });
     box.classList.toggle("hidden",!games.length);
   }
   render();
-  if(window.DGPromo)DGPromo.onChange=render; // the online list may arrive after the menu is drawn
+  if(window.GamePromo)GamePromo.onChange=render; // the online list may arrive after the menu is drawn
 })();
 
 /* --- atelier (éditeurs de niveaux et d'assets) : outil de l'équipe, invisible pour les joueurs.

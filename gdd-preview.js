@@ -550,10 +550,10 @@
         if(shown){mone.ads++;mone.wins=0;mone.lastAt=Date.now();}
         return shown;
       };
-      const show=DGPromo.show;
-      DGPromo.show=g=>{
+      const show=GamePromo.show;
+      GamePromo.show=g=>{
         // Still image only: the catalog's videos have sound, and each one streams from the network.
-        DGPromo.available().forEach(x=>{x.video=null;});
+        GamePromo.available().forEach(x=>{x.video=null;});
         const res=show(g);
         res.then(v=>{if(!v.notShown)mone.house++;});
         return res;
@@ -563,7 +563,7 @@
       const from=currentLevel;
       $("winNext").click();
       await r.until(()=>{
-        const promo=document.querySelector("#dgPromo .later");
+        const promo=document.querySelector("#kitPromo .later");
         if(promo&&!mone.waiting){mone.waiting=setTimeout(()=>{mone.waiting=0;promo.click();},2600);}
         const offer=!banner.classList.contains("hidden");
         if(offer&&!mone.waiting){mone.waiting=setTimeout(()=>{mone.waiting=0;$("bannerAlt").click();},2200);}
@@ -661,10 +661,10 @@
     if(window.DGAds&&DGAds.config){
       DGAds.config.provider="fake";
     }
-    if(SLUG==="monetisation"&&!FREE&&window.DGAds&&window.DGPromo)mone.install();
+    if(SLUG==="monetisation"&&!FREE&&window.DGAds&&window.GamePromo)mone.install();
     else{
       if(window.DGAds&&DGAds.config)DGAds.config.enabled=false;
-      if(window.DGPromo)DGPromo.show=()=>Promise.resolve({completed:false,notShown:true});
+      if(window.GamePromo)GamePromo.show=()=>Promise.resolve({completed:false,notShown:true});
     }
     if(typeof dgLeaveTo==="function"){
       const leave=dgLeaveTo;

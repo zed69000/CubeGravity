@@ -1,8 +1,15 @@
 {
   "id": "date-gravity",
   "android": "com.dategravity.app",
+  "kit": "3",
   "tools": [
     "bugreport",
-    "update"
-  ]
+    "update",
+    "errors"
+  ],
+  "embed": [
+    "tuning",
+    "promo"
+  ],
+  "gddPreview": "gdd-preview.js"
 }
