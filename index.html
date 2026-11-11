@@ -242,10 +242,9 @@ html.tx-in .logoBig span{animation:none}
       <button class="btn ghost sm webOnly" id="fullscreenBtn" type="button">Plein écran</button>
       <button class="btn ghost sm danger" id="resetBtn" type="button">Recommencer depuis le début</button>
       <div id="atelier" class="hidden" data-no-i18n>
-        <div class="lbl">Atelier</div>
+        <div class="lbl">Outils du développeur</div>
         <div class="two"><a class="btn ghost sm" href="editor.html">Niveaux</a><a class="btn ghost sm" href="asset_svg_editor.html">Assets</a></div>
         <button class="btn ghost sm" id="unlockAllBtn" type="button">Tout débloquer</button>
-        <button class="btn ghost sm" id="bugBtn" type="button">Signaler un bug ou une idée</button>
       </div>
       <div id="otherGames" class="hidden"><div class="lbl">Mes autres jeux</div></div>
       <a class="link" id="privacyLink" href="https://date-cube-gravity.sebastienalzamora.workers.dev/privacy" target="_blank" rel="noopener">Confidentialité</a>
@@ -453,8 +452,6 @@ function openOptions(){playOpenSound();overlay.classList.remove("hidden");overla
 function closeOptions(){playCloseSound();overlay.classList.add("hidden");overlay.setAttribute("aria-hidden","true");}
 document.getElementById("gearBtn").addEventListener("click",openOptions);
 document.getElementById("closeOptions").addEventListener("click",closeOptions);
-/* the options close first, so the screenshot shows the game */
-document.getElementById("bugBtn").addEventListener("click",()=>{closeOptions();setTimeout(()=>window.BugReport&&BugReport.open(),250);});
 overlay.addEventListener("click",e=>{if(e.target===overlay)closeOptions();});
 document.addEventListener("keydown",e=>{if(e.key==="Escape"&&!overlay.classList.contains("hidden"))closeOptions();});
 /* Recommencer : efface la progression (niveaux, rencontres, indices, tutoriels vus).

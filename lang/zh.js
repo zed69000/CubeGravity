@@ -255,7 +255,6 @@ DGi18n.add("zh", {
   "murs de verre": "玻璃墙",
   "cœurs à ramasser": "可收集的爱心",
   "Recommencer depuis le début": "从头开始",
-  "Signaler un bug ou une idée": "报告错误或提出想法",
   "Effacer toute ta progression et recommencer depuis le premier niveau ?": "要清除全部进度，从第一关重新开始吗？",
   // album : paliers et souvenirs
   "Souvenirs": "回忆",

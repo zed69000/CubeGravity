@@ -255,7 +255,6 @@ DGi18n.add("ko", {
   "murs de verre": "유리벽",
   "cœurs à ramasser": "모을 수 있는 하트",
   "Recommencer depuis le début": "처음부터 다시 하기",
-  "Signaler un bug ou une idée": "버그 또는 아이디어 보내기",
   "Effacer toute ta progression et recommencer depuis le premier niveau ?": "모든 진행 상황을 지우고 첫 레벨부터 다시 시작할까요?",
   // album : paliers et souvenirs
   "Souvenirs": "추억",

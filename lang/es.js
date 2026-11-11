@@ -255,7 +255,6 @@ DGi18n.add("es", {
   "murs de verre": "muros de cristal",
   "cœurs à ramasser": "corazones para recoger",
   "Recommencer depuis le début": "Empezar de cero",
-  "Signaler un bug ou une idée": "Informar de un error o una idea",
   "Effacer toute ta progression et recommencer depuis le premier niveau ?": "¿Borrar todo tu progreso y volver a empezar desde el primer nivel?",
   // album : paliers et souvenirs
   "Souvenirs": "Recuerdos",
