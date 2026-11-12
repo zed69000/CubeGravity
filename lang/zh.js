@@ -91,6 +91,7 @@ DGi18n.add("zh", {
   "Indice : A mène à A, B mène à B. Après la sortie, je continue à tomber dans le même sens.": "提示:A 通向 A,B 通向 B。出来以后,我会朝原来的方向继续掉。",
   "Nouveauté : les portails. J'entre par une lettre, je ressors par la même lettre. Le plateau ne tourne pas.": "新玩法:传送门。我从哪个字母进去,就从同一个字母出来。棋盘不会转动。",
   "Indice : pense en étapes : rotation, chute, arrêt, prochaine rotation.": "提示:一步一步想:旋转、下落、停住、再旋转。",
+  "toutes les règles": "所有规则",
   "tourner, tomber": "旋转,下落",
   "bords ouverts": "开放边缘",
   "clés et cadenas": "钥匙与挂锁",

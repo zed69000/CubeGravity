@@ -2466,6 +2466,7 @@ function companionStage(){
   if(m.rot)return "rotator";
   if(m.death)return "death";
   if(m.button)return "button";
+  if(levels[currentLevel]?.teach==="wrap")return "wrap";
   if(typeof dgChapterOfLevel==="function" && dgChapterOfLevel(currentLevel)?.mechanic==="wrap")return "wrap";
   return currentLevel===0 ? "core" : "";
 }
@@ -2922,6 +2923,8 @@ function dgChapterProgress(ch){
 function dgChapterUnlocked(chIndex){
   if(window.CG_EDITOR_MODE)return true;
   if(chIndex<=0)return true;
+  // a level already won here or further on keeps the chapter open, even after levels were moved between chapters
+  if(dgChapters.slice(chIndex).some(c=>(c.levelIds||[]).some(dgLevelCompleted)))return true;
   const prev=dgChapters[chIndex-1];
   const p=dgChapterProgress(prev);
   const need=Number(dgChapters[chIndex]?.unlockPercent||DG_CHAPTER_UNLOCK_PERCENT);
@@ -2931,6 +2934,7 @@ function dgLevelUnlocked(idx){
   if(window.CG_EDITOR_MODE)return true;
   const ci=dgChapterIndexOfLevel(idx);
   if(!dgChapterUnlocked(ci))return false;
+  if(dgLevelCompleted(idx))return true;
   const ch=dgChapters[ci];
   if(!ch)return idx===0;
   const pos=ch.levelIds.indexOf(idx);
@@ -2954,7 +2958,7 @@ function dgSafeStartLevel(){
    écrans (chapitres, niveaux, rencontres), fenêtres (victoire, défaite, indice), transitions,
    notes de musique, effets de chute et d'impact. Les règles (turn / fall / blocs) ne changent pas. */
 const DG_WORLDS=DGSpirit.WORLDS; // deux couleurs par chapitre, partagées avec le menu
-const DG_MECH_LABEL={base:"tourner, tomber",wrap:"bords ouverts",button:"clés et cadenas",danger:"cœurs brisés",rotator:"rotateurs",teleporter:"téléporteurs",fragile:"murs de verre",heart:"cœurs à ramasser",mix:"tout mélangé"};
+const DG_MECH_LABEL={learn:"toutes les règles",base:"tourner, tomber",wrap:"bords ouverts",button:"clés et cadenas",danger:"cœurs brisés",rotator:"rotateurs",teleporter:"téléporteurs",fragile:"murs de verre",heart:"cœurs à ramasser",mix:"tout mélangé"};
 let dgC1=DG_WORLDS[0][0],dgC2=DG_WORLDS[0][1];
 let dgTutoActive=false;
 let dgSkipProfileOnce=false;

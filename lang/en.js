@@ -91,6 +91,7 @@ DGi18n.add("en", {
   "Indice : A mène à A, B mène à B. Après la sortie, je continue à tomber dans le même sens.": "Hint: A leads to A, B leads to B. After I come out, I keep falling the same way.",
   "Nouveauté : les portails. J'entre par une lettre, je ressors par la même lettre. Le plateau ne tourne pas.": "New: portals. I go in one letter and come out the same letter. The board doesn't turn.",
   "Indice : pense en étapes : rotation, chute, arrêt, prochaine rotation.": "Hint: think in steps: rotate, fall, stop, next rotation.",
+  "toutes les règles": "all the rules",
   "tourner, tomber": "turn, fall",
   "bords ouverts": "open edges",
   "clés et cadenas": "keys and padlocks",

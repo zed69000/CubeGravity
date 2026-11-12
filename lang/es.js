@@ -91,6 +91,7 @@ DGi18n.add("es", {
   "Indice : A mène à A, B mène à B. Après la sortie, je continue à tomber dans le même sens.": "Pista: A lleva a A, B lleva a B. Al salir, sigo cayendo en la misma dirección.",
   "Nouveauté : les portails. J'entre par une lettre, je ressors par la même lettre. Le plateau ne tourne pas.": "Novedad: los portales. Entro por una letra y salgo por la misma letra. El tablero no gira.",
   "Indice : pense en étapes : rotation, chute, arrêt, prochaine rotation.": "Pista: piensa por pasos: giro, caída, parada, siguiente giro.",
+  "toutes les règles": "todas las reglas",
   "tourner, tomber": "girar, caer",
   "bords ouverts": "bordes abiertos",
   "clés et cadenas": "llaves y candados",
