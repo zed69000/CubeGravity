@@ -3008,8 +3008,9 @@ function dgChapterProgress(ch){
 function dgChapterUnlocked(chIndex){
   if(window.CG_EDITOR_MODE)return true;
   if(chIndex<=0)return true;
-  // a level already won here or further on keeps the chapter open, even after levels were moved between chapters
-  if(dgChapters.slice(chIndex).some(c=>(c.levelIds||[]).some(dgLevelCompleted)))return true;
+  // a level already won here or further on keeps the chapter open, even after levels were moved between chapters;
+  // a chapter's opening lesson does not count, since lessons once sat together in chapter 1
+  if(dgChapters.slice(chIndex).some(c=>(c.levelIds||[]).slice(1).some(dgLevelCompleted)))return true;
   const prev=dgChapters[chIndex-1];
   const p=dgChapterProgress(prev);
   const need=Number(dgChapters[chIndex]?.unlockPercent||DG_CHAPTER_UNLOCK_PERCENT);

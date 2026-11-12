@@ -14,7 +14,7 @@
       "subtitle": "Premier pas",
       "unlockPercent": 70,
       "biome": "rainbow",
-      "mechanic": "learn"
+      "mechanic": "base"
     },
     {
       "id": "w02",
@@ -130,6 +130,29 @@
       ]
     },
     {
+      "id": "L6a3aff37",
+      "name": "Petit signe",
+      "chapter": "w01",
+      "maxMoves": 4,
+      "locked": true,
+      "difficulty": 1,
+      "gridSize": 8,
+      "biome": "rainbow",
+      "solution": "LLRR",
+      "origin": "generated",
+      "score": 5.08,
+      "map": [
+        "########",
+        "##....##",
+        "##....##",
+        "##...A##",
+        "##....##",
+        "##....##",
+        "#.B##..#",
+        "########"
+      ]
+    },
+    {
       "id": "L0a7cffb5",
       "name": "Faire le tour",
       "chapter": "w01",
@@ -158,158 +181,9 @@
       "teach": "wrap"
     },
     {
-      "id": "Ld1542158",
-      "name": "Ouvre-moi",
-      "chapter": "w01",
-      "maxMoves": 1,
-      "locked": true,
-      "difficulty": 3,
-      "gridSize": 9,
-      "biome": "desert",
-      "solution": "L",
-      "origin": "generated",
-      "score": 1.25,
-      "map": [
-        ".#.....#.",
-        ".........",
-        ".........",
-        ".........",
-        "####.####",
-        "##OBSA.##",
-        "#.##.##.#",
-        "...#.#...",
-        "........."
-      ]
-    },
-    {
-      "id": "La4c69272",
-      "name": "Sujet sensible",
-      "chapter": "w01",
-      "maxMoves": 1,
-      "locked": true,
-      "difficulty": 4,
-      "gridSize": 10,
-      "biome": "ice",
-      "solution": "L",
-      "origin": "generated",
-      "score": 0.82,
-      "map": [
-        "..........",
-        "A.........",
-        ".X....#B..",
-        "#.....#...",
-        "......#...",
-        ".####.#..#",
-        ".#..#.#...",
-        ".#.##.#.##",
-        "...##.....",
-        "...##..##."
-      ]
-    },
-    {
-      "id": "L85009747",
-      "name": "Tête qui tourne",
-      "chapter": "w01",
-      "maxMoves": 1,
-      "locked": true,
-      "difficulty": 5,
-      "gridSize": 10,
-      "biome": "cosmic",
-      "solution": "R",
-      "origin": "handmade",
-      "score": 1.03,
-      "map": [
-        "..........",
-        "......#...",
-        "......B...",
-        "..........",
-        "..........",
-        ".#........",
-        "#.A...R..#",
-        ".########.",
-        "..........",
-        ".........."
-      ]
-    },
-    {
-      "id": "L1b2aabd3",
-      "name": "Coup de foudre",
-      "chapter": "w01",
-      "maxMoves": 1,
-      "locked": true,
-      "difficulty": 6,
-      "gridSize": 10,
-      "biome": "garden",
-      "solution": "L",
-      "origin": "generated",
-      "score": 1.18,
-      "map": [
-        "....#B1...",
-        "..........",
-        ".......##.",
-        ".......#..",
-        "###....###",
-        "###....###",
-        "1A#.......",
-        ".##.......",
-        "..........",
-        ".....#...."
-      ]
-    },
-    {
-      "id": "L2ad85d9c",
-      "name": "C’est compliqué",
-      "chapter": "w01",
-      "maxMoves": 1,
-      "locked": true,
-      "difficulty": 7,
-      "gridSize": 10,
-      "biome": "kiss",
-      "solution": "R",
-      "origin": "generated",
-      "score": 4.92,
-      "map": [
-        "#......###",
-        "######..#.",
-        "#.......#.",
-        "........#.",
-        ".#......#.",
-        ".#......#.",
-        ".#...A....",
-        "B#.......F",
-        ".#..######",
-        "F##......#"
-      ]
-    },
-    {
-      "id": "L6e80d9a2",
-      "name": "Évidence",
-      "chapter": "w01",
-      "maxMoves": 3,
-      "locked": true,
-      "difficulty": 9,
-      "gridSize": 10,
-      "biome": "love",
-      "solution": "RLR",
-      "origin": "generated",
-      "score": 9.84,
-      "map": [
-        ".####.....",
-        "......##A.",
-        ".......#..",
-        "#........#",
-        "#.#....#.#",
-        "#.#....#.#",
-        "#........#",
-        "..#.......",
-        "..##.....H",
-        "....B####."
-      ]
-    },
-    {
       "id": "Lef51b291",
       "name": "Le grand détour",
-      "chapter": "w02",
+      "chapter": "w01",
       "maxMoves": 5,
       "locked": true,
       "difficulty": 1,
@@ -551,6 +425,30 @@
         "...#...A..",
         "...#......",
         ".#.#......"
+      ]
+    },
+    {
+      "id": "Ld1542158",
+      "name": "Ouvre-moi",
+      "chapter": "w03",
+      "maxMoves": 1,
+      "locked": true,
+      "difficulty": 3,
+      "gridSize": 9,
+      "biome": "desert",
+      "solution": "L",
+      "origin": "generated",
+      "score": 1.25,
+      "map": [
+        ".#.....#.",
+        ".........",
+        ".........",
+        ".........",
+        "####.####",
+        "##OBSA.##",
+        "#.##.##.#",
+        "...#.#...",
+        "........."
       ]
     },
     {
@@ -830,6 +728,31 @@
       ]
     },
     {
+      "id": "La4c69272",
+      "name": "Sujet sensible",
+      "chapter": "w04",
+      "maxMoves": 1,
+      "locked": true,
+      "difficulty": 4,
+      "gridSize": 10,
+      "biome": "ice",
+      "solution": "L",
+      "origin": "generated",
+      "score": 0.82,
+      "map": [
+        "..........",
+        "A.........",
+        ".X....#B..",
+        "#.....#...",
+        "......#...",
+        ".####.#..#",
+        ".#..#.#...",
+        ".#.##.#.##",
+        "...##.....",
+        "...##..##."
+      ]
+    },
+    {
       "id": "Leaa71297",
       "name": "L’ex au téléphone",
       "chapter": "w04",
@@ -1085,6 +1008,31 @@
         "...S.##...",
         ".....D.A.X",
         ".B..X....."
+      ]
+    },
+    {
+      "id": "L85009747",
+      "name": "Tête qui tourne",
+      "chapter": "w05",
+      "maxMoves": 1,
+      "locked": true,
+      "difficulty": 5,
+      "gridSize": 10,
+      "biome": "cosmic",
+      "solution": "R",
+      "origin": "handmade",
+      "score": 1.03,
+      "map": [
+        "..........",
+        "......#...",
+        "......B...",
+        "..........",
+        "..........",
+        ".#........",
+        "#.A...R..#",
+        ".########.",
+        "..........",
+        ".........."
       ]
     },
     {
@@ -1424,6 +1372,31 @@
       ]
     },
     {
+      "id": "L1b2aabd3",
+      "name": "Coup de foudre",
+      "chapter": "w06",
+      "maxMoves": 1,
+      "locked": true,
+      "difficulty": 6,
+      "gridSize": 10,
+      "biome": "garden",
+      "solution": "L",
+      "origin": "generated",
+      "score": 1.18,
+      "map": [
+        "....#B1...",
+        "..........",
+        ".......##.",
+        ".......#..",
+        "###....###",
+        "###....###",
+        "1A#.......",
+        ".##.......",
+        "..........",
+        ".....#...."
+      ]
+    },
+    {
       "id": "L61ec3c6f",
       "name": "Raccourci",
       "chapter": "w06",
@@ -1738,6 +1711,31 @@
         "##.D#...#.#",
         "....##.S..#",
         "..........D"
+      ]
+    },
+    {
+      "id": "L2ad85d9c",
+      "name": "C’est compliqué",
+      "chapter": "w07",
+      "maxMoves": 1,
+      "locked": true,
+      "difficulty": 7,
+      "gridSize": 10,
+      "biome": "kiss",
+      "solution": "R",
+      "origin": "generated",
+      "score": 4.92,
+      "map": [
+        "#......###",
+        "######..#.",
+        "#.......#.",
+        "........#.",
+        ".#......#.",
+        ".#......#.",
+        ".#...A....",
+        "B#.......F",
+        ".#..######",
+        "F##......#"
       ]
     },
     {
@@ -2068,6 +2066,31 @@
         ".S..L..X..#.",
         "............",
         "............"
+      ]
+    },
+    {
+      "id": "L6e80d9a2",
+      "name": "Évidence",
+      "chapter": "w08",
+      "maxMoves": 3,
+      "locked": true,
+      "difficulty": 9,
+      "gridSize": 10,
+      "biome": "love",
+      "solution": "RLR",
+      "origin": "generated",
+      "score": 9.84,
+      "map": [
+        ".####.....",
+        "......##A.",
+        ".......#..",
+        "#........#",
+        "#.#....#.#",
+        "#.#....#.#",
+        "#........#",
+        "..#.......",
+        "..##.....H",
+        "....B####."
       ]
     },
     {
