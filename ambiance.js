@@ -62,7 +62,7 @@
     st.textContent=
       ".dgAmb{position:absolute;inset:0;overflow:hidden;pointer-events:none}"+
       ".dgAmb .sky{position:absolute;inset:0;transition:opacity .8s}"+
-      ".dgAmb .swirl{position:absolute;width:120vmax;height:70vmax;left:50%;top:50%;margin:-35vmax 0 0 -60vmax;border-radius:50%;mix-blend-mode:screen;will-change:transform}"+
+      ".dgAmb .swirl{position:absolute;width:120vmax;height:70vmax;left:50%;top:50%;margin:-35vmax 0 0 -60vmax;border-radius:50%;will-change:transform}"+
       ".dgAmb .fx{position:absolute;left:-30%;right:-30%;top:-260px;bottom:-60px;will-change:transform;background-repeat:repeat}"+
       ".dgAmb .starsBg{position:absolute;inset:0;background-repeat:repeat;opacity:.9;animation:dgTw 4s ease-in-out infinite alternate}"+
       ".dgAmb .starsBg.b{animation-delay:-2s;opacity:.6}"+

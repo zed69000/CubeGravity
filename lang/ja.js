@@ -91,6 +91,7 @@ DGi18n.add("ja", {
   "Indice : A mène à A, B mène à B. Après la sortie, je continue à tomber dans le même sens.": "ヒント:AはAへ、BはBへつながってるよ。出たあとも同じ向きに落ちつづけるからね。",
   "Nouveauté : les portails. J'entre par une lettre, je ressors par la même lettre. Le plateau ne tourne pas.": "新要素:ワープ。入った文字と同じ文字から出てくるよ。ボードは回らないよ。",
   "Indice : pense en étapes : rotation, chute, arrêt, prochaine rotation.": "ヒント:順番に考えよう。回す、落ちる、止まる、また回す。",
+  "Tourne ton téléphone": "スマホを縦にしてね",
   "toutes les règles": "すべてのルール",
   "tourner, tomber": "回して、落ちる",
   "bords ouverts": "開いたフチ",

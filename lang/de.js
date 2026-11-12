@@ -91,6 +91,7 @@ DGi18n.add("de", {
   "Indice : A mène à A, B mène à B. Après la sortie, je continue à tomber dans le même sens.": "Tipp: A führt zu A, B führt zu B. Nach dem Ausgang falle ich in dieselbe Richtung weiter.",
   "Nouveauté : les portails. J'entre par une lettre, je ressors par la même lettre. Le plateau ne tourne pas.": "Neu: die Portale. Ich gehe bei einem Buchstaben rein und komme beim gleichen wieder raus. Das Spielfeld dreht sich nicht.",
   "Indice : pense en étapes : rotation, chute, arrêt, prochaine rotation.": "Tipp: Denk in Schritten: drehen, fallen, stoppen, wieder drehen.",
+  "Tourne ton téléphone": "Dreh dein Handy",
   "toutes les règles": "alle Regeln",
   "tourner, tomber": "drehen, fallen",
   "bords ouverts": "offene Ränder",

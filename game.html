@@ -384,7 +384,7 @@ html.tx-in #loadingOverlay{display:none}
 .winFx{position:fixed;inset:0;z-index:46;pointer-events:none;overflow:hidden}
 .winGlow{position:absolute;inset:0;background:radial-gradient(circle at var(--gx) var(--gy),color-mix(in srgb,var(--c2) 55%,transparent),color-mix(in srgb,var(--c1) 18%,transparent) 32%,transparent 62%);animation:winGlow .9s ease-out forwards}
 @keyframes winGlow{0%{opacity:0}18%{opacity:1}100%{opacity:0}}
-.winHeart{position:absolute;overflow:visible;filter:drop-shadow(0 0 6px currentColor);will-change:transform,opacity}
+.winHeart{position:absolute;overflow:visible;will-change:transform,opacity}
 .winSpark,.winRocket,.winPop{position:absolute;border-radius:50%;box-shadow:0 0 8px 2px currentColor;will-change:transform,opacity}
 .winRocket{box-shadow:0 0 10px 4px #fff,0 14px 14px -4px rgba(255,255,255,.5)}
 .winPop{box-shadow:0 0 30px 12px currentColor}
@@ -579,6 +579,7 @@ html:not(.editor-enabled) #toggleEdit,html:not(.editor-enabled) #compactEdit{dis
 <script src="tuning.js"></script>
 <script src="version.js"></script>
 <script src="save.js"></script>
+<script src="portrait.js"></script>
 <script src="i18n.js"></script>
 <script src="premium.js"></script>
 <script src="promo.js"></script>
@@ -1888,7 +1889,7 @@ function dgWinJuice(){
     h.setAttribute("viewBox","0 0 24 24");h.setAttribute("class","winHeart");
     h.style.width=h.style.height=size+"px";h.style.left=(cx-size/2)+"px";h.style.top=(cy-size/2)+"px";
     h.style.color=col;
-    h.innerHTML='<path d="'+DG_HEART_PATH+'" fill="'+col+'"/>';
+    h.innerHTML='<path d="'+DG_HEART_PATH+'" fill="'+col+'" stroke="#fff" stroke-opacity=".55" stroke-width="1.2"/>';
     layer.appendChild(h);
     const a=-Math.PI/2+(Math.random()-.5)*2.2, v=90+Math.random()*150, sw=(Math.random()-.5)*60;
     const dx=Math.cos(a)*v, dy=Math.sin(a)*v-60-Math.random()*80;
@@ -1908,7 +1909,7 @@ function dgWinJuice(){
     rocket.animate([{transform:"translate(0,0)",opacity:1},{transform:"translate("+(tx-cx)+"px,"+(ty-cy)+"px)",opacity:1}],{duration:520,delay,easing:"cubic-bezier(.3,.8,.5,1)",fill:"forwards"})
       .onfinish=()=>{
         rocket.remove();
-        const n=heart?30:26;
+        const n=heart?22:18;
         for(let i=0;i<n;i++){
           let ox,oy;
           if(heart){const t=i/n*Math.PI*2;ox=16*Math.pow(Math.sin(t),3);oy=-(13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t));ox*=5.2;oy*=5.2;}
