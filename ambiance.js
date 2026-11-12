@@ -62,6 +62,7 @@
     st.textContent=
       ".dgAmb{position:absolute;inset:0;overflow:hidden;pointer-events:none}"+
       ".dgAmb .sky{position:absolute;inset:0;transition:opacity .8s}"+
+      ".dgAmb .swirl{position:absolute;width:120vmax;height:70vmax;left:50%;top:50%;margin:-35vmax 0 0 -60vmax;border-radius:50%;mix-blend-mode:screen;will-change:transform}"+
       ".dgAmb .fx{position:absolute;left:-30%;right:-30%;top:-260px;bottom:-60px;will-change:transform;background-repeat:repeat}"+
       ".dgAmb .starsBg{position:absolute;inset:0;background-repeat:repeat;opacity:.9;animation:dgTw 4s ease-in-out infinite alternate}"+
       ".dgAmb .starsBg.b{animation-delay:-2s;opacity:.6}"+
@@ -95,6 +96,27 @@
     box.appendChild(sky);
     host.style.setProperty("--ambGlow",time.glow);
     const reduce=window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches;
+    // Slow volutes in the gradient: three long soft veils (light of the hour, then the chapter's two colors)
+    // turn and drift on loops of 30 to 50 seconds. Only transforms move, so nothing is repainted.
+    [
+      {col:time.glow,op:.38,x:-18,y:-30,dur:41,turn:50},
+      {col:"var(--c2)",op:.27,x:22,y:34,dur:53,turn:-40},
+      {col:"var(--c1)",op:.19,x:-26,y:30,dur:34,turn:35}
+    ].forEach((v,i)=>{
+      const d=document.createElement("div");d.className="swirl";
+      d.style.background="radial-gradient(closest-side,"+v.col+" 0%,color-mix(in srgb,"+v.col+" 45%,transparent) 45%,transparent 100%)";
+      d.style.opacity=v.op;
+      const at=(dx,dy,r,sc)=>"translate("+(v.x+dx)+"vw,"+(v.y+dy)+"vh) rotate("+(i*60+r)+"deg) scale("+sc+")";
+      d.style.transform=at(0,0,0,1);
+      if(!reduce)d.animate([
+        {transform:at(0,0,0,1)},
+        {transform:at(10,-6,v.turn*.5,1.12)},
+        {transform:at(4,8,v.turn,.94)},
+        {transform:at(-8,3,v.turn*.4,1.06)},
+        {transform:at(0,0,0,1)}
+      ],{duration:v.dur*1000,iterations:Infinity,easing:"ease-in-out",delay:-i*7000});
+      box.appendChild(d);
+    });
     let w=opt.weather||"none";
     // une météo qui tombe montre déjà la gravité : la poussière du décor (les petits traits) s'efface
     host.classList.toggle("dgWeather",!!(WEATHER[w]&&WEATHER[w].length||WEATHER[w]==="rain"));

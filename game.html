@@ -173,6 +173,14 @@ body.editing #hintStrip,body.editing #hintCount{display:none}
 @keyframes gHand{0%,100%{transform:translateX(0)}18%{transform:translateX(1.2rem)}36%,50%{transform:translateX(0)}68%{transform:translateX(-1.2rem)}86%{transform:translateX(0)}}
 @keyframes gTap{0%{transform:scale(.6);opacity:.9}70%,100%{transform:scale(1.8);opacity:0}}
 body.editing #swipeHint{display:none}
+/* turning demo drawn over the board: a finger drags a short arc and the board leans with it */
+#turnDemo{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;overflow:visible;opacity:0;transition:opacity .35s}
+#turnDemo.show{opacity:1}
+#turnDemoArc{fill:none;stroke:#fff;stroke-width:7;stroke-linecap:round;stroke-dasharray:2 16;opacity:.75;filter:drop-shadow(0 0 6px var(--c2))}
+#turnDemoHand path{fill:#fff;stroke:var(--navy);stroke-width:1.1;stroke-linejoin:round;paint-order:stroke}
+#turnDemoHand{filter:drop-shadow(0 0 10px var(--c2))}
+#turnDemoHand circle{fill:none;stroke:#fff;stroke-width:1.2}
+body.editing #turnDemo,body.btnCtl #turnDemo{display:none}
 /* commandes « boutons » (option) : deux gros boutons de rotation sous la bulle, à la place du geste */
 #controls{display:none}
 #controls #reset{display:none}
@@ -373,6 +381,12 @@ html.tx-in #loadingOverlay{display:none}
 @keyframes heartfloat{from{transform:translate(-50%,0) scale(.8);opacity:1}to{transform:translate(-50%,-8.5rem) scale(1.35);opacity:0}}
 .bigHeart{position:absolute;z-index:46;font-size:5.8rem;pointer-events:none;animation:bigheart 1.4s ease-out forwards;text-shadow:0 0 2rem currentColor}
 @keyframes bigheart{from{transform:translate(-50%,0) scale(.45);opacity:1}to{transform:translate(-50%,-15rem) scale(1.55);opacity:0}}
+.winFx{position:fixed;inset:0;z-index:46;pointer-events:none;overflow:hidden}
+.winGlow{position:absolute;inset:0;background:radial-gradient(circle at var(--gx) var(--gy),color-mix(in srgb,var(--c2) 55%,transparent),color-mix(in srgb,var(--c1) 18%,transparent) 32%,transparent 62%);animation:winGlow .9s ease-out forwards}
+@keyframes winGlow{0%{opacity:0}18%{opacity:1}100%{opacity:0}}
+.winRing{position:absolute;width:2rem;height:2rem;margin:-1rem 0 0 -1rem;border-radius:50%;border:.35rem solid;box-shadow:0 0 1.2rem currentColor;animation:winRing .9s cubic-bezier(.15,.7,.3,1) both}
+@keyframes winRing{0%{transform:scale(.3);opacity:1}100%{transform:scale(14);opacity:0;border-width:.05rem}}
+.winBit{position:absolute;overflow:visible;will-change:transform,opacity}
 .gravel{position:absolute;z-index:45;width:.5rem;height:.5rem;border-radius:50%;background:var(--c2);box-shadow:0 0 .8rem currentColor;animation:gravel .5s ease-out forwards;pointer-events:none}
 .deathPixel{position:absolute;z-index:45;width:.7rem;height:.7rem;border-radius:.2rem;background:var(--yellow);animation:gravel .55s ease-out forwards;pointer-events:none}
 @keyframes gravel{to{transform:translate(var(--dx),var(--dy)) scale(.2);opacity:0}}
@@ -447,6 +461,7 @@ html:not(.editor-enabled) #toggleEdit,html:not(.editor-enabled) #compactEdit{dis
       <svg viewBox="0 0 520 520" aria-label="Plateau"><g id="rot"><g id="grid"></g></g></svg>
       <div id="hintStrip"></div>
       <div id="swipeHint" aria-hidden="true"><span class="chev l"><i>‹</i><i>‹</i><i>‹</i></span><svg viewBox="0 0 24 24"><circle cx="11.5" cy="7.5" r="3.4"/><path d="M18.84 15.87l-4.54-2.26c-.17-.07-.35-.11-.54-.11H13v-6c0-.83-.67-1.5-1.5-1.5S10 6.67 10 7.5v10.74l-3.43-.72c-.08-.01-.15-.03-.24-.03-.31 0-.59.13-.79.33l-.79.8 4.94 4.94c.27.27.65.44 1.06.44h6.79c.75 0 1.33-.55 1.44-1.28l.75-5.27c.01-.07.02-.14.02-.2 0-.62-.38-1.16-.91-1.38z"/></svg><span class="chev r"><i>›</i><i>›</i><i>›</i></span></div>
+      <svg id="turnDemo" viewBox="0 0 520 520" aria-hidden="true"><path id="turnDemoArc" d=""/><g id="turnDemoHand"><circle cx="11.5" cy="7.5" r="3.4"/><path d="M18.84 15.87l-4.54-2.26c-.17-.07-.35-.11-.54-.11H13v-6c0-.83-.67-1.5-1.5-1.5S10 6.67 10 7.5v10.74l-3.43-.72c-.08-.01-.15-.03-.24-.03-.31 0-.59.13-.79.33l-.79.8 4.94 4.94c.27.27.65.44 1.06.44h6.79c.75 0 1.33-.55 1.44-1.28l.75-5.27c.01-.07.02-.14.02-.2 0-.62-.38-1.16-.91-1.38z"/></g></svg>
     </div>
     <div id="confirmBox" class="hidden"><h2>Confirmer la suppression</h2><p id="confirmText"></p><div class="row"><button id="confirmCancel">Annuler</button><button id="confirmDelete" class="danger">Supprimer</button></div></div>
   </main>
@@ -1843,6 +1858,66 @@ function bigHeart(){
   document.body.appendChild(h);
   setTimeout(()=>h.remove(),1600);
 }
+/* Win burst, themed by the chapter: rings leave the meeting point, a soft glow lights the screen, the board
+   bounces, and particles shaped like the chapter's motif fly off with that motif's own way of moving. */
+const DG_WIN_FX=[
+  {box:"0 20 90 40",open:true,speed:5,g:-.05,spin:40,sway:26,life:1700,n:16},   // waves rise and sway
+  {box:"22 30 54 44",speed:6,g:.16,spin:420,sway:34,life:1900,n:18},            // leaves flutter down
+  {box:"20 21 48 48",speed:11,g:.1,spin:200,sway:0,life:1300,n:24,twinkle:true},// stars burst and twinkle
+  {box:"22 28 60 40",speed:4,g:-.04,spin:0,sway:40,life:2000,n:12},             // clouds drift
+  {box:"24 22 52 52",speed:7,g:.12,spin:260,sway:10,life:1600,n:16},            // moons tumble
+  {box:"28 14 40 72",speed:14,g:.05,spin:0,sway:0,life:900,n:18,flash:true},    // lightning strikes out
+  {box:"14 14 68 72",speed:6,g:.1,spin:620,sway:30,life:2000,n:20},             // petals spiral
+  {box:"28 14 44 60",speed:12,g:.3,spin:520,sway:0,life:1300,n:22}              // crystals shatter
+];
+function dgWinJuice(){
+  if(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches)return;
+  const ci=dgChapterIndexOfLevel(currentLevel||0)%DG_BIOMES.length, fx=DG_WIN_FX[ci%DG_WIN_FX.length], motif=DG_BIOMES[ci][1];
+  const r=svg.getBoundingClientRect(), sc=r.width/BOARD;
+  const cx=r.left+(p.x*T+HALF)*sc, cy=r.top+(p.y*T+HALF)*sc;
+  const layer=document.createElement("div");
+  layer.className="winFx";
+  layer.style.setProperty("--gx",cx+"px");layer.style.setProperty("--gy",cy+"px");
+  document.body.appendChild(layer);
+  setTimeout(()=>layer.remove(),fx.life+700);
+  // glow, then rings
+  const glow=document.createElement("i");glow.className="winGlow";layer.appendChild(glow);
+  [0,140,300].forEach((d,i)=>{
+    const ring=document.createElement("i");
+    ring.className="winRing";
+    ring.style.left=cx+"px";ring.style.top=cy+"px";
+    ring.style.borderColor=i%2?dgC1:dgC2;
+    ring.style.animationDelay=d+"ms";
+    layer.appendChild(ring);
+  });
+  const wrap=document.querySelector(".boardWrap");
+  if(wrap&&wrap.animate)wrap.animate([{transform:"scale(1)"},{transform:"scale(1.045)"},{transform:"scale(.985)"},{transform:"scale(1)"}],{duration:520,easing:"ease-out"});
+  // particles
+  const cols=[dgC1,dgC2,"#ffffff",dgC2];
+  for(let i=0;i<fx.n;i++){
+    const el=document.createElementNS("http://www.w3.org/2000/svg","svg");
+    const col=cols[i%cols.length], size=(22+Math.random()*22)*(fx.flash?1.2:1);
+    el.setAttribute("viewBox",fx.box);
+    el.setAttribute("class","winBit");
+    el.style.width=el.style.height=size+"px";
+    el.style.left=(cx-size/2)+"px";el.style.top=(cy-size/2)+"px";
+    el.innerHTML='<path d="'+motif+'" fill="'+(fx.open?"none":col)+'" fill-opacity=".9" stroke="'+col+'" stroke-width="'+(fx.open?7:3)+'" stroke-linecap="round" stroke-linejoin="round"/>';
+    el.style.filter="drop-shadow(0 0 6px "+col+")";
+    layer.appendChild(el);
+    const a=(i/fx.n)*Math.PI*2+Math.random()*.5, v=fx.speed*(.6+Math.random()*.7);
+    const vx=Math.cos(a)*v, vy=Math.sin(a)*v-(fx.g<0?2:3);
+    const spin=(Math.random()<.5?-1:1)*fx.spin*(.5+Math.random()), ph=Math.random()*6;
+    const frames=[], N=18;
+    for(let k=0;k<=N;k++){
+      const t=k/N*fx.life/16;                 // in 60 fps frames
+      const x=vx*t+Math.sin(t*.09+ph)*fx.sway*(k/N);
+      const y=vy*t+fx.g*t*t*.5;
+      const s=fx.twinkle?(.6+.6*Math.abs(Math.sin(t*.25+ph))):(k===0?.3:1-.35*k/N);
+      frames.push({transform:"translate("+x.toFixed(1)+"px,"+y.toFixed(1)+"px) rotate("+(spin*k/N).toFixed(0)+"deg) scale("+s.toFixed(2)+")",opacity:k<N*.6?1:Math.max(0,1-(k-N*.6)/(N*.4))});
+    }
+    el.animate(frames,{duration:fx.life*(.8+Math.random()*.3),easing:"linear",fill:"forwards",delay:Math.random()*90});
+  }
+}
 function gravelFx(distance){
   if(distance<=0)return;
   const svgRect=svg.getBoundingClientRect();
@@ -1989,6 +2064,7 @@ function fall(){
         let stars="♥".repeat(s)+"♡".repeat(3-s);
         status.textContent="Niveau gagné.";
         bigHeart();
+        dgWinJuice();
         const chEnd=dgChapterOfLevel(currentLevel), big=currentLevel===levels.length-1||(!!chEnd&&chEnd.levelIds[chEnd.levelIds.length-1]===currentLevel);
         if(big){floatingHearts();startConfetti();}
         saveWinProgress();
@@ -3165,22 +3241,59 @@ document.getElementById("pauseControls").onclick=()=>{
   dgApplyControls();
 };
 dgApplyControls();
-/* rappel du swipe : seulement quand le joueur ne fait rien depuis un moment (plus longtemps s'il connaît déjà le geste) */
-let dgIdleAt=performance.now(),dgHintOn=false,dgHintLearned=false;
+/* Turning demo: a finger drags a short arc over the board and the board leans with it, one way then
+   the other. In the first chapter it starts almost at once until the gesture is known; everywhere else
+   it comes back when the player waits. Any touch hides it. */
+let dgIdleAt=performance.now(),dgHintOn=false,dgHintLearned=false,dgDemoT0=0;
+try{dgHintLearned=(Number(localStorage.getItem("dg_swipe_count"))||0)>=3;}catch(e){}
+const DG_DEMO_R=205,DG_DEMO_A0=68,DG_DEMO_SPAN=44,DG_DEMO_TILT=14;
+function dgDemoPoint(a){const r=a*Math.PI/180;return [260+DG_DEMO_R*Math.cos(r),260+DG_DEMO_R*Math.sin(r)];}
+function dgDemoArc(){
+  const [x0,y0]=dgDemoPoint(DG_DEMO_A0),[x1,y1]=dgDemoPoint(DG_DEMO_A0+DG_DEMO_SPAN);
+  return "M"+x0.toFixed(1)+" "+y0.toFixed(1)+"A"+DG_DEMO_R+" "+DG_DEMO_R+" 0 0 1 "+x1.toFixed(1)+" "+y1.toFixed(1);
+}
+function dgDemoTick(now){
+  const hand=document.getElementById("turnDemoHand");
+  if(!hand)return;
+  const ease=k=>k<.5?2*k*k:1-Math.pow(-2*k+2,2)/2;
+  const k=((now-dgDemoT0)%3400)/3400;
+  // press, drag clockwise, let go (the board springs back), press, drag back, let go
+  let f,tilt,press;
+  if(k<.1){f=0;tilt=0;press=k/.1;}
+  else if(k<.42){const e=ease((k-.1)/.32);f=e;tilt=e*DG_DEMO_TILT;press=1;}
+  else if(k<.52){const e=(k-.42)/.1;f=1;tilt=DG_DEMO_TILT*(1-e)*(1-e);press=1-e;}
+  else if(k<.6){f=1;tilt=0;press=(k-.52)/.08;}
+  else if(k<.9){const e=ease((k-.6)/.3);f=1-e;tilt=-e*DG_DEMO_TILT;press=1;}
+  else{const e=(k-.9)/.1;f=0;tilt=-DG_DEMO_TILT*(1-e)*(1-e);press=1-e;}
+  const [x,y]=dgDemoPoint(DG_DEMO_A0+f*DG_DEMO_SPAN);
+  const sc=3.1-press*.35; // the finger sinks a little while it presses
+  hand.setAttribute("transform","translate("+(x-11.5*sc).toFixed(1)+" "+(y-7.5*sc).toFixed(1)+") scale("+sc.toFixed(2)+")");
+  hand.style.opacity=String(.55+press*.45);
+  if(!busy&&!dgRot&&!stage.classList.contains("swiping"))rot.setAttribute("transform","rotate("+tilt.toFixed(2)+" "+(BOARD/2)+" "+(BOARD/2)+")");
+}
 function dgIdle(){
-  const el=document.getElementById("swipeHint");
+  const el=document.getElementById("turnDemo");
   if(!el)return;
   const now=performance.now();
-  if(busy||gameOver||stage.classList.contains("swiping")||dgUiOpen())dgIdleAt=now;
-  const on=now-dgIdleAt>(dgHintLearned?12000:Tuning.num("aide.rappel_geste_ms",3500));
-  if(on===dgHintOn)return;
-  dgHintOn=on;
-  el.classList.toggle("show",on);
-  if(!on){
-    let n=0;
-    try{n=Number(localStorage.getItem("dg_swipe_count"))||0;}catch(e){}
-    dgHintLearned=n>=3;
+  if(busy||gameOver||stage.classList.contains("swiping")||dgUiOpen()||dgControls()==="buttons")dgIdleAt=now;
+  const firstSteps=!dgHintLearned&&dgChapterIndexOfLevel(currentLevel||0)===0;
+  const wait=firstSteps?Tuning.num("aide.demo_geste_debut_ms",900)
+    :dgHintLearned?Tuning.num("aide.demo_geste_attente_ms",8000):Tuning.num("aide.rappel_geste_ms",3500);
+  const on=now-dgIdleAt>wait;
+  if(on!==dgHintOn){
+    dgHintOn=on;
+    el.classList.toggle("show",on);
+    if(on){
+      dgDemoT0=now;
+      document.getElementById("turnDemoArc").setAttribute("d",dgDemoArc());
+    }else{
+      if(!busy&&!dgRot&&!stage.classList.contains("swiping"))rot.setAttribute("transform","rotate(0 "+(BOARD/2)+" "+(BOARD/2)+")");
+      let n=0;
+      try{n=Number(localStorage.getItem("dg_swipe_count"))||0;}catch(e){}
+      dgHintLearned=n>=3;
+    }
   }
+  if(on)dgDemoTick(now);
 }
 document.addEventListener("pointerdown",()=>{dgIdleAt=performance.now();},{passive:true});
 /* ce que la rencontre du chapitre est devenue (voir DGSpirit.status) */
