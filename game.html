@@ -384,9 +384,10 @@ html.tx-in #loadingOverlay{display:none}
 .winFx{position:fixed;inset:0;z-index:46;pointer-events:none;overflow:hidden}
 .winGlow{position:absolute;inset:0;background:radial-gradient(circle at var(--gx) var(--gy),color-mix(in srgb,var(--c2) 55%,transparent),color-mix(in srgb,var(--c1) 18%,transparent) 32%,transparent 62%);animation:winGlow .9s ease-out forwards}
 @keyframes winGlow{0%{opacity:0}18%{opacity:1}100%{opacity:0}}
-.winRing{position:absolute;width:2rem;height:2rem;margin:-1rem 0 0 -1rem;border-radius:50%;border:.35rem solid;box-shadow:0 0 1.2rem currentColor;animation:winRing .9s cubic-bezier(.15,.7,.3,1) both}
-@keyframes winRing{0%{transform:scale(.3);opacity:1}100%{transform:scale(14);opacity:0;border-width:.05rem}}
-.winBit{position:absolute;overflow:visible;will-change:transform,opacity}
+.winHeart{position:absolute;overflow:visible;filter:drop-shadow(0 0 6px currentColor);will-change:transform,opacity}
+.winSpark,.winRocket,.winPop{position:absolute;border-radius:50%;box-shadow:0 0 8px 2px currentColor;will-change:transform,opacity}
+.winRocket{box-shadow:0 0 10px 4px #fff,0 14px 14px -4px rgba(255,255,255,.5)}
+.winPop{box-shadow:0 0 30px 12px currentColor}
 .gravel{position:absolute;z-index:45;width:.5rem;height:.5rem;border-radius:50%;background:var(--c2);box-shadow:0 0 .8rem currentColor;animation:gravel .5s ease-out forwards;pointer-events:none}
 .deathPixel{position:absolute;z-index:45;width:.7rem;height:.7rem;border-radius:.2rem;background:var(--yellow);animation:gravel .55s ease-out forwards;pointer-events:none}
 @keyframes gravel{to{transform:translate(var(--dx),var(--dy)) scale(.2);opacity:0}}
@@ -1858,65 +1859,72 @@ function bigHeart(){
   document.body.appendChild(h);
   setTimeout(()=>h.remove(),1600);
 }
-/* Win burst, themed by the chapter: rings leave the meeting point, a soft glow lights the screen, the board
-   bounces, and particles shaped like the chapter's motif fly off with that motif's own way of moving. */
-const DG_WIN_FX=[
-  {box:"0 20 90 40",open:true,speed:5,g:-.05,spin:40,sway:26,life:1700,n:16},   // waves rise and sway
-  {box:"22 30 54 44",speed:6,g:.16,spin:420,sway:34,life:1900,n:18},            // leaves flutter down
-  {box:"20 21 48 48",speed:11,g:.1,spin:200,sway:0,life:1300,n:24,twinkle:true},// stars burst and twinkle
-  {box:"22 28 60 40",speed:4,g:-.04,spin:0,sway:40,life:2000,n:12},             // clouds drift
-  {box:"24 22 52 52",speed:7,g:.12,spin:260,sway:10,life:1600,n:16},            // moons tumble
-  {box:"28 14 40 72",speed:14,g:.05,spin:0,sway:0,life:900,n:18,flash:true},    // lightning strikes out
-  {box:"14 14 68 72",speed:6,g:.1,spin:620,sway:30,life:2000,n:20},             // petals spiral
-  {box:"28 14 44 60",speed:12,g:.3,spin:520,sway:0,life:1300,n:22}              // crystals shatter
-];
+/* Win burst from the couple: hearts fly out of the two lovers while fireworks rise from them and burst in
+   the chapter's colors, every other burst drawn as a heart. A soft glow lights the screen and the board bounces. */
+const DG_HEART_PATH="M12 21s-7-4.35-9.5-8.5C.5 9 2.5 5 6.5 5c2 0 3.5 1 5.5 3c2-2 3.5-3 5.5-3c4 0 6 4 4 7.5C19 16.65 12 21 12 21z";
 function dgWinJuice(){
   if(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches)return;
-  const ci=dgChapterIndexOfLevel(currentLevel||0)%DG_BIOMES.length, fx=DG_WIN_FX[ci%DG_WIN_FX.length], motif=DG_BIOMES[ci][1];
   const r=svg.getBoundingClientRect(), sc=r.width/BOARD;
-  const cx=r.left+(p.x*T+HALF)*sc, cy=r.top+(p.y*T+HALF)*sc;
+  const cx=r.left+(p.x*T+HALF)*sc, cy=r.top+(p.y*T+T*.3)*sc;
   const layer=document.createElement("div");
   layer.className="winFx";
   layer.style.setProperty("--gx",cx+"px");layer.style.setProperty("--gy",cy+"px");
   document.body.appendChild(layer);
-  setTimeout(()=>layer.remove(),fx.life+700);
-  // glow, then rings
+  setTimeout(()=>layer.remove(),3600);
   const glow=document.createElement("i");glow.className="winGlow";layer.appendChild(glow);
-  [0,140,300].forEach((d,i)=>{
-    const ring=document.createElement("i");
-    ring.className="winRing";
-    ring.style.left=cx+"px";ring.style.top=cy+"px";
-    ring.style.borderColor=i%2?dgC1:dgC2;
-    ring.style.animationDelay=d+"ms";
-    layer.appendChild(ring);
-  });
   const wrap=document.querySelector(".boardWrap");
-  if(wrap&&wrap.animate)wrap.animate([{transform:"scale(1)"},{transform:"scale(1.045)"},{transform:"scale(.985)"},{transform:"scale(1)"}],{duration:520,easing:"ease-out"});
-  // particles
-  const cols=[dgC1,dgC2,"#ffffff",dgC2];
-  for(let i=0;i<fx.n;i++){
-    const el=document.createElementNS("http://www.w3.org/2000/svg","svg");
-    const col=cols[i%cols.length], size=(22+Math.random()*22)*(fx.flash?1.2:1);
-    el.setAttribute("viewBox",fx.box);
-    el.setAttribute("class","winBit");
-    el.style.width=el.style.height=size+"px";
-    el.style.left=(cx-size/2)+"px";el.style.top=(cy-size/2)+"px";
-    el.innerHTML='<path d="'+motif+'" fill="'+(fx.open?"none":col)+'" fill-opacity=".9" stroke="'+col+'" stroke-width="'+(fx.open?7:3)+'" stroke-linecap="round" stroke-linejoin="round"/>';
-    el.style.filter="drop-shadow(0 0 6px "+col+")";
-    layer.appendChild(el);
-    const a=(i/fx.n)*Math.PI*2+Math.random()*.5, v=fx.speed*(.6+Math.random()*.7);
-    const vx=Math.cos(a)*v, vy=Math.sin(a)*v-(fx.g<0?2:3);
-    const spin=(Math.random()<.5?-1:1)*fx.spin*(.5+Math.random()), ph=Math.random()*6;
-    const frames=[], N=18;
-    for(let k=0;k<=N;k++){
-      const t=k/N*fx.life/16;                 // in 60 fps frames
-      const x=vx*t+Math.sin(t*.09+ph)*fx.sway*(k/N);
-      const y=vy*t+fx.g*t*t*.5;
-      const s=fx.twinkle?(.6+.6*Math.abs(Math.sin(t*.25+ph))):(k===0?.3:1-.35*k/N);
-      frames.push({transform:"translate("+x.toFixed(1)+"px,"+y.toFixed(1)+"px) rotate("+(spin*k/N).toFixed(0)+"deg) scale("+s.toFixed(2)+")",opacity:k<N*.6?1:Math.max(0,1-(k-N*.6)/(N*.4))});
-    }
-    el.animate(frames,{duration:fx.life*(.8+Math.random()*.3),easing:"linear",fill:"forwards",delay:Math.random()*90});
+  if(wrap&&wrap.animate)wrap.animate([{transform:"scale(1)"},{transform:"scale(1.04)"},{transform:"scale(.99)"},{transform:"scale(1)"}],{duration:520,easing:"ease-out"});
+  const cols=[dgC1,dgC2,"#ff4f8b","#ffffff"];
+  const dot=(x,y,size,col,cls)=>{
+    const d=document.createElement("i");d.className=cls||"winSpark";
+    d.style.left=(x-size/2)+"px";d.style.top=(y-size/2)+"px";d.style.width=d.style.height=size+"px";
+    d.style.background=col;d.style.color=col;
+    layer.appendChild(d);return d;
+  };
+  // hearts escaping from the couple, floating up and swaying
+  for(let i=0;i<14;i++){
+    const h=document.createElementNS("http://www.w3.org/2000/svg","svg");
+    const size=18+Math.random()*20, col=i%3?"#ff4f8b":cols[i%cols.length];
+    h.setAttribute("viewBox","0 0 24 24");h.setAttribute("class","winHeart");
+    h.style.width=h.style.height=size+"px";h.style.left=(cx-size/2)+"px";h.style.top=(cy-size/2)+"px";
+    h.style.color=col;
+    h.innerHTML='<path d="'+DG_HEART_PATH+'" fill="'+col+'"/>';
+    layer.appendChild(h);
+    const a=-Math.PI/2+(Math.random()-.5)*2.2, v=90+Math.random()*150, sw=(Math.random()-.5)*60;
+    const dx=Math.cos(a)*v, dy=Math.sin(a)*v-60-Math.random()*80;
+    h.animate([
+      {transform:"translate(0,0) scale(.2)",opacity:1},
+      {transform:"translate("+(dx*.45+sw)+"px,"+(dy*.45)+"px) scale(1.15)",opacity:1,offset:.35},
+      {transform:"translate("+(dx-sw*.5)+"px,"+dy+"px) scale(.9)",opacity:0}
+    ],{duration:1500+Math.random()*700,delay:Math.random()*260,easing:"cubic-bezier(.2,.7,.4,1)",fill:"both"});
   }
+  // fireworks rising from the couple
+  const W=innerWidth,H=innerHeight;
+  [0,320,640,980].forEach((delay,k)=>{
+    const tx=W*(.18+.64*((k*.37+Math.random()*.25)%1)), ty=H*(.08+Math.random()*.2);
+    const col=k%2?dgC2:dgC1, heart=k%2===1;
+    const rocket=dot(cx+(k%2?10:-10),cy,7,"#fff","winRocket");
+    rocket.style.opacity="0";
+    rocket.animate([{transform:"translate(0,0)",opacity:1},{transform:"translate("+(tx-cx)+"px,"+(ty-cy)+"px)",opacity:1}],{duration:520,delay,easing:"cubic-bezier(.3,.8,.5,1)",fill:"forwards"})
+      .onfinish=()=>{
+        rocket.remove();
+        const n=heart?30:26;
+        for(let i=0;i<n;i++){
+          let ox,oy;
+          if(heart){const t=i/n*Math.PI*2;ox=16*Math.pow(Math.sin(t),3);oy=-(13*Math.cos(t)-5*Math.cos(2*t)-2*Math.cos(3*t)-Math.cos(4*t));ox*=5.2;oy*=5.2;}
+          else{const a=i/n*Math.PI*2,v=70+Math.random()*40;ox=Math.cos(a)*v;oy=Math.sin(a)*v;}
+          const c=i%4===3?"#ffffff":(i%2?col:(heart?"#ff4f8b":cols[(i+k)%2]));
+          const sp=dot(tx,ty,5+Math.random()*3,c);
+          sp.animate([
+            {transform:"translate(0,0) scale(1.4)",opacity:1},
+            {transform:"translate("+ox+"px,"+oy+"px) scale(1)",opacity:1,offset:.45},
+            {transform:"translate("+ox*1.12+"px,"+(oy+55)+"px) scale(.4)",opacity:0}
+          ],{duration:1250+Math.random()*250,easing:"cubic-bezier(.15,.75,.35,1)",fill:"forwards"});
+        }
+        const flash=dot(tx,ty,46,col,"winPop");
+        flash.animate([{transform:"scale(.3)",opacity:.9},{transform:"scale(2.2)",opacity:0}],{duration:420,easing:"ease-out",fill:"forwards"});
+      };
+  });
 }
 function gravelFx(distance){
   if(distance<=0)return;
