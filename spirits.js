@@ -33,7 +33,7 @@
     let s='<circle cx="20" cy="24" r="27" fill="'+P.body+'" opacity=".16"/>';
     if(fem)s+=LOCKS.map(d=>'<path d="'+d+'" fill="'+P.crest+'"'+st+'/>').join("");
     // elle : même crête, plus ample
-    s+='<g transform="translate(20 17) scale('+(fem?1.14:1)+' '+(fem?1.1*cs:cs)+') translate(-20 -17)"><path d="'+P.d+'" fill="'+P.crest+'"'+st+'/></g>';
+    s+='<g transform="translate(20 17) scale('+(fem?1.14:1)+' '+(fem?1.1*cs:cs)+') translate(-20 -17)"><path d="'+P.d+'" fill="'+(P.headFill||P.crest)+'"'+st+'/>'+(P.extra?P.extra.replace(/\{L\}/g,P.line):"")+'</g>';
     s+='<rect x="4" y="13" width="32" height="26" rx="9" fill="'+P.body+'"'+st+'/>';
     s+='<path d="M5 29H35V30a9 9 0 0 1 -9 9H14a9 9 0 0 1 -9 -9Z" fill="#000" opacity=".14"/><path d="M9 17Q10 15 14 15" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".7"/>';
     s+='<path d="M4.5 32H35.5V35.5Q20 40 4.5 35.5Z" fill="'+P.scarf+'"'+st+'/>';
@@ -135,7 +135,12 @@
     {key:"lapin",name:"Lapin",hearts:70,d:"M8 17Q8 10 13 9Q8 4 6 -3Q15 1 16 9H24Q25 1 34 -3Q32 4 27 9Q32 10 32 17Z"},
     {key:"punk",name:"Punk",hearts:100,d:"M8 17L10 7L14 11L16 -3L20 9L24 -7L26 9L30 -1L31 11L33 17Z"},
     {key:"antenne",name:"Antennes",hearts:140,d:"M9 17Q10 9 20 9Q30 9 31 17ZM13 10L9 2.5L11.2 1.5L15.5 9.5ZM27 10L31 2.5L28.8 1.5L24.5 9.5ZM6.8 1a3 3 0 1 0 6 0a3 3 0 1 0 -6 0ZM27.2 1a3 3 0 1 0 6 0a3 3 0 1 0 -6 0Z"},
-    {key:"couronne",name:"Couronne",hearts:200,d:"M7 17L7.5 2L13.5 9.5L20 -1L26.5 9.5L32.5 2L33 17Z"}
+    {key:"couronne",name:"Couronne",hearts:200,d:"M7 17L7.5 2L13.5 9.5L20 -1L26.5 9.5L32.5 2L33 17Z"},
+    // holiday heads: given to everyone during the holiday (fetes.js), kept afterwards
+    {key:"bonnet_noel",name:"Noël",fete:"noel",fill:"#e8323f",d:"M5 16Q5 6 14 3Q22 0.5 27 -3Q33 -7 36 -2Q31 -1 30 4Q34 9 35 16Z",
+      extra:'<rect x="4" y="11" width="32" height="6.5" rx="3.2" fill="#fff" stroke="{L}" stroke-width="1.6"/><circle cx="35.5" cy="-2.5" r="3.8" fill="#fff" stroke="{L}" stroke-width="1.6"/>'},
+    {key:"coeur",name:"Cœur",fete:"valentin",fill:"#ff3b6b",d:"M20 16C9 10 5 3 9.5 -1.5C13.5 -5.5 18.5 -3.5 20 0C21.5 -3.5 26.5 -5.5 30.5 -1.5C35 3 31 10 20 16Z",
+      extra:'<path d="M12.2 0.6Q13.6 -2.2 16.2 -1.8" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" opacity=".85"/>'}
   ];
   const SKINS=[
     {key:"braise",name:"Braise",mem:0,body:"#ff9a2e",crest:"#ffd23f",scarf:"#ff4f6a",line:"#3a1205"},
@@ -145,7 +150,9 @@
     {key:"lavande",name:"Lavande",mem:14,body:"#b18cff",crest:"#ffe0fb",scarf:"#19e3ff",line:"#2a1670"},
     {key:"neon",name:"Néon",mem:20,body:"#7dff6a",crest:"#f6ff3d",scarf:"#ff4fd8",line:"#0f3d0a"},
     {key:"nuit",name:"Nuit",mem:28,body:"#3a3f7a",crest:"#19e3ff",scarf:"#f6ff3d",line:"#0a0d24"},
-    {key:"or",name:"Or",mem:38,body:"#ffd23f",crest:"#fff7c2",scarf:"#ff4fd8",line:"#4a3300"}
+    {key:"or",name:"Or",mem:38,body:"#ffd23f",crest:"#fff7c2",scarf:"#ff4fd8",line:"#4a3300"},
+    {key:"sapin",name:"Sapin",fete:"noel",body:"#2fbf6a",crest:"#fff4d6",scarf:"#e8323f",line:"#0c3a20"},
+    {key:"guimauve",name:"Guimauve",fete:"valentin",body:"#ffb3d1",crest:"#ffffff",scarf:"#ff3b6b",line:"#5a1030"}
   ];
   const LOOK_KEY="dg_me_look";
   function readLook(){
@@ -159,7 +166,7 @@
   function me(l){
     l=l||readLook();
     const h=HEADS.find(x=>x.key===l.head)||HEADS[0], k=SKINS.find(x=>x.key===l.skin)||SKINS[0];
-    return {body:k.body,crest:k.crest,scarf:k.scarf,line:k.line,d:h.d};
+    return {body:k.body,crest:k.crest,scarf:k.scarf,line:k.line,d:h.d,headFill:h.fill,extra:h.extra};
   }
   // ce que la sauvegarde a gagné : cœurs de tous les niveaux, souvenirs découverts
   function earned(pr){
@@ -169,7 +176,10 @@
     Object.values(pr.mem||{}).forEach(box=>Object.values(box||{}).forEach(v=>{if(v===2)mem++;}));
     return {hearts,mem};
   }
-  function lookOpen(item,e){return item.hearts!=null?e.hearts>=item.hearts:e.mem>=item.mem;}
+  function lookOpen(item,e){
+    if(item.fete)return !!(window.DGFete&&DGFete.owns(item.key));
+    return item.hearts!=null?e.hearts>=item.hearts:e.mem>=item.mem;
+  }
 
   /* Les deux couleurs de chaque chapitre : tubes du plateau, boutons, halos. */
   const WORLDS=[["#f6ff3d","#19e3ff"],["#19e3ff","#b06cff"],["#ff9a3d","#ff4fd8"],["#7dff6a","#19b8ff"],["#ff4fd8","#7a5cff"],["#ffe14a","#ff7a3d"],["#ff5fa2","#ffd23f"],["#a8f4fa","#ff4f8b"]];

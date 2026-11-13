@@ -261,6 +261,7 @@ html.tx-in .logoBig span{animation:none}
 <script src="i18n.js"></script>
 <script src="premium.js"></script>
 <script src="promo.js"></script>
+<script src="fetes.js"></script>
 <script src="spirits.js"></script>
 <script src="audio.js"></script>
 <script>
@@ -508,7 +509,7 @@ function lookProgress(){try{return JSON.parse(localStorage.getItem(PROGRESS_KEY)
 function lookSeen(){try{return JSON.parse(localStorage.getItem(LOOK_SEEN_KEY)||"[]")||[];}catch(e){return [];}}
 function lookFresh(){
   const e=DGSpirit.earned(lookProgress()), seen=lookSeen();
-  return [...DGSpirit.HEADS,...DGSpirit.SKINS].filter(it=>(it.hearts||it.mem)&&DGSpirit.lookOpen(it,e)&&!seen.includes(it.key));
+  return [...DGSpirit.HEADS,...DGSpirit.SKINS].filter(it=>(it.hearts||it.mem||it.fete)&&DGSpirit.lookOpen(it,e)&&!seen.includes(it.key));
 }
 let lookNew=[];
 function renderLook(){
@@ -519,7 +520,8 @@ function renderLook(){
   document.getElementById("lookStats").innerHTML=DGSpirit.icon("heart")+" <b>"+e.hearts+"</b> "+tr("cœurs")+"<br>"+DGSpirit.icon("photo")+" <b>"+e.mem+"</b> "+tr("souvenirs découverts");
   const fill=(host,list,isHead)=>{
     host.innerHTML="";
-    list.forEach(it=>{
+    // a holiday item shows only once it was given
+    list.filter(it=>!it.fete||DGSpirit.lookOpen(it,e)).forEach(it=>{
       const open=DGSpirit.lookOpen(it,e), on=(isHead?look.head:look.skin)===it.key;
       const shown=isHead?{head:it.key,skin:look.skin}:{head:look.head,skin:it.key};
       const b=document.createElement("button");
@@ -543,6 +545,8 @@ function renderLook(){
   fill(document.getElementById("lookHeads"),DGSpirit.HEADS,true);
   fill(document.getElementById("lookSkins"),DGSpirit.SKINS,false);
 }
+/* holiday decor and greeting on the menu */
+if(window.DGFete){DGFete.decorate(document.body,{fixed:true});DGFete.greet(document.querySelector(".logoBig"));}
 function openLook(){
   lookNew=lookFresh().map(it=>it.key);
   try{localStorage.setItem(LOOK_SEEN_KEY,JSON.stringify([...new Set([...lookSeen(),...lookNew])]));}catch(e){}

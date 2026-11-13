@@ -584,6 +584,7 @@ html:not(.editor-enabled) #toggleEdit,html:not(.editor-enabled) #compactEdit{dis
 <script src="premium.js"></script>
 <script src="promo.js"></script>
 <script src="ads.js"></script>
+<script src="fetes.js"></script>
 <script src="spirits.js"></script>
 <script src="audio.js"></script>
 <script src="ambiance.js"></script>
@@ -1875,7 +1876,8 @@ function dgWinJuice(){
   const glow=document.createElement("i");glow.className="winGlow";layer.appendChild(glow);
   const wrap=document.querySelector(".boardWrap");
   if(wrap&&wrap.animate)wrap.animate([{transform:"scale(1)"},{transform:"scale(1.04)"},{transform:"scale(.99)"},{transform:"scale(1)"}],{duration:520,easing:"ease-out"});
-  const cols=[dgC1,dgC2,"#ff4f8b","#ffffff"];
+  // a holiday brings its own colors, and Valentine's Day draws every burst as a heart
+  const fc=window.DGFete&&DGFete.colors(), cols=fc||[dgC1,dgC2,"#ff4f8b","#ffffff"];
   const dot=(x,y,size,col,cls)=>{
     const d=document.createElement("i");d.className=cls||"winSpark";
     d.style.left=(x-size/2)+"px";d.style.top=(y-size/2)+"px";d.style.width=d.style.height=size+"px";
@@ -1903,7 +1905,7 @@ function dgWinJuice(){
   const W=innerWidth,H=innerHeight;
   [0,320,640,980].forEach((delay,k)=>{
     const tx=W*(.18+.64*((k*.37+Math.random()*.25)%1)), ty=H*(.08+Math.random()*.2);
-    const col=k%2?dgC2:dgC1, heart=k%2===1;
+    const col=fc?fc[k%2]:(k%2?dgC2:dgC1), heart=k%2===1||(window.DGFete&&DGFete.heartsOnly());
     const rocket=dot(cx+(k%2?10:-10),cy,7,"#fff","winRocket");
     rocket.style.opacity="0";
     rocket.animate([{transform:"translate(0,0)",opacity:1},{transform:"translate("+(tx-cx)+"px,"+(ty-cy)+"px)",opacity:1}],{duration:520,delay,easing:"cubic-bezier(.3,.8,.5,1)",fill:"forwards"})
@@ -3103,6 +3105,7 @@ function dgApplyAmbiance(ci){
   if(q){const [time,weather]=q.split(",");opt={time:time||opt.time,weather:weather||"none"};}
   let ok=true;try{ok=localStorage.getItem("dg_weather")!=="0";}catch(e){}
   DGAmbiance.apply(document.getElementById("gfx"),ok?opt:{time:opt.time,weather:"none"});
+  if(window.DGFete)DGFete.decorate(document.getElementById("gfx"));
 }
 if(window.DGAmbiance)DGAmbiance.onThunder=()=>{if(sfxReady())DGAudio.sfx.thunder();};
 /* Coup de pouce. Le joueur « peine » sur un niveau après deux essais ratés ou recommencés, trois coups

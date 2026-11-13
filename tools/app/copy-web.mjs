@@ -22,6 +22,7 @@ const FILES = [
   "audio.js",
   "ambiance.js",
   "portrait.js",
+  "fetes.js",
   "levels.json",
   "vector_assets.json",
   "manifest.webmanifest",
