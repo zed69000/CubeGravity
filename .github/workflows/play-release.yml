@@ -16,8 +16,9 @@ jobs:
     with:
       package-name: com.dategravity.app
       aab-path: android/app/build/outputs/bundle/release/app-release.aab
-      # l'appli n'est pas encore publiée en production : la release arrive en brouillon, il reste à cliquer « Déployer »
-      release-status: draft
+      release-status: completed
+      # note de version des testeurs : un fichier par langue (whatsnew-fr-FR...)
+      whatsnew-directory: store/whatsnew
       build-command: |
         npm install --no-audit --no-fund
         npm run build:web
