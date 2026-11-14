@@ -11,6 +11,8 @@ const FILES = [
   "tuning.js",
   "version.js",
   "save.js",
+  "cloud-save.js",
+  "cloud-save-game.js",
   "game.html",
   "ads.js",
   "promo.js",

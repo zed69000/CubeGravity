@@ -6,6 +6,9 @@
   "plugins": {
     "SystemBars": {
       "style": "DARK"
+    },
+    "PlayCloudSave": {
+      "appId": ""
     }
   }
 }

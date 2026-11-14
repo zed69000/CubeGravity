@@ -1,0 +1,19 @@
+{
+  "name": "play-cloud-save",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Cloud save for the studio's Capacitor games: Google Play Games Services v2 Saved Games on Android.",
+  "files": [
+    "android/build.gradle",
+    "android/src/",
+    "cloud-save.js"
+  ],
+  "capacitor": {
+    "android": {
+      "src": "android"
+    }
+  },
+  "peerDependencies": {
+    "@capacitor/core": ">=7.0.0"
+  }
+}
