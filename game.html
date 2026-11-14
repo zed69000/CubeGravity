@@ -911,15 +911,25 @@ function setPaused(v){
   if(gamePaused)stopElevatorMusic(); else if(!edit&&!gameOver)startElevatorMusic();
 }
 function sfxReady(){return soundOn&&sfxOn&&sfxVolume>0&&ensureAudio();}
+/* Les bruitages sont placés à l'endroit de leur source à l'écran (audio.js) : x de 0 (bord gauche) à 1 (bord droit).
+   Sans position connue, audio.js prend l'endroit du dernier toucher, sinon le centre. */
+function dgCellX(cx){
+  try{
+    const r=svg.getBoundingClientRect();
+    if(!r.width||!window.innerWidth)return undefined;
+    return (r.left+(cx*T+HALF)*(r.width/BOARD))/window.innerWidth;
+  }catch(e){return undefined;}
+}
+function dgPlayerX(){return p?dgCellX(p.x):undefined;}
 function soundRotate(d){
   // discret : la mélodie, ce sont les murs qui la jouent
   if(sfxReady())DGAudio.sfx.rotate(d);
 }
 
-function soundCrash(){if(sfxReady())DGAudio.sfx.crash();}
-function soundLose(){if(sfxReady())DGAudio.sfx.lose();}
-function soundDoor(){if(sfxReady())DGAudio.sfx.door();}
-function soundEternalFall(){if(sfxReady())DGAudio.sfx.eternal();}
+function soundCrash(){if(sfxReady())DGAudio.sfx.crash(dgPlayerX());}
+function soundLose(){if(sfxReady())DGAudio.sfx.lose(dgPlayerX());}
+function soundDoor(){if(sfxReady())DGAudio.sfx.door(dgPlayerX());} // le bouton est sous le personnage
+function soundEternalFall(){if(sfxReady())DGAudio.sfx.eternal(dgPlayerX());}
 function userAudioGesture(){
   ensureAudio();
   // appelé à chaque rotation sur mobile : la musique, si elle tourne déjà, continue sans coupure
@@ -1308,7 +1318,8 @@ function refreshTeleporterCooldown(){
   const c=currentTeleporterType();
   if(!c || c!==teleporterCooldownType)teleporterCooldownType=null;
 }
-function soundTeleport(){if(sfxReady())DGAudio.sfx.teleport();}
+// la gerbe part du téléporteur de départ et glisse vers celui d'arrivée (le personnage y est déjà)
+function soundTeleport(fromX){if(sfxReady())DGAudio.sfx.teleport(fromX==null?undefined:dgCellX(fromX),dgPlayerX());}
 function teleportFx(x,y,type){
   const svgRect=svg.getBoundingClientRect();
   const scale=svgRect.width/BOARD;
@@ -1345,7 +1356,7 @@ function tryTeleportFromCurrentTile(){
   teleporterCooldownType=type;
   eternalFallWraps=0;
   status.textContent="Téléporteur "+teleporterLabel(type)+" : "+from.x+","+from.y+" → "+p.x+","+p.y+".";
-  soundTeleport();
+  soundTeleport(from.x);
   teleportFx(from.x,from.y,type);
   teleportFx(p.x,p.y,type);
   draw();
@@ -1741,7 +1752,7 @@ function levelHasHeart(){return (levels[currentLevel]?.map||[]).some(r=>r.includ
 function touchHeart(){
   if(!p||!b[p.y]||b[p.y][p.x]!=="H")return;
   b[p.y][p.x]=".";heartTaken=true;
-  if(sfxReady())DGAudio.sfx.pickup();
+  if(sfxReady())DGAudio.sfx.pickup(dgPlayerX());
   floatingHearts();
   draw();
 }
@@ -2052,7 +2063,7 @@ function fall(){
       const fx=wrapX(p.x),fy=wrapY(p.y+1);
       if(b[fy]&&b[fy][fx]==="F"&&dist>=FRAGILE_FALL){
         b[fy][fx]=".";
-        if(sfxReady())DGAudio.sfx.crack();
+        if(sfxReady())DGAudio.sfx.crack(dgCellX(fx));
         shake(3);gravelFx(4);
         draw();
         setTimeout(step,getFallDelayMs());
@@ -3417,7 +3428,7 @@ function dgTampon(word,swap,dark){
   layer.appendChild(st);
   const base="translate(-50%,-50%) rotate(-10deg) ";
   return st.animate([{opacity:0,transform:base+"scale(3.4)"},{opacity:1,transform:base+"scale(1)"}],{duration:170,easing:"cubic-bezier(.3,0,.2,1)",fill:"forwards"}).finished.then(()=>{
-    dgThump(.8);
+    dgThump(.8,.5); // le tampon s'écrase au milieu de l'écran
     document.getElementById("app").animate([{transform:"translate(0,0)"},{transform:"translate(-.5rem,.3rem)"},{transform:"translate(.4rem,-.3rem)"},{transform:"translate(-.3rem,.2rem)"},{transform:"none"}],{duration:180});
     return new Promise(r=>setTimeout(r,Tuning.num("transition.tampon_ms",280)));
   }).then(()=>{
@@ -3448,7 +3459,7 @@ function dgAdvance(target){
   const opt={duration:Tuning.num("transition.defilement_ms",500),easing:"cubic-bezier(.65,0,.25,1)",fill:"both"};
   ghost.animate([{transform:"none"},{transform:"translate("+(dv[0]*dist)+"px,"+(dv[1]*dist)+"px)"}],opt);
   const a=wrap.animate([{transform:"translate("+(-dv[0]*dist)+"px,"+(-dv[1]*dist)+"px)"},{transform:"none"}],opt);
-  dgPluck(dgNoteAt(1,target%7),.014);
+  dgPluck(dgNoteAt(1,target%7),.014,0,.5);
   a.finished.then(()=>{ghost.remove();a.cancel();dgTx.busy=false;resetPlay();});
 }
 
@@ -3517,15 +3528,16 @@ function dgNoteAt(cx,cy){
   const i=(((q.x*2+q.y*3)%10)+10)%10;
   return dgHz(sc[0]+sc[1][i%5]+12*Math.floor(i/5));
 }
-function dgPluck(freq,gain=.03,when=0){
+// x : position à l'écran de la source (0..1) ; par défaut, le personnage
+function dgPluck(freq,gain=.03,when=0,x){
   if(!sfxReady())return;
-  DGAudio.sfx.note(freq,Math.min(.16,gain*2.6),when);
+  DGAudio.sfx.note(freq,Math.min(.16,gain*2.6),when,x==null?dgPlayerX():x);
 }
-function dgThump(imp){if(sfxReady())DGAudio.sfx.thump(imp);}
+function dgThump(imp,x){if(sfxReady())DGAudio.sfx.thump(imp,x==null?dgPlayerX():x);}
 function dgWhoosh(v){
   if(!soundOn||!sfxOn){v=0;}
   if(!audioCtx&&v<=0)return;
-  if(ensureAudio())DGAudio.sfx.whoosh(v);
+  if(ensureAudio())DGAudio.sfx.whoosh(v,dgPlayerX()); // le vent suit le personnage
 }
 /* à la victoire : on rejoue la phrase du niveau, puis l'accord de la tonalité */
 function dgPlayMelody(){
@@ -3534,7 +3546,7 @@ function dgPlayMelody(){
     dgPluck(f,.024,i*.095);
     setTimeout(()=>{if(bars[i])bars[i].classList.add("on");},i*95);
   });
-  if(sfxReady())DGAudio.sfx.winChord(notes.length*.095+.06);
+  if(sfxReady())DGAudio.sfx.winChord(notes.length*.095+.06,dgPlayerX());
 }
 
 /* --- chute et impact */
@@ -3679,7 +3691,7 @@ function dgShowWin(kind,finalText){
   replay.onclick=()=>resetPlay();
   document.getElementById("winScreen").classList.remove("hidden");
   dgFitButtons(document.getElementById("winScreen"));
-  if(big)dgPlayMelody();else if(sfxReady())DGAudio.sfx.winChord(.05);
+  if(big)dgPlayMelody();else if(sfxReady())DGAudio.sfx.winChord(.05,dgPlayerX());
 }
 
 /* --- Premium : proposé juste après une pub, une fois sur trois, jamais plus. C'est le moment où le joueur
