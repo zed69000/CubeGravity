@@ -25,3 +25,7 @@ keystore.properties
 ### Dossier temporaire des builds Gradle (chemin court, voir release-android)
 .t/
 *.aab
+
+# le plugin commun de sauvegarde en ligne a ses sources Android dans le dépôt (le dossier android/ du jeu, lui, est régénéré)
+!native/play-cloud-save/android/
+native/play-cloud-save/android/build/

@@ -1,0 +1,77 @@
+// Play Games Services is only compiled in once the game has its Play Games project id, set in the
+// game's capacitor.config.json: "plugins": { "PlayCloudSave": { "appId": "123456789012" } }.
+// Without it the plugin builds a stub that answers "not configured", so the app never initialises the
+// Play Games SDK with a missing id.
+import groovy.json.JsonSlurper
+
+ext {
+    playGamesVersion = '22.1.0'
+}
+
+def readPlayGamesAppId() {
+    def config = new File(rootProject.projectDir, '../capacitor.config.json')
+    if (!config.exists()) return ''
+    try {
+        def id = new JsonSlurper().parse(config)?.plugins?.PlayCloudSave?.appId
+        return (id ?: '').toString().trim()
+    } catch (ignored) {
+        return ''
+    }
+}
+
+def playGamesAppId = readPlayGamesAppId()
+def withPlayGames = playGamesAppId ==~ /\d{6,}/
+if (!withPlayGames && playGamesAppId) {
+    logger.warn("PlayCloudSave: appId '${playGamesAppId}' is not a Play Games project id, cloud save left out")
+}
+
+// The app id must reach the manifest as a string resource, otherwise Android reads it as a number.
+def generatedRes = new File(buildDir, 'generated/play-cloud-save/res')
+if (withPlayGames) {
+    def values = new File(generatedRes, 'values')
+    values.mkdirs()
+    new File(values, 'play_cloud_save.xml').text =
+        '<?xml version="1.0" encoding="utf-8"?>\n<resources>\n' +
+        "    <string name=\"play_cloud_save_app_id\" translatable=\"false\">${playGamesAppId}</string>\n" +
+        '</resources>\n'
+}
+
+apply plugin: 'com.android.library'
+
+android {
+    namespace = "studio.zed.playcloudsave"
+    compileSdk = project.hasProperty('compileSdkVersion') ? rootProject.ext.compileSdkVersion : 36
+    defaultConfig {
+        minSdkVersion project.hasProperty('minSdkVersion') ? rootProject.ext.minSdkVersion : 24
+        targetSdkVersion project.hasProperty('targetSdkVersion') ? rootProject.ext.targetSdkVersion : 36
+    }
+    sourceSets {
+        main {
+            java.srcDirs += withPlayGames ? 'src/playgames/java' : 'src/stub/java'
+            if (withPlayGames) {
+                manifest.srcFile 'src/playgames/AndroidManifest.xml'
+                res.srcDirs += generatedRes
+            }
+        }
+    }
+    lintOptions {
+        abortOnError = false
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_21
+        targetCompatibility JavaVersion.VERSION_21
+    }
+}
+
+repositories {
+    google()
+    mavenCentral()
+}
+
+dependencies {
+    implementation project(':capacitor-android')
+    implementation "androidx.appcompat:appcompat:${project.hasProperty('androidxAppCompatVersion') ? rootProject.ext.androidxAppCompatVersion : '1.7.1'}"
+    if (withPlayGames) {
+        implementation "com.google.android.gms:play-services-games-v2:$playGamesVersion"
+    }
+}
