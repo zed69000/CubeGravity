@@ -1,13 +1,14 @@
 {
   "id": "date-gravity",
   "android": "com.dategravity.app",
-  "kit": "3",
+  "kit": "4",
   "tools": [
     "bugreport",
     "update",
     "errors"
   ],
   "embed": [
+    "splash",
     "tuning",
     "promo"
   ],

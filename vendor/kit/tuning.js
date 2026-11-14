@@ -1,4 +1,4 @@
-// Studio kit v3, tuning: copied by `npm run kit`, never edit it here.
+// Studio kit v4, tuning: copied by `npm run kit`, never edit it here.
 // Studio kit, embedded tool "tuning": the values set in the game's GDD (games-catalog).
 // Embedded (copied into the game by `npm run kit`), because the game reads it while it starts and offline in the app.
 // The source lives in games-catalog/public/kit/embed/tuning.js: never edit the copy in a game.

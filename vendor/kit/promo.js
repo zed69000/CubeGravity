@@ -1,4 +1,4 @@
-// Studio kit v3, promo: copied by `npm run kit`, never edit it here.
+// Studio kit v4, promo: copied by `npm run kit`, never edit it here.
 /* Studio kit, embedded tool "promo": the house ad for the studio's other games, read from the catalog.
    Embedded (copied into the game by `npm run kit`), because the game asks for it while it starts and it must work
    offline in the app. The source lives in games-catalog/public/kit/embed/promo.js: never edit the copy in a game.

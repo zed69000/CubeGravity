@@ -47,12 +47,7 @@
   if(navigator.sendBeacon)try{navigator.sendBeacon=()=>true;}catch(e){}
   window.open=()=>null;
 
-  /* The game's own studio screen would cover the first scene. The head script already flagged it as seen. */
   const root=document.documentElement;
-  if(root.classList.contains("splash")){
-    root.classList.remove("splash");
-    try{realSession.removeItem("dg_splash");}catch(e){}
-  }
 
   /* Links must stay inside the preview, otherwise a tap would open the real game on the real save. */
   function keepPreview(url){
